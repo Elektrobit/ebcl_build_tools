@@ -1,0 +1,16 @@
+
+book
+.venv
+
+log.html
+output.xml
+report.html
+
+**/__pycache__
+**/__pycache__/**/*
+*.pyc
+
+.coverage
+htmlcov
+
+tools/
