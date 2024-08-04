@@ -1,0 +1,4 @@
+base: root.yaml
+type: kiwi
+kvm: true
+result: '*.tar.xz'
