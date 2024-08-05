@@ -445,14 +445,18 @@ class RootGenerator:
                     'Apt repository key checks are not supported for kiwi-only build!')
 
             for component in apt.components:
+                bootstrap = 'false'
+                if cnt == 0:
+                    bootstrap = 'true'
+
                 cmp_id = f'{cnt}_{apt.distro}_{component}'
-                repos += f'<repository alias=”{cmp_id}" type="apt-deb" ' \
+                repos += f'<repository alias="{cmp_id}" type="apt-deb" ' \
                     f'distribution="{apt.distro}" components="{component}" ' \
-                    f'use_for_bootstrap="{cnt == 0}" repository_gpgcheck="false" >\n'
+                    f'use_for_bootstrap="{bootstrap}" repository_gpgcheck="false" >\n'
                 repos += f'    <source path = "{apt.url}" />\n'
                 repos += '</repository>\n\n'
 
-            cnt += 1
+                cnt += 1
 
         return repos
 
@@ -611,6 +615,8 @@ class RootGenerator:
         elif self.arch == 'arm64' and host_is_arm64:
             cross = False
 
+        logging.info('Cross-build: %s', cross)
+
         cmd = None
         if use_berrymill:
             logging.info(
@@ -639,14 +645,16 @@ class RootGenerator:
                 f'--description={os.path.dirname(appliance)} ' \
                 f'--target-dir={self.result_dir}'
 
-        fn_run = self.fake.run_sudo
-        if not self.kvm:
+        fn_run = None
+        if self.kvm:
+            fn_run = self.fake.run_sudo
+        else:
             fn_run = self.fake.run_no_fake
             cmd = f'bash -c "{cmd}"'
 
         fn_run(f'. /build/venv/bin/activate && {cmd}')
 
-        if self.kvm:
+        if not cross and self.kvm:
             # Fix ownership - needed for KVM build which is executed as root
             self.fake.run_sudo(
                 f'chown -R ebcl:ebcl {self.result_dir}', check=False)
