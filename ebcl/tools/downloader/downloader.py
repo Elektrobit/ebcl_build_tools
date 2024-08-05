@@ -8,6 +8,7 @@ import tempfile
 from typing import Optional
 
 from ebcl.common import init_logging, bug, promo
+from ebcl.common.apt import Apt
 from ebcl.common.config import load_yaml
 from ebcl.common.proxy import Proxy
 from ebcl.common.version import VersionDepends
@@ -21,6 +22,7 @@ class PackageDownloader:
     config: str
     # config values
     arch: str
+    use_ebcl_apt: bool
     # proxy
     proxy: Proxy
 
@@ -42,6 +44,11 @@ class PackageDownloader:
             arch=self.arch,
             ebcl_version=config.get('ebcl_version', None)
         )
+
+        self.use_ebcl_apt = config.get('use_ebcl_apt', False)
+        if self.use_ebcl_apt:
+            ebcl_apt = Apt.ebcl_apt(self.arch)
+            self.proxy.add_apt(ebcl_apt)
 
     def download_packages(
         self,

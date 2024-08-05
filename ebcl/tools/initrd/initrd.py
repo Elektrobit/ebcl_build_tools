@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Tuple, Any, Optional
 
 from ebcl.common import init_logging, bug, promo
+from ebcl.common.apt import Apt
 from ebcl.common.config import load_yaml
 from ebcl.common.fake import Fake
 from ebcl.common.files import Files, EnvironmentType
@@ -36,6 +37,7 @@ class InitrdGenerator:
     arch: str
     template: Optional[str]
     modules_folder: Optional[str]
+    use_ebcl_apt: bool
     # use fakeroot or sudo
     fakeroot: bool
     # name of busybox package
@@ -109,6 +111,11 @@ class InitrdGenerator:
             arch=self.arch,
             ebcl_version=config.get('ebcl_version', None)
         )
+
+        self.use_ebcl_apt = config.get('use_ebcl_apt', False)
+        if self.use_ebcl_apt:
+            ebcl_apt = Apt.ebcl_apt(self.arch)
+            self.proxy.add_apt(ebcl_apt)
 
         self.fake = Fake()
         self.fh = Files(self.fake)
