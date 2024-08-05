@@ -4,6 +4,7 @@ import argparse
 import glob
 import logging
 import os
+import platform
 import shutil
 import tempfile
 
@@ -447,7 +448,8 @@ class RootGenerator:
                 cmp_id = f'{cnt}_{apt.distro}_{component}'
                 repos += f'<repository alias=”{cmp_id}" type="apt-deb" ' \
                     f'distribution="{apt.distro}" components="{component}" ' \
-                    f'use_for_bootstrap="{cnt == 0}" repository_gpgcheck="false" >\n'
+                    f'use_for_bootstrap="{
+                        cnt == 0}" repository_gpgcheck="false" >\n'
                 repos += f'    <source path = "{apt.url}" />\n'
                 repos += '</repository>\n\n'
 
@@ -601,12 +603,25 @@ class RootGenerator:
         if not self.kvm:
             accel = '--no-accel'
 
+        host_is_amd64 = platform.machine().lower() in ("amd64", "x86_64")
+        host_is_arm64 = platform.machine().lower() in ("arm64", "aarch64")
+
+        cross = True
+        if self.arch == 'amd64' and host_is_amd64:
+            cross = False
+        elif self.arch == 'arm64' and host_is_arm64:
+            cross = False
+
         cmd = None
         if use_berrymill:
+            cross_flag = ''
+            if cross:
+                cross_flag = '--cross'
+
             logging.info(
                 'Berrymill & Kiwi KVM build of %s (KVM: %s).', appliance, self.kvm)
             cmd = f'berrymill -c {berrymill_conf} -d -a {self.arch} -i {appliance} ' \
-                f'--clean build --box-memory 4G  --cpu qemu64-v1 {accel} ' \
+                f'--clean build {cross_flag} --box-memory 4G  --cpu qemu64-v1 {accel} ' \
                 f'--target-dir {self.result_dir}'
         else:
             logging.info('Kiwi KVM build of %s (KVM: %s).',
