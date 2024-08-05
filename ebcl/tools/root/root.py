@@ -545,8 +545,9 @@ class RootGenerator:
                     return None
 
         if not berrymill_conf:
-            logging.warning(
-                'No berrymill.conf, falling back to kiwi-only build.')
+            if use_berrymill:
+                logging.warning(
+                    'No berrymill.conf, falling back to kiwi-only build.')
             use_berrymill = False
 
         if not self.image:
