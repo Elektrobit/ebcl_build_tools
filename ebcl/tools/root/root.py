@@ -448,8 +448,7 @@ class RootGenerator:
                 cmp_id = f'{cnt}_{apt.distro}_{component}'
                 repos += f'<repository alias=”{cmp_id}" type="apt-deb" ' \
                     f'distribution="{apt.distro}" components="{component}" ' \
-                    f'use_for_bootstrap="{
-                        cnt == 0}" repository_gpgcheck="false" >\n'
+                    f'use_for_bootstrap="{cnt == 0}" repository_gpgcheck="false" >\n'
                 repos += f'    <source path = "{apt.url}" />\n'
                 repos += '</repository>\n\n'
 
@@ -614,15 +613,17 @@ class RootGenerator:
 
         cmd = None
         if use_berrymill:
-            cross_flag = ''
-            if cross:
-                cross_flag = '--cross'
-
             logging.info(
                 'Berrymill & Kiwi KVM build of %s (KVM: %s).', appliance, self.kvm)
-            cmd = f'berrymill -c {berrymill_conf} -d -a {self.arch} -i {appliance} ' \
-                f'--clean build {cross_flag} --box-memory 4G  --cpu qemu64-v1 {accel} ' \
-                f'--target-dir {self.result_dir}'
+
+            if cross:
+                cmd = f'berrymill -c {berrymill_conf} -d -a {self.arch} -i {appliance} ' \
+                    f'--clean build --cross --box-memory 4G ' \
+                    f'--target-dir {self.result_dir}'
+            else:
+                cmd = f'berrymill -c {berrymill_conf} -d -a {self.arch} -i {appliance} ' \
+                    f'--clean build --box-memory 4G  --cpu qemu64-v1 {accel} ' \
+                    f'--target-dir {self.result_dir}'
         else:
             logging.info('Kiwi KVM build of %s (KVM: %s).',
                          appliance, self.kvm)
