@@ -9,6 +9,7 @@ report.html
 **/__pycache__
 **/__pycache__/**/*
 **/*.pyc
+**/*cpython*
 
 .coverage
 htmlcov

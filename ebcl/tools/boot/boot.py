@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Optional, Any
 
 from ebcl.common import init_logging, bug, promo
+from ebcl.common.apt import Apt
 from ebcl.common.config import load_yaml
 from ebcl.common.fake import Fake
 from ebcl.common.files import Files, parse_scripts, EnvironmentType
@@ -31,6 +32,7 @@ class BootGenerator:
     archive_path: str
     download_deps: bool
     tar: bool
+    use_ebcl_apt: bool
 
     # proxy
     proxy: Proxy
@@ -70,6 +72,11 @@ class BootGenerator:
             arch=self.arch,
             ebcl_version=config.get('ebcl_version', None)
         )
+
+        self.use_ebcl_apt = config.get('use_ebcl_apt', False)
+        if self.use_ebcl_apt:
+            ebcl_apt = Apt.ebcl_apt(self.arch)
+            self.proxy.add_apt(ebcl_apt)
 
         logging.debug('Using apt repos: %s', self.proxy.apts)
 
