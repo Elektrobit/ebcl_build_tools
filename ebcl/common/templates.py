@@ -41,7 +41,7 @@ def render_template(
     if template_copy_folder:
         # output template file
         template_copy = os.path.abspath(os.path.join(
-            template_copy_folder, f'template.{generated_file_name}'))
+            template_copy_folder, f'{generated_file_name}.template'))
 
         if template_file != template_copy:
             logging.debug('Copying template file as %s', template_copy)
