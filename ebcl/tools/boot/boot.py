@@ -60,7 +60,13 @@ class BootGenerator:
         self.arch = config.get('arch', 'arm64')
 
         self.packages = parse_package_config(
-            config.get('packages', []), self.arch)
+            config.get('boot_packages', []), self.arch)
+
+        use_packages = config.get('use_packages', True)
+        if use_packages:
+            ps = parse_package_config(config.get('packages', []), self.arch)
+            if ps:
+                self.packages += ps
 
         kernel = parse_package(config.get('kernel', None), self.arch)
         if kernel:
