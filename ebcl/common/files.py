@@ -318,11 +318,12 @@ def parse_scripts(
                 logging.error('Script %s has no name!', script)
                 continue
 
-            script['name'] = reslove_file(
+            abs_script = reslove_file(
                 file=script['name'],
                 file_base_dir=script.get('base_dir', None),
                 relative_base_dir=relative_base_dir
             )
+            script['name'] = os.path.relpath(abs_script, relative_base_dir)
 
             if 'env' not in script:
                 script['env'] = env
