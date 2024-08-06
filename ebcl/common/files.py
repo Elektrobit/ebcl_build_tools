@@ -179,7 +179,8 @@ class Files:
 
         if not environment:
             environment = EnvironmentType.FAKEROOT
-            logging.debug('No environment provided. Using default %s.', environment)
+            logging.debug(
+                'No environment provided. Using default %s.', environment)
 
         target_dir = self.target_dir
         if cwd:
@@ -217,7 +218,7 @@ class Files:
                 environment=environment,
                 check=check
             )
-            
+
             if os.path.abspath(script_file) != os.path.abspath(file):
                 # delete copied file
                 fn_run = self.fake.run
@@ -314,6 +315,12 @@ def parse_scripts(
         if isinstance(script, dict):
             if 'name' not in script:
                 logging.error('Script %s has no name!', script)
+                continue
+
+            script['name'] = reslove_file(
+                file=script['name'],
+                file_base_dir=script.get('base_dir', None)
+            )
 
             if 'env' not in script:
                 script['env'] = env
@@ -338,3 +345,53 @@ def parse_scripts(
             logging.error('Unkown script entry type: %s', script)
 
     return result
+
+
+def parse_files(
+    files: Optional[list[dict[str, str]]],
+    relative_base_dir: Optional[str] = None
+) -> list[dict[str, str]]:
+    """ Resolve file names to absolute paths. """
+    if not files:
+        return []
+
+    processed: list[Any] = []
+
+    for file in files:
+        if isinstance(file, dict):
+            if 'source' not in file:
+                logging.error('File %s has no source!', file)
+                continue
+
+            file['source'] = reslove_file(
+                file=file['source'],
+                file_base_dir=file.get('base_dir', None),
+                relative_base_dir=relative_base_dir
+            )
+
+            processed.append(file)
+
+        elif isinstance(file, str):
+            file = reslove_file(
+                file=file,
+                relative_base_dir=relative_base_dir
+            )
+            processed.append(file)
+
+        else:
+            logging.error('Unknown file type %s! File is ignored.', file)
+
+    return processed
+
+
+def reslove_file(
+    file: str,
+    file_base_dir: Optional[str] = None,
+    relative_base_dir: Optional[str] = None,
+) -> str:
+    """ Resolve path of file. """
+    if file_base_dir:
+        return os.path.abspath(os.path.join(file_base_dir, file))
+    elif relative_base_dir:
+        return os.path.abspath(os.path.join(relative_base_dir, file))
+    return os.path.abspath(file)

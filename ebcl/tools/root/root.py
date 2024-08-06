@@ -19,7 +19,7 @@ from ebcl.common import init_logging, promo, log_exception
 from ebcl.common.apt import Apt
 from ebcl.common.config import load_yaml
 from ebcl.common.fake import Fake
-from ebcl.common.files import Files, EnvironmentType, parse_scripts
+from ebcl.common.files import Files, EnvironmentType, parse_scripts, parse_files
 from ebcl.common.proxy import Proxy
 from ebcl.common.templates import render_template
 from ebcl.common.version import VersionDepends, parse_package_config
@@ -108,7 +108,7 @@ class RootGenerator:
     # folder to collect build results
     result_dir: Optional[str] = None
 
-    @log_exception()
+    @log_exception(call_exit=True)
     def __init__(self, config_file: str):
         """ Parse the yaml config file.
 
@@ -132,7 +132,7 @@ class RootGenerator:
         self.use_berrymill = config.get('use_berrymill', True)
         self.use_bootstrap_package = config.get('use_bootstrap_package', True)
         self.bootstrap_package = config.get('bootstrap_package', None)
-        self.kiwi_scripts = config.get('kiwi_scripts', [])
+        self.kiwi_scripts = parse_files(config.get('kiwi_scripts', None))
         self.kiwi_root_overlays = config.get('kiwi_root_overlays', [])
         self.use_kiwi_defaults = config.get('use_kiwi_defaults', True)
         self.kvm = config.get('kvm', True)

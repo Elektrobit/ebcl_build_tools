@@ -26,7 +26,7 @@ class PackageDownloader:
     # proxy
     proxy: Proxy
 
-    @log_exception()
+    @log_exception(call_exit=True)
     def __init__(self, config_file: str):
         """ Parse the yaml config file.
 
