@@ -303,7 +303,8 @@ class Files:
 
 def parse_scripts(
     scripts: Optional[list[Any]],
-    env: EnvironmentType = EnvironmentType.FAKEROOT
+    env: EnvironmentType = EnvironmentType.FAKEROOT,
+    relative_base_dir: Optional[str] = None
 ) -> list[dict[str, Any]]:
     """ Parse scripts config entry. """
     if not scripts:
@@ -319,7 +320,8 @@ def parse_scripts(
 
             script['name'] = reslove_file(
                 file=script['name'],
-                file_base_dir=script.get('base_dir', None)
+                file_base_dir=script.get('base_dir', None),
+                relative_base_dir=relative_base_dir
             )
 
             if 'env' not in script:

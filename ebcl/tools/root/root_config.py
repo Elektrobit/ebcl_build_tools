@@ -40,7 +40,11 @@ class RootConfig:
 
         self.config = config_file
 
-        self.scripts = parse_scripts(config.get('scripts', None))
+        config_dir = os.path.dirname(config_file)
+
+        self.scripts = parse_scripts(
+            config.get('scripts', None),
+            relative_base_dir=config_dir)
 
         self.pack_in_chroot = config.get('pack_in_chroot', True)
 
