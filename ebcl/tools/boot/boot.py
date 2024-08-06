@@ -57,20 +57,32 @@ class BootGenerator:
         config = load_yaml(config_file)
 
         self.config = config_file
-        self.files = parse_files(config.get('files', None))
-        self.host_files = parse_files(config.get('host_files', None))
+
+        config_dir = os.path.dirname(config_file)
+
         self.archive_name = config.get('archive_name', 'boot.tar')
         self.download_deps = config.get('download_deps', True)
         self.tar = config.get('tar', True)
+
+        self.files = parse_files(
+            config.get('files', None),
+            relative_base_dir=config_dir)
+
+        self.host_files = parse_files(
+            config.get('host_files', None),
+            relative_base_dir=config_dir)
 
         self.boot_tarball = config.get('boot_tarball', None)
         if isinstance(self.boot_tarball, dict):
             self.boot_tarball = reslove_file(
                 file=self.boot_tarball['name'],
-                file_base_dir=self.boot_tarball.get('base_dir', None)
+                file_base_dir=self.boot_tarball.get('base_dir', None),
+                relative_base_dir=config_dir
             )
 
-        self.scripts = parse_scripts(config.get('scripts', None))
+        self.scripts = parse_scripts(
+            config.get('scripts', None),
+            relative_base_dir=config_dir)
 
         self.arch = config.get('arch', 'arm64')
 

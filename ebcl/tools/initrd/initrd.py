@@ -69,10 +69,14 @@ class InitrdGenerator:
 
         self.config = Path(config_file)
 
+        config_dir = os.path.dirname(config_file)
+
         self.modules = config.get('modules', [])
         self.root_device = config.get('root_device', '')
         self.devices = config.get('devices', [])
-        self.files = parse_files(config.get('files', None))
+        self.files = parse_files(
+            config.get('files', None),
+            relative_base_dir=config_dir)
         self.kversion = config.get('kversion', '')
         self.apt_repos = config.get('apt_repos', None)
         self.template = config.get('template', None)

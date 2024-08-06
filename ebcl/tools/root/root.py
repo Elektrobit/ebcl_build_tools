@@ -119,9 +119,13 @@ class RootGenerator:
 
         self.config = config_file
 
+        config_dir = os.path.dirname(config_file)
+
         self.arch = config.get('arch', 'arm64')
 
-        self.scripts = parse_scripts(config.get('scripts', None))
+        self.scripts = parse_scripts(
+            config.get('scripts', None),
+            relative_base_dir=config_dir)
 
         self.image = config.get('image', None)
         self.template = config.get('template', None)
@@ -132,11 +136,14 @@ class RootGenerator:
         self.use_berrymill = config.get('use_berrymill', True)
         self.use_bootstrap_package = config.get('use_bootstrap_package', True)
         self.bootstrap_package = config.get('bootstrap_package', None)
-        self.kiwi_scripts = parse_files(config.get('kiwi_scripts', None))
         self.kiwi_root_overlays = config.get('kiwi_root_overlays', [])
         self.use_kiwi_defaults = config.get('use_kiwi_defaults', True)
         self.kvm = config.get('kvm', True)
         self.image_version = config.get('image_version', '1.0.0')
+
+        self.kiwi_scripts = parse_files(
+            config.get('kiwi_scripts', None),
+            relative_base_dir=config_dir)
 
         self.name = config.get('name', 'root')
 
