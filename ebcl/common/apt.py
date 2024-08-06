@@ -164,9 +164,13 @@ class Apt:
 
         if url.endswith('xz'):
             content_bytes = lzma.decompress(data)
-        else:
-            assert url.endswith('gz')
+        elif url.endswith('gz'):
             content_bytes = gzip.decompress(data)
+        else:
+            logging.error(
+                'Unkown compression of index %s (%s)! Cannot parse index.', url, self)
+            return
+
         content: str = content_bytes.decode(
             encoding='utf-8', errors='ignore')
         lines: list[str] = content.split('\n')

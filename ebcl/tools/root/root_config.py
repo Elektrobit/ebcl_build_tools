@@ -7,7 +7,7 @@ import tempfile
 
 from typing import Optional, Any
 
-from ebcl.common import init_logging, bug, promo
+from ebcl.common import init_logging, promo, log_exception
 from ebcl.common.config import load_yaml
 from ebcl.common.fake import Fake
 from ebcl.common.files import Files, EnvironmentType, parse_scripts
@@ -29,6 +29,7 @@ class RootConfig:
     # files helper
     fh: Files
 
+    @log_exception()
     def __init__(self, config_file: str):
         """ Parse the yaml config file.
 
@@ -65,6 +66,7 @@ class RootConfig:
                 environment=env
             )
 
+    @log_exception()
     def config_root(self, archive_in: str, archive_out: str) -> Optional[str]:
         """ Config the tarball.  """
         if not os.path.exists(archive_in):
@@ -91,9 +93,14 @@ class RootConfig:
         return ao
 
 
+@log_exception(call_exit=True)
 def main() -> None:
     """ Main entrypoint of EBcL root filesystem config helper. """
     init_logging()
+
+    logging.info('\n=====================\n'
+                 'EBcL Root Configurator\n'
+                 '======================\n')
 
     parser = argparse.ArgumentParser(
         description='Configure the given root tarball.')
@@ -109,15 +116,10 @@ def main() -> None:
     # Read configuration
     generator = RootConfig(args.config_file)
 
-    # Create the boot.tar
-    try:
-        archive = generator.config_root(args.archive_in, args.archive_out)
-    except Exception as e:
-        logging.critical('Image build failed with exception! %s', e)
-        bug()
+    archive = generator.config_root(args.archive_in, args.archive_out)
 
     if archive:
-        print('Archive was written to %s.', archive)
+        print(f'Archive was written to {archive}.')
         promo()
     else:
         exit(1)

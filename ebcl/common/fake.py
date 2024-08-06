@@ -10,6 +10,10 @@ from subprocess import PIPE
 from typing import Tuple, Optional, Any
 
 
+class CommandFailed(Exception):
+    """ Raised if a command returns and returncode which is not 0. """
+
+
 class Fake:
     """ Fakeroot and Fakechroot helper. """
 
@@ -67,9 +71,14 @@ class Fake:
 
         if p.returncode != 0:
             logging.info('Returncode: %s', p.returncode)
-
-        if check:
-            assert p.returncode == 0
+            if check:
+                logging.critical(
+                    'Execution of command %s failed with returncode %s!', cmd, p.returncode)
+                raise CommandFailed(
+                    f'Execution of command {cmd} failed with returncode {p.returncode}!\n'
+                    f'returncode: {p.returncode}\n'
+                    f'STDOUT:\n{pout}'
+                    f'STDERR:\n{perr}')
 
         return (pout, perr, p.returncode)
 

@@ -7,7 +7,7 @@ import tempfile
 
 from typing import Optional
 
-from ebcl.common import init_logging, bug, promo
+from ebcl.common import init_logging, promo, log_exception
 from ebcl.common.apt import Apt
 from ebcl.common.config import load_yaml
 from ebcl.common.proxy import Proxy
@@ -26,6 +26,7 @@ class PackageDownloader:
     # proxy
     proxy: Proxy
 
+    @log_exception()
     def __init__(self, config_file: str):
         """ Parse the yaml config file.
 
@@ -50,6 +51,7 @@ class PackageDownloader:
             ebcl_apt = Apt.ebcl_apt(self.arch)
             self.proxy.add_apt(ebcl_apt)
 
+    @log_exception(call_exit=True)
     def download_packages(
         self,
         packages: str,
@@ -97,9 +99,14 @@ class PackageDownloader:
         print(f'The packages were extracted to:\n{content_path}')
 
 
+@log_exception(call_exit=True)
 def main() -> None:
     """ Main entrypoint of EBcL boot generator. """
     init_logging()
+
+    logging.info('\n======================\n'
+                 'EBcL Package downloader\n'
+                 '=======================\n')
 
     parser = argparse.ArgumentParser(
         description='Download and extract the given packages.')
@@ -118,14 +125,9 @@ def main() -> None:
 
     downloader = PackageDownloader(args.config_file)
 
-    try:
-        # Download and extract the packages
-        downloader.download_packages(
-            args.packages, args.output, args.arch, args.download_depends)
-    except Exception as e:
-        logging.critical('Package download failed with exception! %s', e)
-        bug()
-        exit(1)
+    # Download and extract the packages
+    downloader.download_packages(
+        args.packages, args.output, args.arch, args.download_depends)
 
     promo()
 

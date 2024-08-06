@@ -12,6 +12,10 @@ def main() -> None:
     """ Main entrypoint of EBcL apt proxy. """
     init_logging()
 
+    logging.info('\n=========\n'
+                 'EBcL Proxy\n'
+                 '==========\n')
+
     parser = argparse.ArgumentParser(
         description='EBcL apt proxy.')
 
