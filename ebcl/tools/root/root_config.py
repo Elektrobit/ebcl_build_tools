@@ -29,7 +29,7 @@ class RootConfig:
     # files helper
     fh: Files
 
-    @log_exception()
+    @log_exception(call_exit=True)
     def __init__(self, config_file: str):
         """ Parse the yaml config file.
 
@@ -40,7 +40,6 @@ class RootConfig:
 
         self.config = config_file
 
-        self.scripts = config.get('scripts', [])
         self.scripts = parse_scripts(config.get('scripts', None))
 
         self.pack_in_chroot = config.get('pack_in_chroot', True)

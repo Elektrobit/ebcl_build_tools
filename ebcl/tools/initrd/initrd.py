@@ -16,7 +16,7 @@ from ebcl.common import init_logging, promo, log_exception
 from ebcl.common.apt import Apt
 from ebcl.common.config import load_yaml
 from ebcl.common.fake import Fake
-from ebcl.common.files import Files, EnvironmentType
+from ebcl.common.files import Files, EnvironmentType, parse_files
 from ebcl.common.proxy import Proxy
 from ebcl.common.templates import render_template
 from ebcl.common.version import VersionDepends, parse_package_config, parse_package
@@ -58,7 +58,7 @@ class InitrdGenerator:
     # env for files helper
     env: EnvironmentType
 
-    @log_exception()
+    @log_exception(call_exit=True)
     def __init__(self, config_file: str):
         """ Parse the yaml config file.
 
@@ -72,7 +72,7 @@ class InitrdGenerator:
         self.modules = config.get('modules', [])
         self.root_device = config.get('root_device', '')
         self.devices = config.get('devices', [])
-        self.files = config.get('files', [])
+        self.files = parse_files(config.get('files', None))
         self.kversion = config.get('kversion', '')
         self.apt_repos = config.get('apt_repos', None)
         self.template = config.get('template', None)

@@ -12,7 +12,7 @@ from ebcl.common import init_logging, promo, log_exception
 from ebcl.common.apt import Apt
 from ebcl.common.config import load_yaml
 from ebcl.common.fake import Fake
-from ebcl.common.files import Files, parse_scripts
+from ebcl.common.files import Files, parse_scripts, parse_files, reslove_file
 from ebcl.common.proxy import Proxy
 from ebcl.common.version import VersionDepends, parse_package_config, parse_package
 
@@ -47,7 +47,7 @@ class BootGenerator:
     # files helper
     fh: Files
 
-    @log_exception()
+    @log_exception(call_exit=True)
     def __init__(self, config_file: str):
         """ Parse the yaml config file.
 
@@ -57,12 +57,18 @@ class BootGenerator:
         config = load_yaml(config_file)
 
         self.config = config_file
-        self.files = config.get('files', [])
-        self.host_files = config.get('host_files', [])
-        self.boot_tarball = config.get('boot_tarball', None)
+        self.files = parse_files(config.get('files', None))
+        self.host_files = parse_files(config.get('host_files', None))
         self.archive_name = config.get('archive_name', 'boot.tar')
         self.download_deps = config.get('download_deps', True)
         self.tar = config.get('tar', True)
+
+        self.boot_tarball = config.get('boot_tarball', None)
+        if isinstance(self.boot_tarball, dict):
+            self.boot_tarball = reslove_file(
+                file=self.boot_tarball['name'],
+                file_base_dir=self.boot_tarball.get('base_dir', None)
+            )
 
         self.scripts = parse_scripts(config.get('scripts', None))
 
