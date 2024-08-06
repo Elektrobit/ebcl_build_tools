@@ -12,7 +12,7 @@ from io import BufferedWriter
 from pathlib import Path
 from typing import Tuple, Any, Optional
 
-from ebcl.common import init_logging, bug, promo
+from ebcl.common import init_logging, promo, log_exception
 from ebcl.common.apt import Apt
 from ebcl.common.config import load_yaml
 from ebcl.common.fake import Fake
@@ -58,6 +58,7 @@ class InitrdGenerator:
     # env for files helper
     env: EnvironmentType
 
+    @log_exception()
     def __init__(self, config_file: str):
         """ Parse the yaml config file.
 
@@ -193,7 +194,7 @@ class InitrdGenerator:
 
         return True
 
-    def find_kernel_version(self, mods_dir: str) -> str:
+    def find_kernel_version(self, mods_dir: str) -> Optional[str]:
         """ Find the right kernel version. """
         if self.kversion:
             return self.kversion
@@ -204,6 +205,7 @@ class InitrdGenerator:
         if not versions:
             logging.critical(
                 'Kernel version not found! mods_dir: %s, kernel_dirs: %s', mods_dir, kernel_dirs)
+            return None
 
         versions.sort()
 
@@ -215,10 +217,18 @@ class InitrdGenerator:
         Args:
             mods_dir (str): Folder containing the modules.
         """
+        if not self.modules:
+            logging.info('No modules defined.')
+            return
+
         logging.debug('Modules tmp folder: %s.', mods_dir)
         logging.debug('Target tmp folder: %s.', self.target_dir)
 
         kversion = self.find_kernel_version(mods_dir)
+        if not kversion:
+            logging.error(
+                'Kernel version not found, extracting modules failed!')
+            return
 
         logging.info('Using kernel version %s.', kversion)
 
@@ -355,6 +365,7 @@ class InitrdGenerator:
             if not fs:
                 logging.error('Copying of %s failed!', src)
 
+    @log_exception()
     def create_initrd(self, output_path: str) -> Optional[str]:
         """ Create the initrd image.  """
         self.target_dir = tempfile.mkdtemp()
@@ -383,7 +394,7 @@ class InitrdGenerator:
             mods_dir = os.path.abspath(os.path.join(
                 self.config.parent, self.modules_folder))
             logging.info('Using modules from folder %s...', mods_dir)
-        else:
+        elif self.modules_packages:
             mods_dir = tempfile.mkdtemp()
 
             logging.info('Using modules from deb packages...')
@@ -394,11 +405,18 @@ class InitrdGenerator:
 
             if missing:
                 logging.error('Not found packages: %s', missing)
+        elif self.modules:
+            logging.error('No module sources defined!')
+        else:
+            logging.info('No module sources defined.')
 
-        # Extract modules directly to the initrd /lib/modules directory
-        self.extract_modules_from_deb(mods_dir)
+        if self.modules:
+            # Extract modules directly to the initrd /lib/modules directory
+            self.extract_modules_from_deb(mods_dir)
+        else:
+            logging.info('No modules defined.')
 
-        if not self.modules_folder:
+        if mods_dir and not self.modules_folder:
             # Remove mods temporary folder
             shutil.rmtree(mods_dir)
 
@@ -445,6 +463,7 @@ class InitrdGenerator:
 
         return image_path
 
+    @log_exception()
     def finalize(self):
         """ Finalize output and cleanup. """
 
@@ -452,9 +471,14 @@ class InitrdGenerator:
         self._run_root(f' rm -rf {self.target_dir}')
 
 
+@log_exception(call_exit=True)
 def main() -> None:
     """ Main entrypoint of EBcL initrd generator. """
     init_logging()
+
+    logging.info('\n====================\n'
+                 'EBcL Initrd Generator\n'
+                 '=====================\n')
 
     parser = argparse.ArgumentParser(
         description='Create an initrd image for Linux.')
@@ -467,27 +491,20 @@ def main() -> None:
 
     logging.debug('Running initrd_generator with args %s', args)
 
-    # Read configuration
     generator = InitrdGenerator(args.config_file)
 
     image = None
-    try:
-        # Create the initrd.img
-        image = generator.create_initrd(args.output)
-    except Exception as e:
-        logging.critical('Image build failed with exception! %s', e)
-        bug()
 
-    try:
-        generator.finalize()
-    except Exception as e:
-        logging.error('Cleanup failed with exception! %s', e)
-        bug()
+    # Create the initrd.img
+    image = generator.create_initrd(args.output)
+
+    generator.finalize()
 
     if image:
-        print('Image was written to %s.', image)
+        print(f'Image was written to {image}.')
         promo()
     else:
+        print(f'Image build failed!')
         exit(1)
 
 

@@ -23,6 +23,9 @@ class EnvironmentType(Enum):
         if not script_type:
             return cls.FAKEROOT
 
+        if isinstance(script_type, cls):
+            return script_type
+
         if script_type == 'fake':
             return cls.FAKEROOT
         elif script_type == 'chfake':
@@ -63,7 +66,8 @@ class Files:
         gid: Optional[int] = None,
         mode: Optional[str] = None,
         move: bool = False,
-        delete_if_exists: bool = False
+        delete_if_exists: bool = False,
+        fix_ownership: bool = False
     ) -> list[str]:
         """ Copy file or dir to target environment"""
         files: list[str] = []
@@ -83,6 +87,9 @@ class Files:
             # TODO: test
 
             if file != target:
+                if fix_ownership:
+                    self.fake.run_sudo(f'chown -R ebcl:ebcl {file}')
+
                 fn_run = self.fake.run
                 if environment == EnvironmentType.CHROOT:
                     fn_run = self.fake.run_sudo
@@ -90,12 +97,10 @@ class Files:
                     fn_run = self.fake.run_no_fake
 
                 if os.path.isfile(file):
-                    parent_dir = os.path.dirname(file)
-                    fn_run(f'mkdir -p {parent_dir}')
+                    fn_run(f'mkdir -p {os.path.dirname(target)}')
 
                 if delete_if_exists:
-                    if os.path.exists(target):
-                        fn_run(f'rm -rf {target}')
+                    fn_run(f'rm -rf {target}')
 
                 if move:
                     fn_run(f'mv {file} {target}')
@@ -126,19 +131,6 @@ class Files:
         environment: EnvironmentType = EnvironmentType.FAKEROOT
     ) -> Optional[Tuple[Optional[str], str, int]]:
         """ Run command. """
-        target_dir: Optional[str] = None
-
-        if not self.target_dir:
-            if cwd:
-                logging.info(
-                    'Target dir not set, using cwd %s as fall-back.', cwd)
-                target_dir = cwd
-            else:
-                logging.error('Target dir not set!')
-                return None
-        else:
-            target_dir = self.target_dir
-
         if environment == EnvironmentType.FAKEROOT:
             return self.fake.run(
                 cmd=cmd,
@@ -156,9 +148,20 @@ class Files:
 
         assert fn_run is not None
 
+        chroot_dir: Optional[str] = None
+
+        chroot_dir = self.target_dir
+        if cwd:
+            logging.info('Using cwd %s as chroot dir.', cwd)
+            chroot_dir = cwd
+
+        if not chroot_dir:
+            logging.error('Target dir not set!')
+            return None
+
         return fn_run(
             cmd=cmd,
-            chroot=target_dir,
+            chroot=chroot_dir,
             check=check
         )
 
@@ -166,7 +169,9 @@ class Files:
         self,
         file: str,
         params: Optional[str] = None,
-        environment: Optional[EnvironmentType] = None
+        environment: Optional[EnvironmentType] = None,
+        cwd: Optional[str] = None,
+        check: bool = True
     ) -> Optional[Tuple[Optional[str], str, int]]:
         """ Run scripts. """
         if not params:
@@ -174,14 +179,20 @@ class Files:
 
         if not environment:
             environment = EnvironmentType.FAKEROOT
+            logging.debug('No environment provided. Using default %s.', environment)
 
-        if not self.target_dir:
+        target_dir = self.target_dir
+        if cwd:
+            target_dir = cwd
+
+        if not target_dir:
             logging.error('Target dir not set!')
             return None
 
-        logging.debug('Copying scripts %s', file)
+        logging.info('Using %s as workdir for script %s.', target_dir, file)
 
-        script_files = self.copy_file(file, self.target_dir)
+        logging.debug('Copying scripts %s', file)
+        script_files = self.copy_file(file, target_dir)
 
         logging.debug('Running scripts %s in environment %s',
                       script_files, environment)
@@ -200,34 +211,13 @@ class Files:
                     environment == EnvironmentType.CHROOT:
                 script_file = f'./{os.path.basename(script_file)}'
 
-            if logging.root.level == logging.DEBUG:
-                # Generate some more infos
-                self.run_command(
-                    cmd='echo $PWD',
-                    cwd=self.target_dir,
-                    environment=environment,
-                    check=False
-                )
-                self.run_command(
-                    cmd='ls -lah .',
-                    cwd=self.target_dir,
-                    environment=environment,
-                    check=False
-                )
-                self.run_command(
-                    cmd=f'ls -lah {script_file}',
-                    cwd=self.target_dir,
-                    environment=environment,
-                    check=False
-                )
-
             res = self.run_command(
                 cmd=f'{script_file} {params}',
-                cwd=self.target_dir,
+                cwd=target_dir,
                 environment=environment,
-                check=False
+                check=check
             )
-
+            
             if os.path.abspath(script_file) != os.path.abspath(file):
                 # delete copied file
                 fn_run = self.fake.run
@@ -235,7 +225,7 @@ class Files:
                     fn_run = self.fake.run_sudo
 
                 fn_run(f'rm -f {script_file}',
-                       cwd=self.target_dir,
+                       cwd=target_dir,
                        check=False)
 
         return res

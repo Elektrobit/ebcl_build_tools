@@ -86,29 +86,43 @@ class Package:
 
         # extract deb
         logging.debug('Extracting deb content of %s to %s.',
-                      self.name, deb_content_location)
-        file = unix_ar.open(self.local_file)
-        file.extractall(deb_content_location)
+                      self.local_file, deb_content_location)
+        try:
+            file = unix_ar.open(self.local_file)
+            logging.debug('ar-file: %s', file)
+            file.extractall(deb_content_location)
+        except Exception as e:
+            logging.error('Extraction of deb %s (%s) failed! %s',
+                          self.local_file, self.name, e)
+            return None
 
         # find data.tar
-        tar_file = Path(deb_content_location).glob('data.tar.*').__next__()
-        assert tar_file is not None
+        tar_files = list(Path(deb_content_location).glob('data.tar.*'))
+        if not tar_files:
+            logging.error('No tar content found in package %s!', self)
+            return None
 
-        # decompress zstd file
-        if tar_file.name.endswith('.zst'):
-            with open(tar_file, 'rb') as compressed:
-                decomp = zstandard.ZstdDecompressor()
-                output_path = Path(location) / 'data.tar'
-                with open(output_path, 'wb') as destination:
-                    decomp.copy_stream(compressed, destination)
-            tar_file = output_path
+        logging.debug('Tar-Files: %s', tar_files)
 
-        # extract data.tar
-        logging.debug('Extracting data content of %s to %s.',
-                      tar_file.absolute(), location)
-        tar = tarfile.open(tar_file.absolute())
-        tar.extractall(path=location)
-        tar.close()
+        for tar_file in tar_files:
+            logging.debug('Processing tar file %s...', tar_file)
+
+            # decompress zstd file
+            if tar_file.name.endswith('.zst'):
+                logging.debug('Handling zst data content of %s ...', self.name)
+                with open(tar_file, 'rb') as compressed:
+                    decomp = zstandard.ZstdDecompressor()
+                    output_path = Path(location) / 'data.tar'
+                    with open(output_path, 'wb') as destination:
+                        decomp.copy_stream(compressed, destination)
+                tar_file = output_path
+
+            # extract data.tar
+            logging.debug('Extracting data content of %s to %s.',
+                          tar_file.absolute(), location)
+            tar = tarfile.open(tar_file.absolute())
+            tar.extractall(path=location)
+            tar.close()
 
         shutil.rmtree(deb_content_location)
 

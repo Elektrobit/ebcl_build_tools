@@ -15,7 +15,7 @@ from urllib.parse import urlparse
 
 import yaml
 
-from ebcl.common import init_logging, bug, promo
+from ebcl.common import init_logging, promo, log_exception
 from ebcl.common.apt import Apt
 from ebcl.common.config import load_yaml
 from ebcl.common.fake import Fake
@@ -108,6 +108,7 @@ class RootGenerator:
     # folder to collect build results
     result_dir: Optional[str] = None
 
+    @log_exception()
     def __init__(self, config_file: str):
         """ Parse the yaml config file.
 
@@ -689,6 +690,7 @@ class RootGenerator:
 
         return result_file
 
+    @log_exception()
     def create_root(
         self,
         output_path: str,
@@ -772,6 +774,7 @@ class RootGenerator:
 
         return out_image
 
+    @log_exception()
     def finalize(self, output_path: str):
         """ Finalize output and cleanup. """
 
@@ -810,9 +813,14 @@ class RootGenerator:
             logging.error('Removing temp result dir failed! %s', e)
 
 
+@log_exception(call_exit=True)
 def main() -> None:
     """ Main entrypoint of EBcL root generator. """
     init_logging('DEBUG')
+
+    logging.info('\n===================\n'
+                 'EBcL Root Generator\n'
+                 '===================\n')
 
     parser = argparse.ArgumentParser(
         description='Create the content of the root partiton as root.tar.')
@@ -834,24 +842,17 @@ def main() -> None:
 
     # Create the root.tar
     image = None
-    try:
-        run_scripts = not bool(args.no_config)
-        image = generator.create_root(
-            output_path=args.output,
-            run_scripts=run_scripts,
-            sysroot=args.sysroot)
-    except Exception as e:
-        logging.critical('Image build failed with exception! %s', e)
-        bug()
 
-    try:
-        generator.finalize(args.output)
-    except Exception as e:
-        logging.error('Cleanup failed with exception! %s', e)
-        bug()
+    run_scripts = not bool(args.no_config)
+    image = generator.create_root(
+        output_path=args.output,
+        run_scripts=run_scripts,
+        sysroot=args.sysroot)
+
+    generator.finalize(args.output)
 
     if image:
-        print('Image was written to %s.', image)
+        print(f'Image was written to {image}.')
         promo()
     else:
         exit(1)
