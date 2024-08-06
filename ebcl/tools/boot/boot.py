@@ -64,9 +64,8 @@ class BootGenerator:
         self.download_deps = config.get('download_deps', True)
         self.tar = config.get('tar', True)
 
-        self.files = parse_files(
-            config.get('files', None),
-            relative_base_dir=config_dir)
+        # do not resolve names!
+        self.files = config.get('files', [])
 
         self.host_files = parse_files(
             config.get('host_files', None),
