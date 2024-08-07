@@ -8,7 +8,12 @@ from io import BufferedWriter
 from pathlib import Path
 from typing import Optional, Tuple, Any
 
+from . import ImplementationError
 from .fake import Fake
+
+
+class TarNotFound(Exception):
+    """ Raised if the tar file to extract was not found. """
 
 
 class EnvironmentType(Enum):
@@ -240,12 +245,12 @@ class Files:
 
         if not target_dir:
             logging.error('No target dir found!')
-            return None
+            raise ImplementationError('The target dir is not initialized!')
 
         tar_file = Path(archive)
         if not (tar_file.is_file() or tar_file.is_symlink()):
             logging.error('Archive is no file!')
-            return None
+            raise TarNotFound(f'The archive {archive} was not found!')
 
         if tar_file.parent.absolute() != target_dir:
             dst = Path(target_dir) / tar_file.name

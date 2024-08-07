@@ -347,11 +347,11 @@ class InitrdGenerator:
                 logging.error(
                     'Invalid file entry %s, source is missing!', entry)
 
-            if '@@RESULTS@@' in entry['source']:
+            if '$$RESULTS$$' in src:
                 logging.debug(
-                    'Replacing @@RESULTS@@ with %s for file %s.', output_path, entry)
-                entry['source'] = entry['source'].replace(
-                    '@@RESULTS@@', output_path)
+                    'Replacing $$RESULTS$$ with %s for file %s.', output_path, entry)
+                parts = src.split('$$RESULTS$$/')
+                src = os.path.abspath(os.path.join(output_path, parts[-1]))
 
             src = Path(os.path.abspath(os.path.join(
                 self.config.parent, entry['source'])))

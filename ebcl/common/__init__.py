@@ -5,6 +5,10 @@ import os
 import ebcl
 
 
+class ImplementationError(Exception):
+    """ Raised if a assumption is not met. """
+
+
 def init_logging(level: str = 'INFO'):
     """ Initialize the logging for the EBcL build tools. """
     log_format = '[{asctime}] {levelname:<6s} {filename:s}:{lineno:d} - {message:s}'
