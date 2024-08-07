@@ -67,11 +67,12 @@ class RootConfig:
                 logging.error(
                     'Invalid script entry %s, name is missing!', script)
 
-            if '@@RESULTS@@' in script['name']:
+            if '$$RESULTS$$' in script['name']:
                 logging.debug(
-                    'Replacing @@RESULTS@@ with %s for script %s.', output_path, script)
-                script['name'] = script['name'].replace(
-                    '@@RESULTS@@', output_path)
+                    'Replacing $$RESULTS$$ with %s for script %s.', output_path, script)
+                parts = script['name'].split('$$RESULTS$$/')
+                script['name'] = os.path.abspath(
+                    os.path.join(output_path, parts[-1]))
 
             file = os.path.join(os.path.dirname(
                 self.config), script['name'])
@@ -102,11 +103,11 @@ class RootConfig:
                 logging.error(
                     'Invalid file entry %s, source is missing!', entry)
 
-            if '@@RESULTS@@' in entry['source']:
+            if '$$RESULTS$$' in src:
                 logging.debug(
-                    'Replacing @@RESULTS@@ with %s for file %s.', output_path, entry)
-                entry['source'] = entry['source'].replace(
-                    '@@RESULTS@@', output_path)
+                    'Replacing $$RESULTS$$ with %s for file %s.', output_path, entry)
+                parts = src.split('$$RESULTS$$/')
+                src = os.path.abspath(os.path.join(output_path, parts[-1]))
 
             src = Path(relative_base_dir) / src
 
