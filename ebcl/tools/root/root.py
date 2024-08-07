@@ -664,6 +664,12 @@ class RootGenerator:
                 f'{root_folder}',
                 environment=None)
 
+        # Copy other .kiwi files
+        self.fh.copy_file(
+            f'{image.parent}/*.kiwi',
+            os.path.dirname(appliance)
+        )
+
         # Ensure kiwi boxes are accessible
         self.fake.run_sudo('chmod -R 777 /home/ebcl/.kiwi_boxes', check=False)
 
