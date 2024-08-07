@@ -72,6 +72,8 @@ class RootGenerator:
     packages: list[VersionDepends]
     # root password
     root_password: str
+    # result file name pattern
+    result = Optional[str]
 
     use_ebcl_apt: bool
 
@@ -127,6 +129,7 @@ class RootGenerator:
         config_dir = os.path.dirname(config_file)
 
         self.arch = config.get('arch', 'arm64')
+        self.result = config.get('result', 'arm64')
 
         self.scripts = parse_scripts(
             config.get('scripts', None),
@@ -869,22 +872,22 @@ class RootGenerator:
             logging.error('Copying all artefacts failed! %s', e)
 
         if logging.root.level == logging.DEBUG:
-            logging.info(
+            logging.debug(
                 'Log level set to debug, skipping cleanup of build artefacts.')
-            logging.info('Target folder: %s', self.target_dir)
-            logging.info('Results folder: %s', self.result_dir)
+            logging.debug('Target folder: %s', self.target_dir)
+            logging.debug('Results folder: %s', self.result_dir)
             return
 
         # delete temporary folders
         try:
             if self.target_dir:
-                shutil.rmtree(self.target_dir)
+                self.fake.run(f'rm -rf {self.target_dir}')
         except Exception as e:
             logging.error('Removing temp target dir failed! %s', e)
 
         try:
             if self.result_dir:
-                shutil.rmtree(self.result_dir)
+                self.fake.run(f'rm -rf {self.result_dir}')
         except Exception as e:
             logging.error('Removing temp result dir failed! %s', e)
 
