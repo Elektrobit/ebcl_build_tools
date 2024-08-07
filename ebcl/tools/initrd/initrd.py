@@ -337,11 +337,22 @@ class InitrdGenerator:
             gid = device.get('uid', '0')
             self._run_root(f'chown {uid}:{gid} {dev_folder}/{device["name"]}')
 
-    def copy_files(self):
+    def copy_files(self, output_path: str):
         """ Copy user-specified files in the initrd. """
         logging.debug('Files: %s', self.files)
 
         for entry in self.files:
+            src = entry.get('source', None)
+            if not src:
+                logging.error(
+                    'Invalid file entry %s, source is missing!', entry)
+
+            if '@@RESULTS@@' in entry['source']:
+                logging.debug(
+                    'Replacing @@RESULTS@@ with %s for file %s.', output_path, entry)
+                entry['source'] = entry['source'].replace(
+                    '@@RESULTS@@', output_path)
+
             src = Path(os.path.abspath(os.path.join(
                 self.config.parent, entry['source'])))
 
@@ -428,7 +439,7 @@ class InitrdGenerator:
         self.add_devices()
 
         # Copy files and directories specified in the files
-        self.copy_files()
+        self.copy_files(output_path=output_path)
 
         # Create init script
         init_script: Path = Path(self.target_dir) / 'init'

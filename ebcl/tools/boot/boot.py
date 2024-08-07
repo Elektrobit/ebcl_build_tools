@@ -129,6 +129,7 @@ class BootGenerator:
                    relative_base_dir: str,
                    files: list[dict[str, str]],
                    target_dir: str,
+                   output_path: str,
                    fix_ownership: bool = False):
         """ Copy files to be used. """
 
@@ -141,6 +142,12 @@ class BootGenerator:
             if not src:
                 logging.error(
                     'Invalid file entry %s, source is missing!', entry)
+
+            if '@@RESULTS@@' in entry['source']:
+                logging.debug(
+                    'Replacing @@RESULTS@@ with %s for file %s.', output_path, entry)
+                entry['source'] = entry['source'].replace(
+                    '@@RESULTS@@', output_path)
 
             src = Path(relative_base_dir) / src
 
@@ -170,7 +177,8 @@ class BootGenerator:
 
     def run_scripts(self,
                     relative_base_dir: str,
-                    cwd: str):
+                    cwd: str,
+                    output_path: str):
         """ Run scripts. """
         logging.debug('Target dir: %s', self.target_dir)
         logging.debug('Relative base dir: %s', relative_base_dir)
@@ -178,6 +186,16 @@ class BootGenerator:
 
         for script in self.scripts:
             logging.info('Running script %s.', script)
+
+            if 'name' not in script:
+                logging.error(
+                    'Invalid script entry %s, name is missing!', script)
+
+            if '@@RESULTS@@' in script['name']:
+                logging.debug(
+                    'Replacing @@RESULTS@@ with %s for script %s.', output_path, script)
+                script['name'] = script['name'].replace(
+                    '@@RESULTS@@', output_path)
 
             file = os.path.join(relative_base_dir, script['name'])
 
@@ -236,22 +254,22 @@ class BootGenerator:
 
         # Copy host files to target_dir folder
         logging.info('Copy host files to target dir...')
-        self.copy_files(os.path.dirname(self.config),
-                        self.host_files, self.target_dir)
+        self.copy_files(os.path.dirname(self.config), self.host_files,
+                        self.target_dir, output_path=output_path)
 
         # Copy host files package_dir folder
         logging.info('Copy host files package dir...')
         self.copy_files(os.path.dirname(self.config),
-                        self.host_files, package_dir)
+                        self.host_files, package_dir, output_path=output_path)
 
         logging.info('Running config scripts...')
         self.run_scripts(relative_base_dir=os.path.dirname(
-            self.config), cwd=package_dir)
+            self.config), cwd=package_dir, output_path=output_path)
 
         # Copy files and directories specified in the files
         logging.info('Copy result files...')
-        self.copy_files(package_dir, self.files,
-                        target_dir=self.target_dir, fix_ownership=True)
+        self.copy_files(package_dir, self.files, target_dir=self.target_dir,
+                        fix_ownership=True, output_path=output_path)
 
         # Remove package temporary folder
         logging.info('Remove temporary package contents...')

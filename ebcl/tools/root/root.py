@@ -25,6 +25,10 @@ from ebcl.common.templates import render_template
 from ebcl.common.version import VersionDepends, parse_package_config
 
 
+class FileNotFound(Exception):
+    """ Raised if a command returns and returncode which is not 0. """
+
+
 class ImageType(Enum):
     """ Enum for supported image types. """
     ELBE = 1
@@ -61,6 +65,7 @@ class RootGenerator:
     template: Optional[str] = None
     scripts: list[dict[str, Any]]
     apt_repos: list[Apt]
+    host_files: list[dict[str, str]]
     # build result filename pattern
     result: Optional[str] = None
     # packages to install
@@ -125,6 +130,10 @@ class RootGenerator:
 
         self.scripts = parse_scripts(
             config.get('scripts', None),
+            relative_base_dir=config_dir)
+
+        self.host_files = parse_files(
+            config.get('host_files', None),
             relative_base_dir=config_dir)
 
         self.image = config.get('image', None)
@@ -204,10 +213,20 @@ class RootGenerator:
         self.fake = Fake()
         self.fh = Files(self.fake)
 
-    def _run_scripts(self):
+    def _run_scripts(self, output_path: str):
         """ Run scripts. """
         for script in self.scripts:
             logging.info('Running script: %s', script)
+
+            if 'name' not in script:
+                logging.error(
+                    'Invalid script entry %s, name is missing!', script)
+
+            if '@@RESULTS@@' in script['name']:
+                logging.debug(
+                    'Replacing @@RESULTS@@ with %s for script %s.', output_path, script)
+                script['name'] = script['name'].replace(
+                    '@@RESULTS@@', output_path)
 
             file = os.path.join(os.path.dirname(
                 self.config), script['name'])
@@ -519,21 +538,54 @@ class RootGenerator:
 
         return config_file
 
-    def _copy_files(self, files: list[str], dst: str):
-        """ Copy files to dst. """
+    def _copy_files(self,
+                    relative_base_dir: str,
+                    files: list[dict[str, str]],
+                    target_dir: str,
+                    output_path: str):
+        """ Copy files to target_dir. """
         logging.debug('Files: %s', files)
 
-        for file in files:
-            src = os.path.join(os.path.dirname(self.config), file)
+        for entry in files:
+            logging.info('Processing entry: %s', entry)
 
-            logging.info('Copying file %s...', file)
+            src = entry.get('source', None)
+            if not src:
+                logging.error(
+                    'Invalid file entry %s, source is missing!', entry)
 
-            self.fh.copy_file(
+            if '@@RESULTS@@' in entry['source']:
+                logging.debug(
+                    'Replacing @@RESULTS@@ with %s for file %s.', output_path, entry)
+                entry['source'] = entry['source'].replace(
+                    '@@RESULTS@@', output_path)
+
+            src = Path(relative_base_dir) / src
+
+            dst = Path(target_dir)
+            file_dest = entry.get('destination', None)
+            if file_dest:
+                dst = dst / file_dest
+
+            mode: str = entry.get('mode', '600')
+            uid: int = int(entry.get('uid', '0'))
+            gid: int = int(entry.get('gid', '0'))
+
+            logging.debug('Copying files %s', src)
+
+            copied_files = self.fh.copy_file(
                 src=str(src),
                 dst=str(dst),
+                uid=uid,
+                gid=gid,
+                mode=mode,
+                delete_if_exists=True
             )
 
-    def _build_kiwi_image(self) -> Optional[str]:
+            if not copied_files:
+                raise FileNotFound(f'File {src} not found!')
+
+    def _build_kiwi_image(self, output_path: str) -> Optional[str]:
         """ Run kiwi image build. """
         assert self.result_dir
 
@@ -597,7 +649,10 @@ class RootGenerator:
                     kiwi_scripts.append(str(kiwi_script.absolute()))
 
         # Copy kiwi image dependencies
-        self._copy_files(kiwi_scripts, os.path.dirname(appliance))
+        kiwi_script_files = [{'source': file, 'mode': 700}
+                             for file in kiwi_scripts]
+        self._copy_files(os.path.dirname(self.config), kiwi_script_files,
+                         self.target_dir, output_path=output_path)
 
         root_folder = os.path.join(os.path.dirname(appliance), 'root')
         self.fake.run_no_fake(f'mkdir -p {root_folder}')
@@ -742,29 +797,36 @@ class RootGenerator:
         if self.image_type == ImageType.ELBE:
             image_file = self._build_elbe_image()
         elif self.image_type == ImageType.KIWI:
-            image_file = self._build_kiwi_image()
+            image_file = self._build_kiwi_image(output_path=output_path)
 
         if not image_file:
             logging.critical('Image build failed!')
             return None
 
         if not run_scripts:
-            logging.info('Skipping the config script execution.')
+            logging.info(
+                'Skipping the config script execution and copying host files.')
+        else:
+            if self.host_files:
+                # Copy host files to target_dir folder
+                logging.info('Copy host files to target dir...')
+                self._copy_files(os.path.dirname(self.config), self.host_files,
+                                 self.target_dir, output_path=output_path)
 
-        if run_scripts and self.scripts:
-            with tempfile.TemporaryDirectory() as tmp_root_dir:
-                self.fh.extract_tarball(image_file, tmp_root_dir)
-                self._run_scripts()
-                image_file = self.fh.pack_root_as_tarball(
-                    output_dir=self.target_dir,
-                    archive_name=os.path.basename(image_file),
-                    root_dir=tmp_root_dir,
-                    use_fake_chroot=self.pack_in_chroot
-                )
+            if self.scripts:
+                with tempfile.TemporaryDirectory() as tmp_root_dir:
+                    self.fh.extract_tarball(image_file, tmp_root_dir)
+                    self._run_scripts(output_path=output_path)
+                    image_file = self.fh.pack_root_as_tarball(
+                        output_dir=self.target_dir,
+                        archive_name=os.path.basename(image_file),
+                        root_dir=tmp_root_dir,
+                        use_fake_chroot=self.pack_in_chroot
+                    )
 
-                if not image_file:
-                    logging.critical('Repacking root failed!')
-                    return None
+                    if not image_file:
+                        logging.critical('Repacking root failed!')
+                        return None
 
         # Move image tar to output folder
         image_name = os.path.basename(image_file)

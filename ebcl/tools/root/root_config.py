@@ -5,12 +5,14 @@ import logging
 import os
 import tempfile
 
+from pathlib import Path
 from typing import Optional, Any
 
 from ebcl.common import init_logging, promo, log_exception
 from ebcl.common.config import load_yaml
 from ebcl.common.fake import Fake
-from ebcl.common.files import Files, EnvironmentType, parse_scripts
+from ebcl.common.files import Files, EnvironmentType, parse_scripts, parse_files
+from ebcl.tools.root.root import FileNotFound
 
 
 class RootConfig:
@@ -22,6 +24,7 @@ class RootConfig:
     config: str
     # config values
     scripts: list[dict[str, Any]]
+    host_files: list[dict[str, str]]
     # Tar the root tarball in the chroot env
     pack_in_chroot: bool
     # fakeroot helper
@@ -46,15 +49,29 @@ class RootConfig:
             config.get('scripts', None),
             relative_base_dir=config_dir)
 
+        self.host_files = parse_files(
+            config.get('host_files', None),
+            relative_base_dir=config_dir)
+
         self.pack_in_chroot = config.get('pack_in_chroot', True)
 
         self.fake = Fake()
         self.fh = Files(self.fake)
 
-    def _run_scripts(self):
+    def _run_scripts(self, output_path: str):
         """ Run scripts. """
         for script in self.scripts:
             logging.info('Running script: %s', script)
+
+            if 'name' not in script:
+                logging.error(
+                    'Invalid script entry %s, name is missing!', script)
+
+            if '@@RESULTS@@' in script['name']:
+                logging.debug(
+                    'Replacing @@RESULTS@@ with %s for script %s.', output_path, script)
+                script['name'] = script['name'].replace(
+                    '@@RESULTS@@', output_path)
 
             file = os.path.join(os.path.dirname(
                 self.config), script['name'])
@@ -69,6 +86,53 @@ class RootConfig:
                 environment=env
             )
 
+    def _copy_files(self,
+                    relative_base_dir: str,
+                    files: list[dict[str, str]],
+                    target_dir: str,
+                    output_path: str):
+        """ Copy files to target_dir. """
+        logging.debug('Files: %s', files)
+
+        for entry in files:
+            logging.info('Processing entry: %s', entry)
+
+            src = entry.get('source', None)
+            if not src:
+                logging.error(
+                    'Invalid file entry %s, source is missing!', entry)
+
+            if '@@RESULTS@@' in entry['source']:
+                logging.debug(
+                    'Replacing @@RESULTS@@ with %s for file %s.', output_path, entry)
+                entry['source'] = entry['source'].replace(
+                    '@@RESULTS@@', output_path)
+
+            src = Path(relative_base_dir) / src
+
+            dst = Path(target_dir)
+            file_dest = entry.get('destination', None)
+            if file_dest:
+                dst = dst / file_dest
+
+            mode: str = entry.get('mode', '600')
+            uid: int = int(entry.get('uid', '0'))
+            gid: int = int(entry.get('gid', '0'))
+
+            logging.debug('Copying files %s', src)
+
+            copied_files = self.fh.copy_file(
+                src=str(src),
+                dst=str(dst),
+                uid=uid,
+                gid=gid,
+                mode=mode,
+                delete_if_exists=True
+            )
+
+            if not copied_files:
+                raise FileNotFound(f'File {src} not found!')
+
     @log_exception()
     def config_root(self, archive_in: str, archive_out: str) -> Optional[str]:
         """ Config the tarball.  """
@@ -76,12 +140,22 @@ class RootConfig:
             logging.critical('Archive %s does not exist!', archive_in)
             return None
 
+        output_path = os.path.dirname(archive_out)
+
         ao = None
         if self.scripts:
             with tempfile.TemporaryDirectory() as tmp_root_dir:
                 self.fh.target_dir = tmp_root_dir
                 self.fh.extract_tarball(archive_in, tmp_root_dir)
-                self._run_scripts()
+
+                if self.host_files:
+                    # Copy host files to target_dir folder
+                    logging.info('Copy host files to target dir...')
+                    self._copy_files(os.path.dirname(self.config), self.host_files,
+                                     tmp_root_dir, output_path=output_path)
+
+                self._run_scripts(output_path=output_path)
+
                 ao = self.fh.pack_root_as_tarball(
                     output_dir=os.path.dirname(archive_out),
                     archive_name=os.path.basename(archive_out),
