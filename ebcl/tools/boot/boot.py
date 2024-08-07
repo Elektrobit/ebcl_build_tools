@@ -229,6 +229,10 @@ class BootGenerator:
         self.download_deb_packages(package_dir)
 
         if self.boot_tarball:
+            if '@@RESULTS@@' in self.boot_tarball:
+                self.boot_tarball = self.boot_tarball.replace(
+                    '@@RESULTS@@', output_path)
+
             logging.info('Extracting boot tarball...')
             boot_tar_temp = tempfile.mkdtemp()
 
