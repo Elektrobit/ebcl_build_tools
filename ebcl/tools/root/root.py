@@ -242,7 +242,8 @@ class RootGenerator:
             self.fh.run_script(
                 file=file,
                 params=script.get('params', None),
-                environment=env
+                environment=env,
+                check=True
             )
 
     def _generate_elbe_image(self) -> Optional[str]:
