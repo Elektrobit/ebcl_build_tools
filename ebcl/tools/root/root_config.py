@@ -84,7 +84,8 @@ class RootConfig:
             self.fh.run_script(
                 file=file,
                 params=script.get('params', None),
-                environment=env
+                environment=env,
+                check=True
             )
 
     def _copy_files(self,
