@@ -729,10 +729,9 @@ class RootGenerator:
 
         fn_run(f'. /build/venv/bin/activate && {cmd}')
 
-        if not cross and self.kvm:
-            # Fix ownership - needed for KVM build which is executed as root
-            self.fake.run_sudo(
-                f'chown -R ebcl:ebcl {self.result_dir}', check=False)
+        # Fix ownership - needed for KVM build which is executed as root
+        self.fake.run_sudo(
+            f'chown -R ebcl:ebcl {self.result_dir}', check=False)
 
         tar: Optional[str] = None
         pattern = '*.tar.xz'
