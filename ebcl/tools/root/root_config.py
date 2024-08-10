@@ -144,30 +144,37 @@ class RootConfig:
 
         output_path = os.path.dirname(archive_out)
 
+        tmp_root_dir = tempfile.mkdtemp()
+
         ao = None
-        if self.scripts:
-            with tempfile.TemporaryDirectory() as tmp_root_dir:
-                self.fh.target_dir = tmp_root_dir
-                self.fh.extract_tarball(archive_in, tmp_root_dir)
 
-                if self.host_files:
-                    # Copy host files to target_dir folder
-                    logging.info('Copy host files to target dir...')
-                    self._copy_files(os.path.dirname(self.config), self.host_files,
-                                     tmp_root_dir, output_path=output_path)
+        self.fh.target_dir = tmp_root_dir
+        self.fh.extract_tarball(archive_in, tmp_root_dir)
 
-                self._run_scripts(output_path=output_path)
+        if self.host_files:
+            # Copy host files to target_dir folder
+            logging.info('Copy host files to target dir...')
+            self._copy_files(os.path.dirname(self.config), self.host_files,
+                             tmp_root_dir, output_path=output_path)
 
-                ao = self.fh.pack_root_as_tarball(
-                    output_dir=os.path.dirname(archive_out),
-                    archive_name=os.path.basename(archive_out),
-                    root_dir=tmp_root_dir,
-                    use_fake_chroot=self.pack_in_chroot
-                )
+        self._run_scripts(output_path=output_path)
 
-                if not ao:
-                    logging.critical('Repacking root failed!')
-                    return None
+        ao = self.fh.pack_root_as_tarball(
+            output_dir=os.path.dirname(archive_out),
+            archive_name=os.path.basename(archive_out),
+            root_dir=tmp_root_dir,
+            use_fake_chroot=self.pack_in_chroot
+        )
+
+        if logging.root.level == logging.DEBUG:
+            logging.info('Skipping cleanup of tmpdir.')
+        else:
+            logging.info('Cleaning up the tmpdir...')
+            self.fake.run(f'rm -rf {tmp_root_dir}', check=False)
+
+        if not ao:
+            logging.critical('Repacking root failed!')
+            return None
 
         return ao
 
