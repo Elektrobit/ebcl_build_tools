@@ -89,6 +89,8 @@ class Files:
             else:
                 target = dst
 
+            logging.info('Copying file %s to %s...', file, target)
+
             # TODO: test
 
             if file != target:
@@ -104,20 +106,31 @@ class Files:
                 if os.path.isfile(file):
                     fn_run(f'mkdir -p {os.path.dirname(target)}')
 
-                if delete_if_exists:
+                is_dir = os.path.isdir(file)
+                if is_dir:
+                    logging.debug('File %s is a dir...')
+                else:
+                    logging.debug('File %s is a file...')
+
+
+                if delete_if_exists and not is_dir:
                     fn_run(f'rm -rf {target}')
 
                 if move:
                     fn_run(f'mv {file} {target}')
                 else:
-                    fn_run(f'cp -R {file} {target}')
+                    if is_dir:
+                        fn_run(f'rsync -av {file} {target}')
+                        target = os.path.join(target, os.path.basename(file))
+                    else:
+                        fn_run(f'cp {file} {target}')
 
                 if uid:
-                    fn_run(f'chown {uid} {target}')
+                    fn_run(f'chown -R {uid} {target}')
                 if gid:
-                    fn_run(f'chown :{gid} {target}')
+                    fn_run(f'chown -R :{gid} {target}')
                 if mode:
-                    fn_run(f'chmod {mode} {target}')
+                    fn_run(f'chmod -R {mode} {target}')
 
             else:
                 logging.debug(

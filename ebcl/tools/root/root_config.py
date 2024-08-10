@@ -149,7 +149,11 @@ class RootConfig:
         ao = None
 
         self.fh.target_dir = tmp_root_dir
+
         self.fh.extract_tarball(archive_in, tmp_root_dir)
+
+        if logging.root.level == logging.DEBUG:
+            self.fake.run(f'ls -lah {tmp_root_dir}')
 
         if self.host_files:
             # Copy host files to target_dir folder
