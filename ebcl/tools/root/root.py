@@ -22,7 +22,7 @@ from ebcl.common.fake import Fake
 from ebcl.common.files import Files, EnvironmentType, parse_scripts, parse_files
 from ebcl.common.proxy import Proxy
 from ebcl.common.templates import render_template
-from ebcl.common.version import VersionDepends, parse_package_config
+from ebcl.common.version import VersionDepends, parse_package_config, parse_package
 
 
 class FileNotFound(Exception):
@@ -170,7 +170,7 @@ class RootGenerator:
                 else:
                     primary_repo = 'http://ports.ubuntu.com/ubuntu-ports/'
 
-            primary_distro = config.get('primary_repo', 'jammy')
+            primary_distro = config.get('primary_distro', 'jammy')
 
             self.primary_repo = Apt(
                 url=primary_repo,
@@ -188,6 +188,10 @@ class RootGenerator:
 
         self.packages = parse_package_config(
             config.get('packages', []), self.arch)
+
+        kernel = parse_package(config.get('kernel', None), self.arch)
+        if kernel:
+            self.packages.append(kernel)
 
         self.bootstrap = parse_package_config(
             config.get('bootstrap', []), self.arch)

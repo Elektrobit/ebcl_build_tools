@@ -72,18 +72,18 @@ class InitrdGenerator:
         config_dir = os.path.dirname(config_file)
 
         self.modules = config.get('modules', [])
-        self.root_device = config.get('root_device', '')
+        self.root_device = config.get('root_device', '/dev/vda1')
         self.devices = config.get('devices', [])
         self.files = parse_files(
-            config.get('files', None),
+            config.get('files', []),
             relative_base_dir=config_dir)
-        self.kversion = config.get('kversion', '')
+        self.kversion = config.get('kversion', None)
         self.apt_repos = config.get('apt_repos', None)
         self.template = config.get('template', None)
         self.modules_folder = config.get('modules_folder', None)
 
         self.initrd_name = config.get('initrd_name', 'initrd.img')
-        self.name = config.get('name', '')
+        self.name = config.get('name', 'root')
 
         self.fakeroot = config.get('fakeroot', False)
         self.env = EnvironmentType.FAKEROOT
