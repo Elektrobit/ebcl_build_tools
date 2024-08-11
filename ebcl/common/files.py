@@ -112,7 +112,6 @@ class Files:
                 else:
                     logging.debug('File %s is a file...')
 
-
                 if delete_if_exists and not is_dir:
                     fn_run(f'rm -rf {target}')
 
@@ -304,7 +303,7 @@ class Files:
 
         fn_run(
             'tar --exclude=\'./proc/*\' --exclude=\'./sys/*\' --exclude=\'./dev/*\' '
-            f'-cf {archive_name} .',
+            f'--exclude=\'./{archive_name}\' -cf {archive_name} .',
             target_dir
         )
 
