@@ -576,9 +576,14 @@ class RootGenerator:
             if file_dest:
                 dst = dst / file_dest
 
-            mode: str = entry.get('mode', '600')
-            uid: int = int(entry.get('uid', '0'))
-            gid: int = int(entry.get('gid', '0'))
+            mode: Optional[str] = entry.get('mode', None)
+            uid: Optional[int] = entry.get('uid', None)
+            gid: Optional[int] = entry.get('gid', None)
+
+            if uid:
+                uid = int(uid)
+            if gid:
+                gid = int(gid)
 
             logging.debug('Copying files %s', src)
 
