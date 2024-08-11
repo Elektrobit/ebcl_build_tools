@@ -123,7 +123,7 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    downloader = PackageDownloader(args.config_file)
+    downloader = PackageDownloader(args.config)
 
     # Download and extract the packages
     downloader.download_packages(
