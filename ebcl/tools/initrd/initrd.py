@@ -254,6 +254,8 @@ class InitrdGenerator:
 
         orig_deps: dict[str, list[str]] = {}
 
+        # TODO: fix depends
+
         if os.path.isfile(mods_dep_src):
             with open(mods_dep_src, encoding='utf8') as f:
                 lines = f.readlines()
