@@ -129,7 +129,7 @@ class RootGenerator:
         config_dir = os.path.dirname(config_file)
 
         self.arch = config.get('arch', 'arm64')
-        self.result = config.get('result', 'arm64')
+        self.result = config.get('result', None)
 
         self.scripts = parse_scripts(
             config.get('scripts', None),
