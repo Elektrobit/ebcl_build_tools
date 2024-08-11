@@ -125,11 +125,11 @@ class Files:
                         fn_run(f'cp {file} {target}')
 
                 if uid:
-                    fn_run(f'chown -R {uid} {target}')
+                    fn_run(f'chown {uid} {target}')
                 if gid:
-                    fn_run(f'chown -R :{gid} {target}')
+                    fn_run(f'chown :{gid} {target}')
                 if mode:
-                    fn_run(f'chmod -R {mode} {target}')
+                    fn_run(f'chmod {mode} {target}')
 
             else:
                 logging.debug(
