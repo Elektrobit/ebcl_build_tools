@@ -655,7 +655,7 @@ class RootGenerator:
                 logging.info('Adding %s to kiwi root overlays.', root_overlay)
                 kiwi_root_overlays.append(str(root_overlay.absolute()))
 
-            for name in ['config.sh', 'pre_disk_sync.sh',
+            for name in ['config.sh', 'pre_disk_sync.sh', 'uboot-install.sh',
                          'post_bootstrap.sh', 'uboot_install.sh']:
                 kiwi_script = image_dir / name
                 if kiwi_script.is_file():
