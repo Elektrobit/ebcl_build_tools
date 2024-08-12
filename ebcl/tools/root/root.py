@@ -648,16 +648,16 @@ class RootGenerator:
         kiwi_root_overlays = self.kiwi_root_overlays
 
         if self.use_kiwi_defaults:
-            conf_dir = Path(self.config).parent
+            image_dir = Path(image).parent
 
-            root_overlay = conf_dir / 'root'
+            root_overlay = image_dir / 'root'
             if root_overlay.is_dir():
                 logging.info('Adding %s to kiwi root overlays.', root_overlay)
                 kiwi_root_overlays.append(str(root_overlay.absolute()))
 
             for name in ['config.sh', 'pre_disk_sync.sh',
                          'post_bootstrap.sh', 'uboot_install.sh']:
-                kiwi_script = conf_dir / name
+                kiwi_script = image_dir / name
                 if kiwi_script.is_file():
                     logging.info('Adding %s to kiwi scripts.', kiwi_script)
                     kiwi_scripts.append(str(kiwi_script.absolute()))
