@@ -666,7 +666,7 @@ class RootGenerator:
         kiwi_script_files = [{'source': file, 'mode': 700}
                              for file in kiwi_scripts]
         self._copy_files(os.path.dirname(self.config), kiwi_script_files,
-                         self.target_dir, output_path=output_path)
+                         os.path.dirname(appliance), output_path=output_path)
 
         root_folder = os.path.join(os.path.dirname(appliance), 'root')
         self.fake.run_no_fake(f'mkdir -p {root_folder}')
