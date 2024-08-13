@@ -204,16 +204,13 @@ class InitrdGenerator:
 
         logging.info('Using package %s (%s).', package, name)
 
-        with tempfile.TemporaryDirectory() as pkg_temp_dir:
-            res = package.extract(pkg_temp_dir)
-            if res is None:
-                logging.critical(
-                    'Extraction of package %s (deb: %s) failed!', package, package.local_file)
-                return False
+        res = package.extract(self.target_dir)
+        if res is None:
+            logging.critical(
+                'Extraction of package %s (deb: %s) failed!', package, package.local_file)
+            return False
 
-            logging.debug('Package %s extracted to %s.', package, res)
-
-            self.fh.copy_file(f'{pkg_temp_dir}/*', self.target_dir)
+        logging.debug('Package %s extracted to %s.', package, res)
 
         return True
 
