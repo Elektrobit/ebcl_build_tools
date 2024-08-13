@@ -16,7 +16,7 @@ from ebcl.common import init_logging, promo, log_exception
 from ebcl.common.apt import Apt
 from ebcl.common.config import load_yaml
 from ebcl.common.fake import Fake
-from ebcl.common.files import Files, EnvironmentType, parse_files
+from ebcl.common.files import Files, EnvironmentType, parse_files, reslove_file
 from ebcl.common.proxy import Proxy
 from ebcl.common.templates import render_template
 from ebcl.common.version import VersionDepends, parse_package_config, parse_package
@@ -38,6 +38,7 @@ class InitrdGenerator:
     template: Optional[str]
     modules_folder: Optional[str]
     use_ebcl_apt: bool
+    initrd_tarball: Optional[str]
     # use fakeroot or sudo
     fakeroot: bool
     # name of busybox package
@@ -125,6 +126,14 @@ class InitrdGenerator:
         self.fake = Fake()
         self.fh = Files(self.fake)
 
+        self.initrd_tarball = config.get('initrd_tarball', None)
+        if isinstance(self.initrd_tarball, dict):
+            self.initrd_tarball = reslove_file(
+                file=self.initrd_tarball['name'],
+                file_base_dir=self.initrd_tarball.get('base_dir', None),
+                relative_base_dir=config_dir
+            )
+
     def _run_chroot(self, cmd: str) -> Tuple[str, str, int]:
         """ Run command in chroot target environment. """
         if self.fakeroot:
@@ -153,41 +162,7 @@ class InitrdGenerator:
             logging.critical('No busybox!')
             return False
 
-        package = self.proxy.find_package(self.busybox)
-        if not package:
-            return False
-
-        package = self.proxy.download_package(
-            arch=self.busybox.arch,
-            package=package,
-            version_relation=self.busybox.version_relation
-        )
-
-        if not package:
-            logging.error('Busybox was not found! %s', self.busybox)
-            return False
-
-        if package.local_file and \
-                os.path.isfile(package.local_file):
-            # Download was successful.
-            logging.debug('Using busybox deb %s.', package.local_file)
-        else:
-            logging.critical('Busybox download failed!')
-            return False
-
-        if not package.local_file:
-            logging.critical('Busybox download failed! %s', self.busybox)
-            return False
-
-        logging.info('Using busybox %s (%s).', package, self.busybox)
-
-        res = package.extract(self.target_dir)
-        if res is None:
-            logging.critical(
-                'Extraction of busybox package %s (deb: %s) failed!', package, package.local_file)
-            return False
-
-        logging.debug('Busybox extracted to %s.', res)
+        self.install_package(self.busybox)
 
         if not os.path.isfile(os.path.join(self.target_dir, 'bin', 'busybox')):
             logging.critical(
@@ -195,6 +170,50 @@ class InitrdGenerator:
             return False
 
         self._run_chroot('/bin/busybox --install -s /bin')
+
+        return True
+
+    def install_package(self, name: str) -> bool:
+        """Get package and add it to the initrd. """
+        package = None
+
+        package = self.proxy.find_package(name)
+        if not package:
+            return False
+
+        package = self.proxy.download_package(
+            arch=self.arch,
+            package=package
+        )
+
+        if not package:
+            logging.error('Package %s was not found!', package)
+            return False
+
+        if package.local_file and \
+                os.path.isfile(package.local_file):
+            # Download was successful.
+            logging.debug('Using package deb %s.', package.local_file)
+        else:
+            logging.critical('Package download failed!')
+            return False
+
+        if not package.local_file:
+            logging.critical('Package download failed! %s', package)
+            return False
+
+        logging.info('Using package %s (%s).', package, name)
+
+        with tempfile.TemporaryDirectory() as pkg_temp_dir:
+            res = package.extract(pkg_temp_dir)
+            if res is None:
+                logging.critical(
+                    'Extraction of package %s (deb: %s) failed!', package, package.local_file)
+                return False
+
+            logging.debug('Package %s extracted to %s.', package, res)
+
+            self.fh.copy_file(f'{pkg_temp_dir}/*', self.target_dir)
 
         return True
 
@@ -404,6 +423,35 @@ class InitrdGenerator:
                 f'mkdir -p {os.path.join(self.target_dir, dir_name)}')
             self._run_root(
                 f'chown 0:0 {os.path.join(self.target_dir, dir_name)}')
+
+        if self.initrd_tarball:
+            if '$$RESULTS$$' in self.initrd_tarball:
+                parts = self.initrd_tarball.split('$$RESULTS$$/')
+                self.initrd_tarball = os.path.abspath(
+                    os.path.join(output_path, parts[-1]))
+
+            logging.info('Extracting initrd tarball...')
+            boot_tar_temp = tempfile.mkdtemp()
+
+            logging.debug(
+                'Temporary folder for initrd tarball: %s', boot_tar_temp)
+
+            tarball = os.path.join(os.path.dirname(
+                self.config), self.initrd_tarball)
+
+            logging.debug('Extracting initrd tarball %s to %s',
+                          tarball, boot_tar_temp)
+
+            self.fh.extract_tarball(
+                archive=tarball,
+                directory=boot_tar_temp
+            )
+
+            # Merge deb content and boot tarball
+            self.fake.run(cmd=f'rsync -av {boot_tar_temp}/* {self.target_dir}')
+
+            # Delete temporary tar folder
+            self.fake.run(f'rm -rf {boot_tar_temp}', check=False)
 
         mods_dir = None
 
