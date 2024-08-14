@@ -313,7 +313,7 @@ class Files:
             logging.info('Archive %s exists. Deleting old archive.', archive)
             os.remove(archive)
 
-        self.fake.run(f'mv {tmp_archive} {archive}')
+        self.fake.run_no_fake(f'mv {tmp_archive} {archive}')
 
         return archive
 
