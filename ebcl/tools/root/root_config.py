@@ -53,7 +53,7 @@ class RootConfig:
             config.get('host_files', None),
             relative_base_dir=config_dir)
 
-        self.pack_in_chroot = config.get('pack_in_chroot', True)
+        self.pack_in_chroot = config.get('pack_in_chroot', False)
 
         self.fake = Fake()
         self.fh = Files(self.fake)
