@@ -142,7 +142,7 @@ class RootGenerator:
         self.image = config.get('image', None)
         self.template = config.get('template', None)
 
-        self.pack_in_chroot = config.get('pack_in_chroot', True)
+        self.pack_in_chroot = config.get('pack_in_chroot', False)
 
         self.berrymill_conf = config.get('berrymill_conf', None)
         self.use_berrymill = config.get('use_berrymill', True)
