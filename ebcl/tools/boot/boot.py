@@ -29,7 +29,7 @@ class BootGenerator:
     # config values
     packages: list[VersionDepends]
     files: list[dict[str, str]]
-    host_files: list[dict[str, str]]
+    host_files: list[dict[str, Any]]
     boot_tarball: Optional[str]
     scripts: list[dict[str, Any]]
     arch: str
@@ -138,18 +138,19 @@ class BootGenerator:
         for entry in files:
             logging.info('Processing entry: %s', entry)
 
-            src = entry.get('source', None)
-            if not src:
+            source = entry.get('source', None)
+            if not source:
                 logging.error(
                     'Invalid file entry %s, source is missing!', entry)
+                continue
 
-            if '$$RESULTS$$' in src:
+            if '$$RESULTS$$' in source:
                 logging.debug(
                     'Replacing $$RESULTS$$ with %s for file %s.', output_path, entry)
-                parts = src.split('$$RESULTS$$/')
-                src = os.path.abspath(os.path.join(output_path, parts[-1]))
+                parts = source.split('$$RESULTS$$/')
+                source = os.path.abspath(os.path.join(output_path, parts[-1]))
 
-            src = Path(relative_base_dir) / src
+            src = Path(relative_base_dir) / source
 
             dst = Path(target_dir)
             file_dest = entry.get('destination', None)
@@ -290,7 +291,7 @@ class BootGenerator:
                 output_dir=output_path,
                 archive_name=self.archive_name,
                 root_dir=self.target_dir,
-                use_fake_chroot=False
+                use_sudo=False
             )
 
         # copy to output folder

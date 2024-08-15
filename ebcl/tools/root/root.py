@@ -65,15 +65,13 @@ class RootGenerator:
     template: Optional[str] = None
     scripts: list[dict[str, Any]]
     apt_repos: list[Apt]
-    host_files: list[dict[str, str]]
+    host_files: list[dict[str, Any]]
     # build result filename pattern
     result: Optional[str] = None
     # packages to install
     packages: list[VersionDepends]
     # root password
     root_password: str
-    # result file name pattern
-    result = Optional[str]
 
     use_ebcl_apt: bool
 
@@ -102,7 +100,7 @@ class RootGenerator:
     packer: str
 
     # Tar the root tarball in the chroot env
-    pack_in_chroot: bool
+    use_fakeroot: bool
 
     # fakeroot helper
     fake: Fake
@@ -142,7 +140,7 @@ class RootGenerator:
         self.image = config.get('image', None)
         self.template = config.get('template', None)
 
-        self.pack_in_chroot = config.get('pack_in_chroot', False)
+        self.use_fakeroot = config.get('use_fakeroot', False)
 
         self.berrymill_conf = config.get('berrymill_conf', None)
         self.use_berrymill = config.get('use_berrymill', True)
@@ -153,9 +151,10 @@ class RootGenerator:
         self.kvm = config.get('kvm', True)
         self.image_version = config.get('image_version', '1.0.0')
 
-        self.kiwi_scripts = parse_files(
+        kiwi_scripts = parse_files(
             config.get('kiwi_scripts', None),
             relative_base_dir=config_dir)
+        self.kiwi_scripts = [ks['source'] for ks in kiwi_scripts]
 
         self.name = config.get('name', 'root')
 
@@ -549,7 +548,7 @@ class RootGenerator:
 
     def _copy_files(self,
                     relative_base_dir: str,
-                    files: list[dict[str, str]],
+                    files: list[dict[str, Any]],
                     target_dir: str,
                     output_path: str):
         """ Copy files to target_dir. """
@@ -558,18 +557,19 @@ class RootGenerator:
         for entry in files:
             logging.info('Processing entry: %s', entry)
 
-            src = entry.get('source', None)
-            if not src:
+            source = entry.get('source', None)
+            if not source:
                 logging.error(
                     'Invalid file entry %s, source is missing!', entry)
+                continue
 
-            if '$$RESULTS$$' in src:
+            if '$$RESULTS$$' in source:
                 logging.debug(
                     'Replacing $$RESULTS$$ with %s for file %s.', output_path, entry)
-                parts = src.split('$$RESULTS$$/')
-                src = os.path.abspath(os.path.join(output_path, parts[-1]))
+                parts = source.split('$$RESULTS$$/')
+                source = os.path.abspath(os.path.join(output_path, parts[-1]))
 
-            src = Path(relative_base_dir) / src
+            src = Path(relative_base_dir) / source
 
             dst = Path(target_dir)
             file_dest = entry.get('destination', None)
@@ -579,11 +579,6 @@ class RootGenerator:
             mode: Optional[str] = entry.get('mode', None)
             uid: Optional[int] = entry.get('uid', None)
             gid: Optional[int] = entry.get('gid', None)
-
-            if uid:
-                uid = int(uid)
-            if gid:
-                gid = int(gid)
 
             logging.debug('Copying files %s', src)
 
@@ -840,7 +835,7 @@ class RootGenerator:
                         output_dir=self.target_dir,
                         archive_name=os.path.basename(image_file),
                         root_dir=tmp_root_dir,
-                        use_fake_chroot=self.pack_in_chroot
+                        use_sudo=not self.use_fakeroot
                     )
 
                     if not image_file:

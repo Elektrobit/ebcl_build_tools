@@ -1,16 +1,15 @@
 """ Deb helper funktions. """
 import logging
 import os
-import shutil
-import tarfile
 import tempfile
 
 from pathlib import Path
 from typing import Optional
 
 import unix_ar
-import zstandard
 
+from .fake import Fake
+from .files import Files
 from .version import Version, VersionDepends, VersionRealtion
 
 
@@ -69,7 +68,9 @@ class Package:
         """ Get dependencies. """
         return self.depends + self.pre_depends
 
-    def extract(self, location: Optional[str] = None) -> Optional[str]:
+    def extract(self, location: Optional[str] = None,
+                files: Optional[Files] = None,
+                use_sudo: bool = True) -> Optional[str]:
         """ Extract a deb archive. """
         if not self.local_file:
             return None
@@ -104,27 +105,20 @@ class Package:
 
         logging.debug('Tar-Files: %s', tar_files)
 
+        if not files:
+            fake = Fake()
+            files = Files(fake, location)
+
         for tar_file in tar_files:
             logging.debug('Processing tar file %s...', tar_file)
 
-            # decompress zstd file
-            if tar_file.name.endswith('.zst'):
-                logging.debug('Handling zst data content of %s ...', self.name)
-                with open(tar_file, 'rb') as compressed:
-                    decomp = zstandard.ZstdDecompressor()
-                    output_path = Path(location) / 'data.tar'
-                    with open(output_path, 'wb') as destination:
-                        decomp.copy_stream(compressed, destination)
-                tar_file = output_path
-
-            # extract data.tar
             logging.debug('Extracting data content of %s to %s.',
                           tar_file.absolute(), location)
-            tar = tarfile.open(tar_file.absolute())
-            tar.extractall(path=location)
-            tar.close()
 
-        shutil.rmtree(deb_content_location)
+            files.extract_tarball(str(tar_file.absolute()),
+                                  location, use_sudo=use_sudo)
+
+        files.fake.run_cmd(f'rm -rf {deb_content_location}', check=False)
 
         return location
 
