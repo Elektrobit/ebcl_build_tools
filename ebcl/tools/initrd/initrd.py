@@ -173,7 +173,7 @@ class InitrdGenerator:
 
         return True
 
-    def install_package(self, name: str) -> bool:
+    def install_package(self, name: VersionDepends) -> bool:
         """Get package and add it to the initrd. """
         package = None
 
@@ -451,8 +451,6 @@ class InitrdGenerator:
             # Delete temporary tar folder
             self.fake.run_fake(f'rm -rf {boot_tar_temp}', check=False)
 
-        mods_dir = None
-
         if self.modules_folder:
             mods_dir = os.path.abspath(os.path.join(
                 self.config.parent, self.modules_folder))
@@ -567,7 +565,7 @@ def main() -> None:
         print(f'Image was written to {image}.')
         promo()
     else:
-        print(f'Image build failed!')
+        print('Image build failed!')
         exit(1)
 
 

@@ -24,9 +24,9 @@ class RootConfig:
     config: str
     # config values
     scripts: list[dict[str, Any]]
-    host_files: list[dict[str, str]]
+    host_files: list[dict[str, Any]]
     # Tar the root tarball in the chroot env
-    pack_in_chroot: bool
+    use_fakeroot: bool
     # fakeroot helper
     fake: Fake
     # files helper
@@ -53,7 +53,7 @@ class RootConfig:
             config.get('host_files', None),
             relative_base_dir=config_dir)
 
-        self.pack_in_chroot = config.get('pack_in_chroot', False)
+        self.pack_in_chroot = config.get('use_fakeroot', False)
 
         self.fake = Fake()
         self.fh = Files(self.fake)
@@ -172,7 +172,7 @@ class RootConfig:
             output_dir=os.path.dirname(archive_out),
             archive_name=os.path.basename(archive_out),
             root_dir=tmp_root_dir,
-            use_fake_chroot=self.pack_in_chroot
+            use_sudo=not self.use_fakeroot
         )
 
         if logging.root.level == logging.DEBUG:

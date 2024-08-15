@@ -8,7 +8,7 @@ from ebcl.common.proxy import Proxy
 
 
 class TestFake:
-    """ Tests for the apt functions. """
+    """ Tests for the fake functions. """
 
     fake: Fake
     apt: Apt
