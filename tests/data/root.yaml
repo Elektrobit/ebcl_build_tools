@@ -6,7 +6,7 @@ packages:
   - util-linux
 scripts:
   - name: root_config_chfake.sh
-    env: chfake
+    env: sudo
   - name: root_config_fake.sh
     env: fake
   - name: root_config_chroot.sh

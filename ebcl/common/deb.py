@@ -12,26 +12,11 @@ from .fake import Fake
 from .files import Files
 from .version import Version, VersionDepends, VersionRealtion
 
+from .types.cpu_arch import CpuArch
+
 
 class Package:
     """ APT package information. """
-
-    name: str
-    arch: str
-    repo: str
-    version: Optional[Version] = None
-    file_url: Optional[str] = None
-    local_file: Optional[str] = None
-
-    pre_depends: list[list[VersionDepends]] = []
-    depends: list[list[VersionDepends]] = []
-
-    breaks: list[list[VersionDepends]] = []
-    conflicts: list[list[VersionDepends]] = []
-
-    recommends: list[list[VersionDepends]] = []
-    suggests: list[list[VersionDepends]] = []
-    enhances: list[list[VersionDepends]] = []
 
     @classmethod
     def from_deb(cls, deb: str, depends: list[list[VersionDepends]]):
@@ -47,7 +32,7 @@ class Package:
 
         name = parts[0].strip()
         version = parts[1].strip()
-        arch = parts[2].strip()
+        arch = CpuArch.from_str(parts[2].strip())
 
         p = cls(name, arch, 'local_deb')
 
@@ -59,10 +44,24 @@ class Package:
 
         return p
 
-    def __init__(self, name: str, arch: str, repo: str):
-        self.name = name
-        self.arch = arch
-        self.repo = repo
+    def __init__(self, name: str, arch: CpuArch, repo: str):
+        self.name: str = name
+        self.arch: CpuArch = arch
+        self.repo: str = repo
+
+        self.version: Optional[Version] = None
+        self.file_url: Optional[str] = None
+        self.local_file: Optional[str] = None
+
+        self.pre_depends: list[list[VersionDepends]] = []
+        self.depends: list[list[VersionDepends]] = []
+
+        self.breaks: list[list[VersionDepends]] = []
+        self.conflicts: list[list[VersionDepends]] = []
+
+        self.recommends: list[list[VersionDepends]] = []
+        self.suggests: list[list[VersionDepends]] = []
+        self.enhances: list[list[VersionDepends]] = []
 
     def get_depends(self) -> list[list[VersionDepends]]:
         """ Get dependencies. """
