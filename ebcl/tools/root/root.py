@@ -24,6 +24,8 @@ from ebcl.common.proxy import Proxy
 from ebcl.common.templates import render_template
 from ebcl.common.version import VersionDepends, parse_package_config, parse_package
 
+from ebcl.common.types.cpu_arch import CpuArch
+
 
 class FileNotFound(Exception):
     """ Raised if a command returns and returncode which is not 0. """
@@ -59,7 +61,7 @@ class RootGenerator:
     config: str
     # config values
     name: str
-    arch: str
+    arch: CpuArch
     image_type: ImageType
     image: Optional[str] = None
     template: Optional[str] = None

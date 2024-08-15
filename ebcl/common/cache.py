@@ -12,6 +12,8 @@ import jsonpickle
 from .deb import Package, filter_packages
 from .version import Version, VersionRealtion
 
+from .types.cpu_arch import CpuArch
+
 
 class AddOp(Enum):
     """ File operation when package is added. """
@@ -22,14 +24,9 @@ class AddOp(Enum):
 
 class Cache:
     """" EBcL deb package cache. """
-    # cache folder
-    folder: str
-    index_file: str
-    index: list[Package]
 
     def __init__(self, folder: Optional[str] = None):
         """ Setup the cache store. """
-
         if folder:
             self.folder = folder
         else:
@@ -46,7 +43,7 @@ class Cache:
         if os.path.isfile(self.index_file):
             with open(self.index_file, encoding='utf8') as f:
                 data = f.read()
-                self.index = jsonpickle.decode(data)
+                self.index: list[Package] = jsonpickle.decode(data)
         else:
             self.index = []
 
@@ -102,7 +99,7 @@ class Cache:
 
     def get(
         self,
-        arch: str,
+        arch: CpuArch,
         name: str,
         version: Optional[Version] = None,
         relation: Optional[VersionRealtion] = None,

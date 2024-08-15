@@ -6,17 +6,20 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
 
+from .types.cpu_arch import CpuArch
+
 
 class Version:
     """ Debian package version. """
-    # Epoch of package - small unsigned int
-    epoch: int
-    # Upstream package version - X.Y.Z
-    version: str
-    # Debian revision.
-    revision: Optional[str]
 
     def __init__(self, package_version: str):
+        # Epoch of package - small unsigned int
+        self.epoch: int
+        # Upstream package version - X.Y.Z
+        self.version: str
+        # Debian revision.
+        self.revision: Optional[str]
+
         version = package_version.strip()
 
         if ':' in version:
@@ -240,7 +243,7 @@ class VersionDepends:
     package_relation: Optional[PackageRelation]
     version_relation: Optional[VersionRealtion]
     version: Optional[Version]
-    arch: str
+    arch: CpuArch
 
     def __str__(self) -> str:
         t = f'VersionDepends<{self.name}'
@@ -293,7 +296,7 @@ class VersionDepends:
 
 def parse_depends(
     entry: str,
-    default_arch: str,
+    default_arch: CpuArch,
     package_relation: Optional[PackageRelation] = None
 ) -> Optional[list[VersionDepends]]:
     """ Parse package depends entry. """
@@ -314,7 +317,7 @@ def parse_depends(
         if ':' in name:
             np = name.split(':')
             name = np[0]
-            arch = np[1]
+            arch = CpuArch.from_str(np[1])
 
         version = None
         version_relation = None
@@ -340,7 +343,7 @@ def parse_depends(
     return result
 
 
-def parse_package_config(packages: list[str], arch: str) -> list[VersionDepends]:
+def parse_package_config(packages: list[str], arch: CpuArch) -> list[VersionDepends]:
     """ Parse packages conifguration. """
     vd_list: list[VersionDepends] = []
     for package in packages:
@@ -354,7 +357,7 @@ def parse_package_config(packages: list[str], arch: str) -> list[VersionDepends]
     return vd_list
 
 
-def parse_package(package: Optional[str], arch: str) -> Optional[VersionDepends]:
+def parse_package(package: Optional[str], arch: CpuArch) -> Optional[VersionDepends]:
     """ Parse a single package configuration. """
     if package:
         vds = parse_depends(package, arch)

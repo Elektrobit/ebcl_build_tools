@@ -8,23 +8,15 @@ import tempfile
 from typing import Optional
 
 from ebcl.common import init_logging, promo, log_exception
-from ebcl.common.apt import Apt
-from ebcl.common.config import load_yaml
-from ebcl.common.proxy import Proxy
+from ebcl.common.config import Config
 from ebcl.common.version import VersionDepends
+
+from ebcl.common.types.cpu_arch import CpuArch
 
 
 class PackageDownloader:
     """ Download and extract deb packages. """
     # TODO: test
-
-    # config file
-    config: str
-    # config values
-    arch: str
-    use_ebcl_apt: bool
-    # proxy
-    proxy: Proxy
 
     @log_exception(call_exit=True)
     def __init__(self, config_file: str):
@@ -33,23 +25,7 @@ class PackageDownloader:
         Args:
             config_file (Path): Path to the yaml config file.
         """
-        config = load_yaml(config_file)
-
-        self.config = config_file
-
-        self.arch = config.get('arch', 'arm64')
-
-        self.proxy = Proxy()
-        self.proxy.parse_apt_repos(
-            apt_repos=config.get('apt_repos', None),
-            arch=self.arch,
-            ebcl_version=config.get('ebcl_version', None)
-        )
-
-        self.use_ebcl_apt = config.get('use_ebcl_apt', False)
-        if self.use_ebcl_apt:
-            ebcl_apt = Apt.ebcl_apt(self.arch)
-            self.proxy.add_apt(ebcl_apt)
+        self.config: Config = Config(config_file)
 
     @log_exception(call_exit=True)
     def download_packages(
@@ -64,8 +40,10 @@ class PackageDownloader:
             output_path = tempfile.mkdtemp()
             assert output_path
 
-        if not arch:
-            arch = 'amd64'
+        if arch:
+            cpu_arch = CpuArch.from_str(arch)
+        else:
+            cpu_arch = self.config.arch
 
         content_path = os.path.join(output_path, 'contents')
         os.makedirs(content_path, exist_ok=True)
@@ -81,10 +59,10 @@ class PackageDownloader:
             package_relation=None,
             version_relation=None,
             version=None,
-            arch=arch
+            arch=cpu_arch
         ) for name in package_names]
 
-        (_debs, _contents, missing) = self.proxy.download_deb_packages(
+        (_debs, _contents, missing) = self.config.proxy.download_deb_packages(
             packages=vds,
             extract=True,
             debs=output_path,

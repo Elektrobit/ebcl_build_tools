@@ -17,12 +17,10 @@ class CommandFailed(Exception):
 class Fake:
     """ Fakeroot and subprocess helper. """
 
-    state: Path
-
     def __init__(self, state: Optional[str] = None):
         """ Set state directory. """
         if state is None:
-            self.state = Path(tempfile.mktemp())
+            self.state: Path = Path(tempfile.mktemp())
             self.state.touch()
         else:
             self.state = Path(state)

@@ -4,11 +4,14 @@ import logging
 import os
 import tempfile
 
-from enum import Enum
 from pathlib import Path
 from typing import Optional, Tuple, Any
 
+from . import ImplementationError
+
 from .fake import Fake
+
+from .types.environment_type import EnvironmentType
 
 
 class TarNotFound(Exception):
@@ -19,55 +22,28 @@ class TargetDirNotInitialized(Exception):
     """ Raised if the target dir is needed but not set. """
 
 
-class EnvironmentType(Enum):
-    """ Enum for supported environment types. """
-    FAKEROOT = 1
-    CHROOT = 3
-    SUDO = 4
-    SHELL = 5
+class FileNotFound(Exception):
+    """ Raised if a command returns and returncode which is not 0. """
 
-    @classmethod
-    def from_str(cls, script_type: Optional[str]):
-        """ Get ImageType from str. """
-        if not script_type:
-            return cls.FAKEROOT
 
-        if isinstance(script_type, cls):
-            return script_type
+def sub_output_path(path: str, output_path: Optional[str] = None):
+    """ Replace $$RESULTS$$ with output path.  """
+    if '$$RESULTS$$' in path:
+        if not output_path:
+            raise ImplementationError('output_path missing!')
 
-        if script_type == 'fake':
-            return cls.FAKEROOT
-        elif script_type == 'chroot':
-            return cls.CHROOT
-        elif script_type == 'sudo':
-            return cls.SUDO
-        elif script_type == 'shell':
-            return cls.SHELL
-        else:
-            return None
+        parts = path.split('$$RESULTS$$/')
+        path = os.path.abspath(os.path.join(output_path, parts[-1]))
 
-    def __str__(self) -> str:
-        if self.value == 1:
-            return "fake"
-        elif self.value == 3:
-            return "chroot"
-        elif self.value == 4:
-            return "sudo"
-        elif self.value == 5:
-            return "shell"
-        else:
-            return "UNKNOWN"
+    return path
 
 
 class Files:
     """ Files and scripts helpers. """
 
-    target_dir: Optional[str]
-    fake: Fake
-
     def __init__(self, fake: Fake, target_dir: Optional[str] = None) -> None:
-        self.target_dir = target_dir
-        self.fake = fake
+        self.target_dir: Optional[str] = target_dir
+        self.fake: Fake = fake
 
     def _run_cmd(
         self, cmd: str,
@@ -96,6 +72,58 @@ class Files:
             return self.fake.run_chroot(cmd, chroot=chroot_dir, check=check)
         elif env == EnvironmentType.SHELL or env is None:
             return self.fake.run_cmd(cmd, cwd=cwd, check=check)
+
+    def copy_files(
+        self,
+        files: list[dict[str, str]],
+        target_dir: Optional[str] = None,
+        output_path: Optional[str] = None,
+        fix_ownership: bool = False
+    ):
+        """ Copy files. """
+        # TODO: test
+        logging.debug('Files: %s', files)
+
+        for entry in files:
+            logging.info('Processing entry: %s', entry)
+
+            source = entry.get('source', None)
+            if not source:
+                logging.error(
+                    'Invalid file entry %s, source is missing!', entry)
+                continue
+
+            src = sub_output_path(source, output_path)
+
+            if not target_dir:
+                target_dir = self.target_dir
+
+            if not target_dir:
+                raise TargetDirNotInitialized()
+
+            dst = target_dir
+            file_dest = entry.get('destination', None)
+            if file_dest:
+                dst = os.path.join(dst, file_dest)
+
+            mode: str = entry.get('mode', '600')
+            uid: int = int(entry.get('uid', 0))
+            gid: int = int(entry.get('gid', 0))
+
+            logging.debug('Copying files %s', src)
+
+            copied_files = self.copy_file(
+                src=src,
+                dst=dst,
+                uid=uid,
+                gid=gid,
+                mode=mode,
+                delete_if_exists=True,
+                fix_ownership=fix_ownership
+            )
+
+            if not copied_files:
+                raise FileNotFound(f'File {src} not found!')
 
     def copy_file(
         self,
@@ -180,6 +208,34 @@ class Files:
             files.append(target)
 
         return files
+
+    def run_scripts(
+        self,
+        scripts: list[dict[str, str]],
+        cwd: str,
+        output_path: Optional[str] = None,
+    ):
+        """ Run scripts. """
+        # TODO: test
+        logging.debug('Target dir: %s', self.target_dir)
+        logging.debug('CWD: %s', cwd)
+
+        for script in scripts:
+            logging.info('Running script %s.', script)
+
+            if 'name' not in script:
+                logging.error(
+                    'Invalid script entry %s, name is missing!', script)
+                continue
+
+            file = sub_output_path(script['name'], output_path)
+
+            self.run_script(
+                file=file,
+                params=script.get('params', None),
+                environment=EnvironmentType.from_str(script.get('env', None)),
+                cwd=cwd
+            )
 
     def run_script(
         self,
@@ -343,7 +399,7 @@ def parse_scripts(
                 logging.error('Script %s has no name!', script)
                 continue
 
-            script['name'] = reslove_file(
+            script['name'] = resolve_file(
                 file=script['name'],
                 file_base_dir=script.get('base_dir', None),
                 relative_base_dir=relative_base_dir
@@ -363,9 +419,10 @@ def parse_scripts(
                 script['env'] = env
 
             result.append(script)
+
         elif isinstance(script, str):
             logging.debug('Using default env %s for script %s.', env, script)
-            name = reslove_file(
+            name = resolve_file(
                 file=script,
                 relative_base_dir=relative_base_dir
             )
@@ -381,7 +438,8 @@ def parse_scripts(
 
 def parse_files(
     files: Optional[list[dict[str, str]]],
-    relative_base_dir: Optional[str] = None
+    relative_base_dir: Optional[str] = None,
+    resolve: bool = True
 ) -> list[dict[str, Any]]:
     """ Resolve file names to absolute paths. """
     if not files:
@@ -395,19 +453,22 @@ def parse_files(
                 logging.error('File %s has no source!', file)
                 continue
 
-            file['source'] = reslove_file(
-                file=file['source'],
-                file_base_dir=file.get('base_dir', None),
-                relative_base_dir=relative_base_dir
-            )
+            if resolve:
+                file['source'] = resolve_file(
+                    file=file['source'],
+                    file_base_dir=file.get('base_dir', None),
+                    relative_base_dir=relative_base_dir
+                )
 
             processed.append(file)
 
         elif isinstance(file, str):
-            file = reslove_file(
-                file=file,
-                relative_base_dir=relative_base_dir
-            )
+            if resolve:
+                file = resolve_file(
+                    file=file,
+                    relative_base_dir=relative_base_dir
+                )
+
             processed.append({
                 'source': file
             })
@@ -418,7 +479,7 @@ def parse_files(
     return processed
 
 
-def reslove_file(
+def resolve_file(
     file: str,
     file_base_dir: Optional[str] = None,
     relative_base_dir: Optional[str] = None,
