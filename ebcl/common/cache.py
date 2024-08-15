@@ -2,6 +2,7 @@
 import logging
 import os
 import shutil
+import tempfile
 
 from enum import Enum
 from typing import Optional
@@ -26,9 +27,17 @@ class Cache:
     index_file: str
     index: list[Package]
 
-    def __init__(self, folder: str = '/workspace/state/cache'):
+    def __init__(self, folder: Optional[str] = None):
         """ Setup the cache store. """
-        self.folder = folder
+
+        if folder:
+            self.folder = folder
+        else:
+            if os.path.isdir('/workspace/state/cache'):
+                self.folder = '/workspace/state/cache'
+            else:
+                self.folder = tempfile.mkdtemp()
+
         os.makedirs(self.folder, exist_ok=True)
         assert os.path.isdir(self.folder)
 

@@ -72,7 +72,7 @@ class Apt:
         key_gpg: Optional[str] = None,
         has_sources: bool = True,
         arch: str = "amd64",
-        state_folder: str = '/workspace/state/apt'
+        state_folder: Optional[str] = None
     ) -> None:
         if components is None:
             components = ['main']
@@ -82,10 +82,17 @@ class Apt:
         self.components = components
         self.arch = arch
         self.packages = None
-        self.state_folder = state_folder
         self.key_url = key_url
         self.key_gpg = key_gpg
         self.has_sources = has_sources
+
+        if state_folder:
+            self.state_folder = state_folder
+        else:
+            if os.path.isdir('/workspace/state/apt'):
+                self.state_folder = '/workspace/state/apt'
+            else:
+                self.state_folder = tempfile.mkdtemp()
 
         if not key_gpg and 'ubuntu.com/ubuntu' in url:
             self.key_gpg = '/etc/apt/trusted.gpg.d/ubuntu-keyring-2018-archive.gpg'
@@ -485,7 +492,7 @@ class Apt:
         if not self.key_gpg:
             fake = Fake()
             try:
-                fake.run_no_fake(
+                fake.run_cmd(
                     f'cat {key_pub_file} | gpg --dearmor > {key_gpg_file}')
             except Exception as e:
                 logging.error('Dearmoring key %s of %s as %s failed! %s',

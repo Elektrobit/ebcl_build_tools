@@ -17,10 +17,11 @@ class TarNotFound(Exception):
 
 
 class EnvironmentType(Enum):
-    """ Enum for supported script types. """
+    """ Enum for supported environment types. """
     FAKEROOT = 1
-    FAKECHROOT = 2
     CHROOT = 3
+    SUDO = 4
+    SHELL = 5
 
     @classmethod
     def from_str(cls, script_type: Optional[str]):
@@ -33,9 +34,11 @@ class EnvironmentType(Enum):
 
         if script_type == 'fake':
             return cls.FAKEROOT
-        elif script_type == 'chfake':
-            return cls.FAKECHROOT
         elif script_type == 'chroot':
+            return cls.CHROOT
+        elif script_type == 'sudo':
+            return cls.CHROOT
+        elif script_type == 'shell':
             return cls.CHROOT
         else:
             return None
@@ -43,10 +46,12 @@ class EnvironmentType(Enum):
     def __str__(self) -> str:
         if self.value == 1:
             return "fake"
-        elif self.value == 2:
-            return "chfake"
         elif self.value == 3:
             return "chroot"
+        elif self.value == 4:
+            return "sudo"
+        elif self.value == 5:
+            return "shell"
         else:
             return "UNKNOWN"
 
