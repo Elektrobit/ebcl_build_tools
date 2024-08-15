@@ -1,9 +1,8 @@
 """ Tests for the fake functions. """
 import os
-import shutil
 import tempfile
 
-from ebcl.common.apt import Apt, parse_depends
+from ebcl.common.apt import Apt
 from ebcl.common.fake import Fake
 from ebcl.common.proxy import Proxy
 
@@ -84,3 +83,11 @@ class TestFake:
         assert not stderr.strip()
 
         self.fake.run_sudo(f'rm -rf {chroot}')
+
+    def test_run_sudo(self):
+        """ Run a command using sudo. """
+        (stdout, stderr, _returncode) = self.fake.run_sudo('id')
+        assert stdout is not None
+        assert 'uid=0(root)' in stdout
+        assert 'gid=0(root)' in stdout
+        assert not stderr.strip()
