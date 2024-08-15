@@ -102,11 +102,11 @@ class Files:
                 if fix_ownership:
                     self.fake.run_sudo(f'chown -R ebcl:ebcl {file}')
 
-                fn_run = self.fake.run
+                fn_run = self.fake.run_fake
                 if environment == EnvironmentType.CHROOT:
                     fn_run = self.fake.run_sudo
                 elif environment is None:
-                    fn_run = self.fake.run_no_fake
+                    fn_run = self.fake.run_cmd
 
                 if os.path.isfile(file):
                     fn_run(f'mkdir -p {os.path.dirname(target)}')
@@ -154,7 +154,7 @@ class Files:
     ) -> Optional[Tuple[Optional[str], str, int]]:
         """ Run command. """
         if environment == EnvironmentType.FAKEROOT:
-            return self.fake.run(
+            return self.fake.run_fake(
                 cmd=cmd,
                 cwd=cwd,
                 stdout=stdout,
@@ -163,10 +163,8 @@ class Files:
 
         fn_run = None
 
-        if environment == EnvironmentType.FAKECHROOT:
+        if environment == EnvironmentType.CHROOT:
             fn_run = self.fake.run_chroot
-        elif environment == EnvironmentType.CHROOT:
-            fn_run = self.fake.run_sudo_chroot
 
         assert fn_run is not None
 
@@ -230,8 +228,7 @@ class Files:
                 logging.error('Script %s not found!', script_file)
                 return None
 
-            if environment == EnvironmentType.FAKECHROOT or \
-                    environment == EnvironmentType.CHROOT:
+            if environment == EnvironmentType.CHROOT:
                 script_file = f'./{os.path.basename(script_file)}'
 
             res = self.run_command(
@@ -243,7 +240,7 @@ class Files:
 
             if os.path.abspath(script_file) != os.path.abspath(file):
                 # delete copied file
-                fn_run = self.fake.run
+                fn_run = self.fake.run_fake
                 if environment == EnvironmentType.CHROOT:
                     fn_run = self.fake.run_sudo
 
@@ -271,10 +268,10 @@ class Files:
 
         if tar_file.parent.absolute() != target_dir:
             dst = Path(target_dir) / tar_file.name
-            self.fake.run(f'cp {tar_file.absolute()} {dst.absolute()}')
+            self.fake.run_fake(f'cp {tar_file.absolute()} {dst.absolute()}')
             tar_file = dst
 
-        self.fake.run(f'tar xf {tar_file.name}', cwd=target_dir)
+        self.fake.run_fake(f'tar xf {tar_file.name}', cwd=target_dir)
 
         return target_dir
 
@@ -302,7 +299,7 @@ class Files:
                 'Archive %s exists. Deleting old archive.', tmp_archive)
             os.remove(tmp_archive)
 
-        fn_run: Any = self.fake.run
+        fn_run: Any = self.fake.run_fake
         if use_fake_chroot:
             fn_run = self.fake.run_chroot
 
@@ -318,7 +315,7 @@ class Files:
             logging.info('Archive %s exists. Deleting old archive.', archive)
             os.remove(archive)
 
-        self.fake.run_no_fake(f'mv {tmp_archive} {archive}')
+        self.fake.run_cmd(f'mv {tmp_archive} {archive}')
 
         return archive
 
