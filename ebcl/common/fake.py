@@ -1,4 +1,4 @@
-""" Fakeroot and Fakechroot helper. """
+""" Fakeroot and subprocess helper. """
 import logging
 import os
 import subprocess
@@ -15,7 +15,7 @@ class CommandFailed(Exception):
 
 
 class Fake:
-    """ Fakeroot and Fakechroot helper. """
+    """ Fakeroot and subprocess helper. """
 
     state: Path
 
@@ -33,7 +33,7 @@ class Fake:
             if os.path.isfile(self.state):
                 os.remove(self.state)
 
-    def run_no_fake(
+    def run_cmd(
         self,
         cmd: str,
         cwd: Optional[str] = None,
@@ -75,14 +75,15 @@ class Fake:
                 logging.critical(
                     'Execution of command %s failed with returncode %s!', cmd, p.returncode)
                 raise CommandFailed(
-                    f'Execution of command {cmd} failed with returncode {p.returncode}!\n'
+                    f'Execution of command {
+                        cmd} failed with returncode {p.returncode}!\n'
                     f'returncode: {p.returncode}\n'
                     f'STDOUT:\n{pout}'
                     f'STDERR:\n{perr}')
 
         return (pout, perr, p.returncode)
 
-    def run(
+    def run_fake(
         self,
         cmd: str,
         cwd: Optional[str] = None,
@@ -90,28 +91,17 @@ class Fake:
         check=True
     ) -> Tuple[Optional[str], str, int]:
         """ Run a command using fakeroot. """
-        return self.run_no_fake(
-            cmd=f'fakechroot fakeroot -i {self.state} -s {self.state} -- {cmd}',
+        return self.run_cmd(
+            cmd=f'fakeroot -i {
+                self.state} -s {self.state} -- {cmd}',
             cwd=cwd,
             stdout=stdout,
             check=check
         )
 
     def run_chroot(self, cmd: str, chroot: str, check=True) -> Tuple[str, str, int]:
-        """ Run a command using fakechroot. """
-        (out, err, returncode) = self.run_no_fake(
-            cmd=f'fakechroot fakeroot -i {self.state} -s {self.state} -- chroot {chroot} {cmd}',
-            check=check
-        )
-
-        if out is None:
-            out = ''
-
-        return (out, err, returncode)
-
-    def run_sudo_chroot(self, cmd: str, chroot: str, check=True) -> Tuple[str, str, int]:
         """ Run a command using sudo and chroot. """
-        (out, err, returncode) = self.run_no_fake(
+        (out, err, returncode) = self.run_cmd(
             cmd=f'sudo chroot {chroot} {cmd}',
             check=check
         )
@@ -128,7 +118,7 @@ class Fake:
             check=True
     ) -> Tuple[Optional[str], str, int]:
         """ Run a command using sudo. """
-        return self.run_no_fake(
+        return self.run_cmd(
             cmd=f'sudo bash -c "{cmd}"',
             cwd=cwd,
             stdout=stdout,

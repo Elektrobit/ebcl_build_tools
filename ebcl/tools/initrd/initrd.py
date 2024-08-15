@@ -139,7 +139,7 @@ class InitrdGenerator:
         if self.fakeroot:
             return self.fake.run_chroot(cmd, self.target_dir)
         else:
-            return self.fake.run_sudo_chroot(cmd, self.target_dir)
+            return self.fake.run_chroot(cmd, self.target_dir)
 
     def _run_root(
         self,
@@ -150,7 +150,7 @@ class InitrdGenerator:
     ) -> Tuple[Optional[str], str, int]:
         """ Run command as root. """
         if self.fakeroot:
-            return self.fake.run(cmd=cmd, cwd=cwd, stdout=stdout, check=check)
+            return self.fake.run_fake(cmd=cmd, cwd=cwd, stdout=stdout, check=check)
         else:
             return self.fake.run_sudo(cmd=cmd, cwd=cwd, stdout=stdout, check=check)
 
@@ -445,10 +445,11 @@ class InitrdGenerator:
             )
 
             # Merge deb content and boot tarball
-            self.fake.run(cmd=f'rsync -av {boot_tar_temp}/* {self.target_dir}')
+            self.fake.run_fake(
+                cmd=f'rsync -av {boot_tar_temp}/* {self.target_dir}')
 
             # Delete temporary tar folder
-            self.fake.run(f'rm -rf {boot_tar_temp}', check=False)
+            self.fake.run_fake(f'rm -rf {boot_tar_temp}', check=False)
 
         mods_dir = None
 

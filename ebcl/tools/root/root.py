@@ -360,7 +360,7 @@ class RootGenerator:
             logging.critical('Image %s not found!', image)
             return None
 
-        (out, err, _returncode) = self.fake.run_no_fake(
+        (out, err, _returncode) = self.fake.run_cmd(
             'elbe control create_project')
         assert not err
         assert out
@@ -368,15 +368,15 @@ class RootGenerator:
 
         pre_xml = os.path.join(self.result_dir, image.name) + '.gz'
 
-        self.fake.run_no_fake(
+        self.fake.run_cmd(
             f'elbe preprocess --output={pre_xml} {image.absolute()}')
-        self.fake.run_no_fake(
+        self.fake.run_cmd(
             f'elbe control set_xml {prj} {pre_xml}')
-        self.fake.run_no_fake(f'elbe control build {prj}')
-        self.fake.run(f'elbe control wait_busy {prj}')
-        self.fake.run(
+        self.fake.run_cmd(f'elbe control build {prj}')
+        self.fake.run_fake(f'elbe control wait_busy {prj}')
+        self.fake.run_fake(
             f'elbe control get_files --output {self.result_dir} {prj}')
-        self.fake.run(f'elbe control del_project {prj}')
+        self.fake.run_fake(f'elbe control del_project {prj}')
 
         tar = os.path.join(self.result_dir, 'root.tar')
 
@@ -488,7 +488,8 @@ class RootGenerator:
                 cmp_id = f'{cnt}_{apt.distro}_{component}'
                 repos += f'<repository alias="{cmp_id}" type="apt-deb" ' \
                     f'distribution="{apt.distro}" components="{component}" ' \
-                    f'use_for_bootstrap="{bootstrap}" repository_gpgcheck="false" >\n'
+                    f'use_for_bootstrap="{
+                        bootstrap}" repository_gpgcheck="false" >\n'
                 repos += f'    <source path = "{apt.url}" />\n'
                 repos += '</repository>\n\n'
 
@@ -669,7 +670,7 @@ class RootGenerator:
                          os.path.dirname(appliance), output_path=output_path)
 
         root_folder = os.path.join(os.path.dirname(appliance), 'root')
-        self.fake.run_no_fake(f'mkdir -p {root_folder}')
+        self.fake.run_cmd(f'mkdir -p {root_folder}')
 
         for overlay in kiwi_root_overlays:
             self.fh.copy_file(
@@ -733,7 +734,7 @@ class RootGenerator:
         if self.kvm:
             fn_run = self.fake.run_sudo
         else:
-            fn_run = self.fake.run_no_fake
+            fn_run = self.fake.run_cmd
             cmd = f'bash -c "{cmd}"'
 
         fn_run(f'. /build/venv/bin/activate && {cmd}')
@@ -767,7 +768,7 @@ class RootGenerator:
         assert self.target_dir
 
         result_file = os.path.join(self.target_dir, result_name)
-        self.fake.run(f'mv {tar} {result_file}')
+        self.fake.run_fake(f'mv {tar} {result_file}')
 
         return result_file
 
@@ -858,7 +859,7 @@ class RootGenerator:
             ext = '.' + image_name.split('.', maxsplit=1)[-1]
 
         out_image = f'{output_path}/{self.name}{ext}'
-        self.fake.run(f'mv {image_file} {out_image}')
+        self.fake.run_fake(f'mv {image_file} {out_image}')
 
         return out_image
 
@@ -876,7 +877,7 @@ class RootGenerator:
             logging.error('Fixing ownership failed! %s', e)
 
         try:
-            self.fake.run(f'cp -R {self.result_dir}/* {output_path}')
+            self.fake.run_fake(f'cp -R {self.result_dir}/* {output_path}')
         except Exception as e:
             logging.error('Copying all artefacts failed! %s', e)
 
@@ -890,13 +891,13 @@ class RootGenerator:
         # delete temporary folders
         try:
             if self.target_dir:
-                self.fake.run(f'rm -rf {self.target_dir}')
+                self.fake.run_fake(f'rm -rf {self.target_dir}')
         except Exception as e:
             logging.error('Removing temp target dir failed! %s', e)
 
         try:
             if self.result_dir:
-                self.fake.run(f'rm -rf {self.result_dir}')
+                self.fake.run_fake(f'rm -rf {self.result_dir}')
         except Exception as e:
             logging.error('Removing temp result dir failed! %s', e)
 

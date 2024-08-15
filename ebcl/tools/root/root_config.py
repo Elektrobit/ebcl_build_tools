@@ -158,7 +158,7 @@ class RootConfig:
         self.fh.extract_tarball(archive_in, tmp_root_dir)
 
         if logging.root.level == logging.DEBUG:
-            self.fake.run(f'ls -lah {tmp_root_dir}')
+            self.fake.run_fake(f'ls -lah {tmp_root_dir}')
 
         if self.host_files:
             # Copy host files to target_dir folder
@@ -179,7 +179,7 @@ class RootConfig:
             logging.info('Skipping cleanup of tmpdir.')
         else:
             logging.info('Cleaning up the tmpdir...')
-            self.fake.run(f'rm -rf {tmp_root_dir}', check=False)
+            self.fake.run_fake(f'rm -rf {tmp_root_dir}', check=False)
 
         if not ao:
             logging.critical('Repacking root failed!')

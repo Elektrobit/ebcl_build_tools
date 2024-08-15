@@ -253,10 +253,11 @@ class BootGenerator:
             )
 
             # Merge deb content and boot tarball
-            self.fake.run(cmd=f'rsync -av {boot_tar_temp}/* {package_dir}')
+            self.fake.run_fake(
+                cmd=f'rsync -av {boot_tar_temp}/* {package_dir}')
 
             # Delete temporary tar folder
-            self.fake.run(f'rm -rf {boot_tar_temp}', check=False)
+            self.fake.run_fake(f'rm -rf {boot_tar_temp}', check=False)
 
         # Copy host files to target_dir folder
         logging.info('Copy host files to target dir...')
@@ -279,7 +280,7 @@ class BootGenerator:
 
         # Remove package temporary folder
         logging.info('Remove temporary package contents...')
-        self.fake.run(f'rm -rf {package_dir}', check=False)
+        self.fake.run_cmd(f'rm -rf {package_dir}', check=False)
 
         if self.tar:
             # create tar archive
@@ -306,7 +307,7 @@ class BootGenerator:
 
         # delete temporary folder
         logging.debug('Remove temporary folder...')
-        self.fake.run(f'rm -rf {self.target_dir}', check=False)
+        self.fake.run_cmd(f'rm -rf {self.target_dir}', check=False)
 
 
 @log_exception(call_exit=True)
