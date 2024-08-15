@@ -21,5 +21,8 @@ pip install -e embdgen-core
 pip install -e embdgen-cominit
 pip install -e embdgen-config-yaml
 
+# install the build tools
+pip install -e .
+
 # install robot framework
-pip install robotframework
+pip install robotframework pytest pytest-cov
