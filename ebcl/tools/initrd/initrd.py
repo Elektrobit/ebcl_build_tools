@@ -12,7 +12,7 @@ from typing import Optional
 
 from ebcl.common import init_logging, promo, log_exception
 from ebcl.common.config import Config
-from ebcl.common.files import EnvironmentType, sub_output_path
+from ebcl.common.files import EnvironmentType
 from ebcl.common.templates import render_template
 
 
@@ -20,14 +20,19 @@ class InitrdGenerator:
     """ EBcL initrd generator. """
 
     @log_exception(call_exit=True)
-    def __init__(self, config_file: str):
+    def __init__(self, config_file: str, output_path: str):
         """ Parse the yaml config file.
 
         Args:
             config_file (Path): Path to the yaml config file.
         """
-        self.config: Config = Config(config_file)
+        self.config: Config = Config(config_file, output_path)
         self.target_dir: str = self.config.target_dir
+
+        if self.config.name:
+            self.name: str = self.config.name + '.img'
+        else:
+            self.name = 'initrd.img'
 
     def install_busybox(self) -> bool:
         """Get busybox and add it to the initrd. """
@@ -196,15 +201,9 @@ class InitrdGenerator:
                 f'chown {uid}:{gid} {dev_folder}/{device["name"]}')
 
     @log_exception()
-    def create_initrd(self, output_path: str) -> Optional[str]:
+    def create_initrd(self) -> Optional[str]:
         """ Create the initrd image.  """
-
-        if self.config.name:
-            name = self.config.name
-        else:
-            name = 'initrd.img'
-
-        image_path = os.path.join(output_path, name)
+        image_path = os.path.join(self.config.output_path, self.name)
 
         logging.info('Installing busybox...')
 
@@ -221,13 +220,12 @@ class InitrdGenerator:
                 f'chown 0:0 {os.path.join(self.target_dir, dir_name)}')
 
         if self.config.base_tarball:
-            base_tarball = sub_output_path(
-                self.config.base_tarball, output_path)
+            base_tarball = self.config.base_tarball
             logging.info('Extracting base tarball %s...', base_tarball)
             self.config.fh.extract_tarball(base_tarball, self.target_dir)
 
         if self.config.modules_folder:
-            mods_dir = sub_output_path(self.config.modules_folder, output_path)
+            mods_dir = self.config.modules_folder
             logging.info('Using modules from folder %s...', mods_dir)
         elif self.config.packages:
             mods_dir = tempfile.mkdtemp()
@@ -256,7 +254,8 @@ class InitrdGenerator:
         self.add_devices()
 
         # Copy files and directories specified in the files
-        self.config.fh.copy_files(self.config.host_files, output_path)
+        self.config.fh.copy_files(
+            self.config.host_files, self.config.output_path)
 
         # Create init script
         init_script: Path = Path(self.target_dir) / 'init'
@@ -276,8 +275,8 @@ class InitrdGenerator:
             template_file=template,
             params=params,
             generated_file_name=f'{self.config.name}.init.sh',
-            results_folder=output_path,
-            template_copy_folder=output_path
+            results_folder=self.config.output_path,
+            template_copy_folder=self.config.output_path
         )
 
         if not init_script_content:
@@ -323,12 +322,12 @@ def main() -> None:
 
     logging.debug('Running initrd_generator with args %s', args)
 
-    generator = InitrdGenerator(args.config_file)
+    generator = InitrdGenerator(args.config_file, args.output)
 
     image = None
 
     # Create the initrd.img
-    image = generator.create_initrd(args.output)
+    image = generator.create_initrd()
 
     generator.finalize()
 

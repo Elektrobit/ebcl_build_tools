@@ -9,6 +9,8 @@ from ebcl.common.fake import Fake
 from ebcl.tools.initrd.initrd import InitrdGenerator
 from ebcl.common.version import VersionDepends
 
+from ebcl.common.types.cpu_arch import CpuArch
+
 
 class TestInitrd:
     """ Unit tests for the EBcL initrd generator. """
@@ -23,9 +25,8 @@ class TestInitrd:
         test_dir = os.path.dirname(os.path.abspath(__file__))
         cls.yaml = os.path.join(test_dir, 'data', 'initrd.yaml')
         # Prepare generator
-        cls.generator = InitrdGenerator(cls.yaml)
         cls.temp_dir = tempfile.mkdtemp()
-        cls.generator.target_dir = cls.temp_dir
+        cls.generator = InitrdGenerator(cls.yaml, cls.temp_dir)
 
     @classmethod
     def teardown_class(cls):
@@ -35,9 +36,9 @@ class TestInitrd:
 
     def test_read_config(self):
         """ Test yaml config loading. """
-        generator = InitrdGenerator(self.yaml)
-        assert generator.arch == 'arm64'
-        assert generator.root_device == '/dev/mmcblk0p2'
+        generator = InitrdGenerator(self.yaml, self.temp_dir)
+        assert generator.config.arch == CpuArch.ARM64
+        assert generator.config.root_device == '/dev/mmcblk0p2'
 
     def test_install_busybox(self):
         """ Test yaml config loading. """
@@ -55,13 +56,13 @@ class TestInitrd:
             package_relation=None,
             version_relation=None,
             version=None,
-            arch=self.generator.arch
+            arch=self.generator.config.arch
         )
-        package = self.generator.proxy.find_package(vd)
+        package = self.generator.config.proxy.find_package(vd)
         assert package
 
-        pkg = self.generator.proxy.download_package(
-            self.generator.arch, package)
+        pkg = self.generator.config.proxy.download_package(
+            self.generator.config.arch, package)
         assert pkg
         assert pkg.local_file
         assert os.path.isfile(pkg.local_file)
@@ -73,13 +74,13 @@ class TestInitrd:
             package_relation=None,
             version_relation=None,
             version=None,
-            arch=self.generator.arch
+            arch=self.generator.config.arch
         )
-        package = self.generator.proxy.find_package(vd)
+        package = self.generator.config.proxy.find_package(vd)
         assert package
 
-        pkg = self.generator.proxy.download_package(
-            self.generator.arch, package)
+        pkg = self.generator.config.proxy.download_package(
+            self.generator.config.arch, package)
         assert pkg
         assert pkg.local_file
         assert os.path.isfile(pkg.local_file)
@@ -89,11 +90,12 @@ class TestInitrd:
         pkg.extract(mods_temp)
 
         module = 'kernel/pfeng/pfeng.ko'
-        self.generator.modules = [module]
+        self.generator.config.modules = [module]
 
         kversion = self.generator.find_kernel_version(mods_temp)
+        assert kversion
 
-        self.generator.extract_modules_from_deb(mods_temp)
+        self.generator.copy_modules(mods_temp)
 
         shutil.rmtree(mods_temp)
 
@@ -102,7 +104,7 @@ class TestInitrd:
 
     def test_add_devices(self):
         """ Test device node creation. """
-        self.generator.devices = [{
+        self.generator.config.devices = [{
             'name': 'console',
             'type': 'char',
             'major': '5',
@@ -117,7 +119,7 @@ class TestInitrd:
 
     def test_copy_files(self):
         """ Test copying of files. """
-        self.generator.files = [
+        self.generator.config.host_files = [
             {
                 'source': 'dummy.txt',
                 'destination': 'root'
@@ -134,7 +136,9 @@ class TestInitrd:
         os.mkdir(os.path.join(self.temp_dir, 'root'))
 
         self.generator.install_busybox()
-        self.generator.copy_files()
+        self.generator.config.fh.copy_files(
+            self.generator.config.host_files,
+            self.generator.config.output_path)
 
         fake = Fake()
 
@@ -167,11 +171,7 @@ class TestInitrd:
 
     def test_sysroot_is_created(self):
         """ Test that sysroot folder is created. """
-        temp_dir = tempfile.mkdtemp()
+        self.generator.create_initrd()
 
-        self.generator.create_initrd(temp_dir)
-
-        out = os.path.join(temp_dir, 'initrd.img')
+        out = os.path.join(self.temp_dir, 'initrd.img')
         assert os.path.isfile(out)
-
-        shutil.rmtree(temp_dir)

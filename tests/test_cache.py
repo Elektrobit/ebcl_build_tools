@@ -6,6 +6,8 @@ from ebcl.common.cache import Cache
 from ebcl.common.deb import Package
 from ebcl.common.version import Version, VersionRealtion
 
+from ebcl.common.types.cpu_arch import CpuArch
+
 
 class TestCache:
     """ Tests for the cache functions. """
@@ -31,14 +33,14 @@ class TestCache:
         assert res
 
         v = Version('1.36.1-3ubuntu1')
-        p = self.cache.get('amd64', 'busybox-static', v,
+        p = self.cache.get(CpuArch.AMD64, 'busybox-static', v,
                            relation=VersionRealtion.EXACT)
         assert p
         assert p.name == 'busybox-static'
-        assert p.arch == 'amd64'
+        assert p.arch == CpuArch.AMD64
         assert p.version == v
 
-        p = self.cache.get('amd64', 'busybox-static',
+        p = self.cache.get(CpuArch.AMD64, 'busybox-static',
                            Version('anotherversion'), VersionRealtion.EXACT)
         assert not p
 
@@ -48,21 +50,18 @@ class TestCache:
             '/workspace/tools/build/tests/data/busybox-static_1.36.1-3ubuntu1_amd64.deb', []))
         assert res
 
-        p = self.cache.get('amd64', 'busybox-static')
+        p = self.cache.get(CpuArch.AMD64, 'busybox-static')
         assert p
         assert p.name == 'busybox-static'
-        assert p.arch == 'amd64'
+        assert p.arch == CpuArch.AMD64
         assert p.version == Version('1.36.1-3ubuntu1')
 
     def test_cache_miss(self):
         """ Package does not exist. """
-        p = self.cache.get('amd64', 'not-existing')
+        p = self.cache.get(CpuArch.AMD64, 'not-existing')
         assert p is None
 
-        p = self.cache.get('nonearch', 'not-existing')
-        assert p is None
-
-        p = self.cache.get('amd64', 'busybox', Version('nonversion'),
+        p = self.cache.get(CpuArch.AMD64, 'busybox', Version('nonversion'),
                            VersionRealtion.EXACT)
         assert p is None
 
@@ -76,8 +75,9 @@ class TestCache:
         del cache
 
         cache = Cache()
-        p = cache.get('amd64', 'busybox-static', Version('1.36.1-3ubuntu1'))
+        p = cache.get(CpuArch.AMD64, 'busybox-static',
+                      Version('1.36.1-3ubuntu1'))
         assert p
         assert p.name == 'busybox-static'
-        assert p.arch == 'amd64'
+        assert p.arch == CpuArch.AMD64
         assert p.version == Version('1.36.1-3ubuntu1')

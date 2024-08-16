@@ -11,7 +11,7 @@ from . import log_exception
 
 from .apt import Apt
 from .fake import Fake
-from .files import Files, parse_files, parse_scripts, resolve_file
+from .files import Files, parse_files, parse_scripts, resolve_file, sub_output_path
 from .proxy import Proxy
 from .version import VersionDepends, parse_package_config, parse_package
 
@@ -36,18 +36,19 @@ class Config:
         'files', 'scripts', 'template', 'name', 'download_deps', 'base_tarball', 'packages',
         'kernel', 'tar', 'busybox', 'modules', 'root_device', 'devices', 'kernel_version',
         'modules_folder', 'result_pattern', 'image', 'berrymill_conf', 'use_berrymill',
-        'use_bootstrap_package', 'boopstrap_package', 'boostrap', 'kiwi_root_overlays',
+        'use_bootstrap_package', 'bootstrap_package', 'bootstrap', 'kiwi_root_overlays',
         'use_kiwi_defaults', 'kiwi_scripts', 'kvm', 'image_version', 'type', 'primary_repo',
         'root_password', 'hostname', 'domain', 'console', 'packer', 'sysroot_packages',
-        'sysroot_defaults'
+        'sysroot_defaults', 'primary_distro'
     ]
 
-    def __init__(self, config_file: str):
+    def __init__(self, config_file: str, output_path: str):
         self.config_file = config_file
         self.proxy = Proxy()
         self.fake = Fake()
 
         self.target_dir = tempfile.mkdtemp()
+        self.output_path = os.path.abspath(output_path)
 
         self.fh = Files(
             fake=self.fake,
@@ -103,12 +104,12 @@ class Config:
         self.berrymill_conf: Optional[str] = None
         # Use Berrymill for Kiwi-ng builds.
         self.use_berrymill: bool = True
-        # Use a boostrap package for Kiwi-ng builds.
+        # Use a bootstrap package for Kiwi-ng builds.
         self.use_bootstrap_package: bool = True
-        # Name of the Kiwi-ng boostrap package.
-        self.boopstrap_package: Optional[str] = None
+        # Name of the Kiwi-ng bootstrap package.
+        self.bootstrap_package: Optional[str] = None
         # Additional bootstrap packages for debootstrap.
-        self.boostrap: list[VersionDepends] = []
+        self.bootstrap: list[VersionDepends] = []
         # List of overlay folders for Kiwi-ng builds.
         self.kiwi_root_overlays: list[str] = []
         # Add default names for Kiwi-ng artifacts.
@@ -123,6 +124,8 @@ class Config:
         self.type: BuildType = BuildType.ELBE
         # Primary repo for debootstrap
         self.primary_repo: Optional[str] = None
+        # Primary repo for debootstrap
+        self.primary_distro: Optional[str] = None
         # Password for the root user
         self.root_password: Optional[str] = 'linux'
         # Hostname for the root filesystem
@@ -211,6 +214,7 @@ class Config:
 
         host_files = parse_files(
             config.get('host_files', None),
+            output_path=self.output_path,
             relative_base_dir=config_dir)
 
         for host_file in host_files:
@@ -223,6 +227,7 @@ class Config:
 
         scripts = parse_scripts(
             config.get('scripts', None),
+            output_path=self.output_path,
             relative_base_dir=config_dir)
 
         for script in scripts:
@@ -242,6 +247,7 @@ class Config:
                 file=template,
                 relative_base_dir=config_dir
             )
+            self.template = sub_output_path(self.template, self.output_path)
 
         if 'name' in config:
             self.name = config.get('name', None)
@@ -255,6 +261,8 @@ class Config:
                 file=base_tarball,
                 relative_base_dir=config_dir
             )
+            self.base_tarball = sub_output_path(
+                self.base_tarball, self.output_path)
 
         inherit_packages: bool = config.get('inherit_packages', True)
 
@@ -298,6 +306,8 @@ class Config:
                 file=modules_folder,
                 relative_base_dir=config_dir
             )
+            self.modules_folder = sub_output_path(
+                self.modules_folder, self.output_path)
 
             if not os.path.isdir(self.modules_folder):
                 raise InvalidConfiguration(f'The module folder {self.modules_folder} '
@@ -312,6 +322,7 @@ class Config:
                 file=image,
                 relative_base_dir=config_dir
             )
+            self.image = sub_output_path(self.image, self.output_path)
 
         if 'berrymill_conf' in config:
             berrymill_conf = config.get('berrymill_conf', None)
@@ -319,6 +330,8 @@ class Config:
                 file=berrymill_conf,
                 relative_base_dir=config_dir
             )
+            self.berrymill_conf = sub_output_path(
+                self.berrymill_conf, self.output_path)
 
         if 'use_berrymill' in config:
             self.use_berrymill = config.get('use_berrymill', True)
@@ -327,21 +340,22 @@ class Config:
             self.use_bootstrap_package = config.get(
                 'use_bootstrap_package', True)
 
-        if 'boopstrap_package' in config:
-            self.boopstrap_package = config.get('boopstrap_package', None)
+        if 'bootstrap_package' in config:
+            self.bootstrap_package = config.get('bootstrap_package', None)
 
-        if 'boostrap' in config:
+        if 'bootstrap' in config:
             if inherit_packages:
-                boostrap = parse_package_config(
-                    config.get('boostrap', []), self.arch)
-                self.boostrap += boostrap
+                bootstrap = parse_package_config(
+                    config.get('bootstrap', []), self.arch)
+                self.bootstrap += bootstrap
             else:
-                self.boostrap = parse_package_config(
-                    config.get('boostrap', []), self.arch)
+                self.bootstrap = parse_package_config(
+                    config.get('bootstrap', []), self.arch)
 
         if 'kiwi_root_overlays' in config:
             kiwi_root_overlays = parse_files(
                 config.get('kiwi_root_overlays', None),
+                output_path=self.output_path,
                 relative_base_dir=config_dir)
 
             kiwi_overlay_list = [r['source'] for r in kiwi_root_overlays]
@@ -359,6 +373,7 @@ class Config:
         if 'kiwi_scripts' in config:
             kiwi_scripts = parse_files(
                 config.get('kiwi_scripts', None),
+                output_path=self.output_path,
                 relative_base_dir=config_dir)
 
             kiwi_script_list = [s['source'] for s in kiwi_scripts]
@@ -381,6 +396,9 @@ class Config:
 
         if 'primary_repo' in config:
             self.primary_repo = config.get('primary_repo', None)
+
+        if 'primary_distro' in config:
+            self.primary_distro = config.get('primary_distro', None)
 
         if 'root_password' in config:
             self.root_password = config.get('root_password', 'linux')
@@ -417,42 +435,4 @@ class Config:
 
     def extract_package(self, vd: VersionDepends) -> bool:
         """Get package and add it to the target dir. """
-        # TODO: test
-        package = None
-
-        package = self.proxy.find_package(vd)
-        if not package:
-            return False
-
-        package = self.proxy.download_package(
-            arch=self.arch,
-            package=package
-        )
-
-        if not package:
-            logging.error('Package %s was not found!', package)
-            return False
-
-        if package.local_file and \
-                os.path.isfile(package.local_file):
-            # Download was successful.
-            logging.debug('Using package deb %s.', package.local_file)
-        else:
-            logging.critical('Package download failed!')
-            return False
-
-        if not package.local_file:
-            logging.critical('Package download failed! %s', package)
-            return False
-
-        logging.info('Using package %s (%s).', package, vd)
-
-        res = package.extract(self.target_dir)
-        if res is None:
-            logging.critical(
-                'Extraction of package %s (deb: %s) failed!', package, package.local_file)
-            return False
-
-        logging.debug('Package %s extracted to %s.', package, res)
-
-        return True
+        return self.proxy.extract_package(vd, self.arch, self.target_dir)

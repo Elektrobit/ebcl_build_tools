@@ -26,7 +26,7 @@ class FileNotFound(Exception):
     """ Raised if a command returns and returncode which is not 0. """
 
 
-def sub_output_path(path: str, output_path: Optional[str] = None):
+def sub_output_path(path: str, output_path: Optional[str] = None) -> str:
     """ Replace $$RESULTS$$ with output path.  """
     if '$$RESULTS$$' in path:
         if not output_path:
@@ -75,7 +75,7 @@ class Files:
 
     def copy_files(
         self,
-        files: list[dict[str, str]],
+        files: list[dict[str, Any]],
         target_dir: Optional[str] = None,
         output_path: Optional[str] = None,
         fix_ownership: bool = False
@@ -384,6 +384,7 @@ class Files:
 
 def parse_scripts(
     scripts: Optional[list[Any]],
+    output_path: str,
     env: EnvironmentType = EnvironmentType.FAKEROOT,
     relative_base_dir: Optional[str] = None
 ) -> list[dict[str, Any]]:
@@ -404,6 +405,8 @@ def parse_scripts(
                 file_base_dir=script.get('base_dir', None),
                 relative_base_dir=relative_base_dir
             )
+
+            script['name'] = sub_output_path(script['name'], output_path)
 
             if 'env' in script:
                 se = EnvironmentType.from_str(script['env'])
@@ -426,6 +429,9 @@ def parse_scripts(
                 file=script,
                 relative_base_dir=relative_base_dir
             )
+
+            name = sub_output_path(name, output_path)
+
             result.append({
                 'name': name,
                 'env': env
@@ -438,6 +444,7 @@ def parse_scripts(
 
 def parse_files(
     files: Optional[list[dict[str, str]]],
+    output_path: str,
     relative_base_dir: Optional[str] = None,
     resolve: bool = True
 ) -> list[dict[str, Any]]:
@@ -460,6 +467,8 @@ def parse_files(
                     relative_base_dir=relative_base_dir
                 )
 
+            file['source'] = sub_output_path(file['source'], output_path)
+
             processed.append(file)
 
         elif isinstance(file, str):
@@ -468,6 +477,8 @@ def parse_files(
                     file=file,
                     relative_base_dir=relative_base_dir
                 )
+
+            file = sub_output_path(file, output_path)
 
             processed.append({
                 'source': file

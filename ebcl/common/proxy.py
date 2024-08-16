@@ -352,3 +352,46 @@ class Proxy:
                 logging.error('Invalid apt repo config: %s', repo)
 
         return result
+
+    def extract_package(self, vd: VersionDepends, arch: CpuArch,
+                        target_dir: str) -> bool:
+        """Get package and add it to the target dir. """
+        # TODO: test
+        package = None
+
+        package = self.find_package(vd)
+        if not package:
+            return False
+
+        package = self.download_package(
+            arch=arch,
+            package=package
+        )
+
+        if not package:
+            logging.error('Package %s was not found!', package)
+            return False
+
+        if package.local_file and \
+                os.path.isfile(package.local_file):
+            # Download was successful.
+            logging.debug('Using package deb %s.', package.local_file)
+        else:
+            logging.critical('Package download failed!')
+            return False
+
+        if not package.local_file:
+            logging.critical('Package download failed! %s', package)
+            return False
+
+        logging.info('Using package %s (%s).', package, vd)
+
+        res = package.extract(target_dir)
+        if res is None:
+            logging.critical(
+                'Extraction of package %s (deb: %s) failed!', package, package.local_file)
+            return False
+
+        logging.debug('Package %s extracted to %s.', package, res)
+
+        return True

@@ -1,6 +1,8 @@
 """ Unit tests for the version helpers. """
 from ebcl.common.version import Version, VersionDepends, PackageRelation, VersionRealtion
 
+from ebcl.common.types.cpu_arch import CpuArch
+
 
 class TestVersion:
     """ Unit tests for the version helpers. """
@@ -75,14 +77,14 @@ class TestVersion:
             package_relation=PackageRelation.DEPENDS,
             version_relation=VersionRealtion.EXACT,
             version=Version('1.2.3'),
-            arch='amd64'
+            arch=CpuArch.AMD64
         )
         b = VersionDepends(
             name='hallo',
             package_relation=PackageRelation.DEPENDS,
             version_relation=VersionRealtion.EXACT,
             version=Version('1.2.3'),
-            arch='amd64'
+            arch=CpuArch.AMD64
         )
         assert a == b
 
@@ -91,14 +93,14 @@ class TestVersion:
             package_relation=PackageRelation.DEPENDS,
             version_relation=VersionRealtion.EXACT,
             version=Version('1.2.3'),
-            arch='amd64'
+            arch=CpuArch.AMD64
         )
         b = VersionDepends(
             name='hallo',
             package_relation=PackageRelation.DEPENDS,
             version_relation=VersionRealtion.EXACT,
             version=Version('1.2.3'),
-            arch='amd64'
+            arch=CpuArch.AMD64
         )
         assert a != b
 
@@ -107,14 +109,14 @@ class TestVersion:
             package_relation=PackageRelation.PRE_DEPENS,
             version_relation=VersionRealtion.EXACT,
             version=Version('1.2.3'),
-            arch='amd64'
+            arch=CpuArch.AMD64
         )
         b = VersionDepends(
             name='hallo',
             package_relation=PackageRelation.DEPENDS,
             version_relation=VersionRealtion.EXACT,
             version=Version('1.2.3'),
-            arch='amd64'
+            arch=CpuArch.AMD64
         )
         assert a != b
 
@@ -123,14 +125,14 @@ class TestVersion:
             package_relation=PackageRelation.DEPENDS,
             version_relation=VersionRealtion.LARGER,
             version=Version('1.2.3'),
-            arch='amd64'
+            arch=CpuArch.AMD64
         )
         b = VersionDepends(
             name='hallo',
             package_relation=PackageRelation.DEPENDS,
             version_relation=VersionRealtion.EXACT,
             version=Version('1.2.4'),
-            arch='amd64'
+            arch=CpuArch.AMD64
         )
         assert a != b
 
@@ -139,14 +141,14 @@ class TestVersion:
             package_relation=PackageRelation.DEPENDS,
             version_relation=VersionRealtion.EXACT,
             version=Version('1.2.3'),
-            arch='amd64'
+            arch=CpuArch.AMD64
         )
         b = VersionDepends(
             name='hallo',
             package_relation=PackageRelation.DEPENDS,
             version_relation=VersionRealtion.EXACT,
             version=Version('1.2.3'),
-            arch='arm64'
+            arch=CpuArch.AMD64
         )
         assert a != b
 
@@ -157,14 +159,14 @@ class TestVersion:
             package_relation=PackageRelation.DEPENDS,
             version_relation=VersionRealtion.EXACT,
             version=Version('1.2.3'),
-            arch='amd64'
+            arch=CpuArch.AMD64
         )
         b = VersionDepends(
             name='hallo',
             package_relation=PackageRelation.DEPENDS,
             version_relation=VersionRealtion.EXACT,
             version=Version('1.2.3'),
-            arch='amd64'
+            arch=CpuArch.AMD64
         )
         assert a < b
         assert a <= b
@@ -174,14 +176,14 @@ class TestVersion:
             package_relation=PackageRelation.DEPENDS,
             version_relation=VersionRealtion.EXACT,
             version=Version('1.2.3'),
-            arch='amd64'
+            arch=CpuArch.AMD64
         )
         b = VersionDepends(
             name='hallo',
             package_relation=PackageRelation.DEPENDS,
             version_relation=VersionRealtion.EXACT,
             version=Version('1.2.4'),
-            arch='amd64'
+            arch=CpuArch.AMD64
         )
         assert a < b
         assert a <= b
@@ -191,14 +193,14 @@ class TestVersion:
             package_relation=PackageRelation.PRE_DEPENS,
             version_relation=VersionRealtion.EXACT,
             version=None,
-            arch='amd64'
+            arch=CpuArch.AMD64
         )
         b = VersionDepends(
             name='hallo',
             package_relation=PackageRelation.DEPENDS,
             version_relation=VersionRealtion.EXACT,
             version=Version('1.2.3'),
-            arch='amd64'
+            arch=CpuArch.AMD64
         )
         assert a < b
         assert a <= b
@@ -208,14 +210,14 @@ class TestVersion:
             package_relation=PackageRelation.DEPENDS,
             version_relation=VersionRealtion.LARGER,
             version=Version('1.2.3'),
-            arch='amd64'
+            arch=CpuArch.AMD64
         )
         b = VersionDepends(
             name='hallo',
             package_relation=PackageRelation.DEPENDS,
             version_relation=VersionRealtion.EXACT,
             version=None,
-            arch='amd64'
+            arch=CpuArch.AMD64
         )
         assert a > b
         assert a >= b
