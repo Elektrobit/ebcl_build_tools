@@ -130,7 +130,7 @@ class TestApt:
         assert len(d) == 1
         assert d[0].name == 'perl'
         assert d[0].version is None
-        assert d[0].arch == 'any'
+        assert d[0].arch == CpuArch.ANY
 
     def test_parse_depends(self):
         """ Test of the parse_depends function. """

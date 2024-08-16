@@ -254,8 +254,7 @@ class InitrdGenerator:
         self.add_devices()
 
         # Copy files and directories specified in the files
-        self.config.fh.copy_files(
-            self.config.host_files, self.config.output_path)
+        self.config.fh.copy_files(self.config.host_files)
 
         # Create init script
         init_script: Path = Path(self.target_dir) / 'init'

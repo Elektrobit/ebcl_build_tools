@@ -22,10 +22,9 @@ def config_root(config: Config, archive_in: str, archive_out: str):
         # Copy host files to target_dir folder
         logging.info('Copy host files to target dir...')
         config.fh.copy_files(
-            config.host_files, config.target_dir, config.output_path)
+            config.host_files, config.target_dir)
 
-    config.fh.run_scripts(
-        config.scripts, config.target_dir, config.output_path)
+    config.fh.run_scripts(config.scripts, config.target_dir)
 
     ao: Optional[str] = config.fh.pack_root_as_tarball(
         output_dir=os.path.dirname(archive_out),

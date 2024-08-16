@@ -1,4 +1,5 @@
 """ Tests for the cache functions. """
+import os
 import shutil
 import tempfile
 
@@ -28,8 +29,11 @@ class TestCache:
 
     def test_add(self):
         """ Add a pacakage. """
-        res = self.cache.add(Package.from_deb(
-            '/workspace/tools/build/tests/data/busybox-static_1.36.1-3ubuntu1_amd64.deb', []))
+        deb = os.path.join(os.path.dirname(__file__), 'data',
+                           'busybox-static_1.36.1-3ubuntu1_amd64.deb')
+        assert os.path.isfile(deb)
+
+        res = self.cache.add(Package.from_deb(deb, []))
         assert res
 
         v = Version('1.36.1-3ubuntu1')
@@ -46,8 +50,11 @@ class TestCache:
 
     def test_get_no_version(self):
         """ Get any version of a package. """
-        res = self.cache.add(Package.from_deb(
-            '/workspace/tools/build/tests/data/busybox-static_1.36.1-3ubuntu1_amd64.deb', []))
+        deb = os.path.join(os.path.dirname(__file__), 'data',
+                           'busybox-static_1.36.1-3ubuntu1_amd64.deb')
+        assert os.path.isfile(deb)
+
+        res = self.cache.add(Package.from_deb(deb, []))
         assert res
 
         p = self.cache.get(CpuArch.AMD64, 'busybox-static')
@@ -67,17 +74,24 @@ class TestCache:
 
     def test_restore_cache(self):
         """ Test for restoring cache index. """
-        cache = Cache()
-        res = cache.add(Package.from_deb(
-            '/workspace/tools/build/tests/data/busybox-static_1.36.1-3ubuntu1_amd64.deb', []))
+        cache_dir = tempfile.mkdtemp()
+
+        cache = Cache(cache_dir)
+        deb = os.path.join(os.path.dirname(__file__), 'data',
+                           'busybox-static_1.36.1-3ubuntu1_amd64.deb')
+        assert os.path.isfile(deb)
+
+        res = cache.add(Package.from_deb(deb, []))
         assert res
 
         del cache
 
-        cache = Cache()
+        cache = Cache(cache_dir)
         p = cache.get(CpuArch.AMD64, 'busybox-static',
                       Version('1.36.1-3ubuntu1'))
         assert p
         assert p.name == 'busybox-static'
         assert p.arch == CpuArch.AMD64
         assert p.version == Version('1.36.1-3ubuntu1')
+
+        shutil.rmtree(cache_dir)

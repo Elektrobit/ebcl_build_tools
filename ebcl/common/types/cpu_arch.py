@@ -12,6 +12,7 @@ class CpuArch(Enum):
     AMD64 = 1
     ARM64 = 2
     ARMHF = 3
+    ANY = 4
 
     @classmethod
     def from_str(cls, arch: Optional[str]):
@@ -28,6 +29,8 @@ class CpuArch(Enum):
             return cls.ARM64
         elif arch == 'armhf':
             return cls.ARMHF
+        elif arch == 'any':
+            return cls.ANY
         else:
             return None
 
@@ -38,6 +41,8 @@ class CpuArch(Enum):
             return "arm64"
         elif self.value == 3:
             return "armhf"
+        elif self.value == 4:
+            return "any"
         else:
             return "UNKNOWN"
 
