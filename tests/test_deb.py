@@ -9,6 +9,8 @@ from ebcl.common.deb import Package
 from ebcl.common.proxy import Proxy
 from ebcl.common.version import Version
 
+from ebcl.common.types.cpu_arch import CpuArch
+
 
 class TestDeb:
     """ Tests for the deb functions. """
@@ -32,7 +34,7 @@ class TestDeb:
         p = ps[-1]
 
         with tempfile.TemporaryDirectory() as d:
-            pkg = self.proxy.download_package('amd64', p)
+            pkg = self.proxy.download_package(CpuArch.AMD64, p)
             assert pkg
             assert pkg.local_file
             assert os.path.isfile(pkg.local_file)
@@ -53,13 +55,13 @@ class TestDeb:
             url='http://archive.ubuntu.com/ubuntu',
             distro='jammy',
             components=['main', 'universe'],
-            arch='amd64'
+            arch=CpuArch.AMD64
         )
 
         proxy = Proxy()
         proxy.add_apt(apt)
 
-        packages = parse_depends('busybox', 'amd64')
+        packages = parse_depends('busybox', CpuArch.AMD64)
         assert packages
 
         (debs, contents, missing) = proxy.download_deb_packages(

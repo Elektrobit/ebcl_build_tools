@@ -9,27 +9,27 @@ from typing import Optional
 
 from ebcl.common import init_logging, promo, log_exception
 from ebcl.common.config import Config
-from ebcl.common.files import resolve_file, sub_output_path
+from ebcl.common.files import resolve_file
 
 
 class BootGenerator:
     """ EBcL boot generator. """
 
     @log_exception(call_exit=True)
-    def __init__(self, config_file: str):
+    def __init__(self, config_file: str, output_path: str):
         """ Parse the yaml config file.
 
         Args:
             config_file (Path): Path to the yaml config file.
         """
-        self.config: Config = Config(config_file)
+        self.config: Config = Config(config_file, output_path)
 
         self.proxy = self.config.proxy
         self.fake = self.config.fake
         self.fh = self.config.fh
 
         if self.config.name:
-            self.name: str = self.config.name
+            self.name: str = self.config.name + '.tar'
         else:
             self.name = 'boot.tar'
 
@@ -46,25 +46,25 @@ class BootGenerator:
             logging.critical('Not found packages: %s', missing)
 
     @log_exception()
-    def create_boot(self, output_path: str) -> Optional[str]:
+    def create_boot(self) -> Optional[str]:
         """ Create the boot.tar.  """
         logging.debug('Target directory: %s', self.config.target_dir)
 
         package_dir = tempfile.mkdtemp()
         logging.debug('Package directory: %s', package_dir)
 
-        output_path = os.path.abspath(output_path)
-        logging.debug('Output directory: %s', output_path)
-        if not os.path.isdir(output_path):
-            logging.critical('Output path %s is no folder!', output_path)
+        output_path = os.path.abspath(self.config.output_path)
+        logging.debug('Output directory: %s', self.config.output_path)
+        if not os.path.isdir(self.config.output_path):
+            logging.critical('Output path %s is no folder!',
+                             self.config.output_path)
             exit(1)
 
         logging.info('Download deb packages...')
         self.download_deb_packages(package_dir)
 
         if self.config.base_tarball:
-            base_tarball = sub_output_path(
-                self.config.base_tarball, output_path)
+            base_tarball = self.config.base_tarball
 
             logging.info('Extracting base tarball %s...', base_tarball)
             boot_tar_temp = tempfile.mkdtemp()
@@ -149,12 +149,12 @@ def main() -> None:
     logging.debug('Running boot_generator with args %s', args)
 
     # Read configuration
-    generator = BootGenerator(args.config_file)
+    generator = BootGenerator(args.config_file, args.output)
 
     image = None
 
     # Create the boot.tar
-    image = generator.create_boot(args.output)
+    image = generator.create_boot()
 
     if image:
         print(f'Results were written to {image}.')

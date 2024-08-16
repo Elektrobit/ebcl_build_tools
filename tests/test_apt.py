@@ -6,6 +6,8 @@ from ebcl.common.apt import Apt, parse_depends
 from ebcl.common.proxy import Proxy
 from ebcl.common.version import Version, VersionRealtion
 
+from ebcl.common.types.cpu_arch import CpuArch
+
 
 class TestApt:
     """ Tests for the apt functions. """
@@ -45,7 +47,7 @@ class TestApt:
             url='https://linux.elektrobit.com/eb-corbos-linux/1.2',
             distro='ebcl',
             components=['prod', 'dev'],
-            arch='arm64'
+            arch=CpuArch.ARM64
         )
 
         p = apt.find_package('busybox-static')
@@ -69,14 +71,14 @@ class TestApt:
         a = Apt(
             url='http://archive.ubuntu.com/ubuntu',
             distro='jammy',
-            arch='amd64',
+            arch=CpuArch.AMD64,
             components=['main', 'universe']
         )
 
         b = Apt(
             url='http://archive.ubuntu.com/ubuntu',
             distro='jammy',
-            arch='amd64',
+            arch=CpuArch.AMD64,
             components=['main', 'universe']
         )
         assert a == b
@@ -84,7 +86,7 @@ class TestApt:
         b = Apt(
             url='http://ports.ubuntu.com/ubuntu-ports',
             distro='jammy',
-            arch='amd64',
+            arch=CpuArch.AMD64,
             components=['main', 'universe']
         )
         assert a != b
@@ -92,7 +94,7 @@ class TestApt:
         b = Apt(
             url='http://archive.ubuntu.com/ubuntu',
             distro='jammy',
-            arch='amd64',
+            arch=CpuArch.AMD64,
             components=['main']
         )
         assert a != b
@@ -100,7 +102,7 @@ class TestApt:
         b = Apt(
             url='http://archive.ubuntu.com/ubuntu',
             distro='jammy',
-            arch='amd64',
+            arch=CpuArch.AMD64,
             components=['main', 'other']
         )
         assert a != b
@@ -108,7 +110,7 @@ class TestApt:
         b = Apt(
             url='http://archive.ubuntu.com/ubuntu',
             distro='noble',
-            arch='amd64',
+            arch=CpuArch.AMD64,
             components=['main', 'universe']
         )
         assert a != b
@@ -116,14 +118,14 @@ class TestApt:
         b = Apt(
             url='http://archive.ubuntu.com/ubuntu',
             distro='jammy',
-            arch='arm64',
+            arch=CpuArch.ARM64,
             components=['main', 'universe']
         )
         assert a != b
 
     def test_perl(self):
         """ Test package name with any suffix. """
-        d = parse_depends('perl:any', 'amd64')
+        d = parse_depends('perl:any', CpuArch.AMD64)
         assert d
         assert len(d) == 1
         assert d[0].name == 'perl'
@@ -132,7 +134,7 @@ class TestApt:
 
     def test_parse_depends(self):
         """ Test of the parse_depends function. """
-        vds = parse_depends('init-system-helpers (>= 1.54~)', 'amd64')
+        vds = parse_depends('init-system-helpers (>= 1.54~)', CpuArch.AMD64)
         assert vds
         assert len(vds) == 1
         assert vds[0].name == 'init-system-helpers'
@@ -142,7 +144,7 @@ class TestApt:
 
         vds = parse_depends(
             'libaprutil1-dbd-sqlite3 | libaprutil1-dbd-mysql '
-            '| libaprutil1-dbd-odbc | libaprutil1-dbd-pgsql', 'amd64')
+            '| libaprutil1-dbd-odbc | libaprutil1-dbd-pgsql', CpuArch.AMD64)
         assert vds
         assert len(vds) == 4
         assert vds[0].name == 'libaprutil1-dbd-sqlite3'
@@ -155,7 +157,7 @@ class TestApt:
         assert vds[3].version is None
 
         vds = parse_depends(
-            'libnghttp2-14 (>> 1.50.0) | libpcre2-8-0 (<= 10.22)', 'amd64')
+            'libnghttp2-14 (>> 1.50.0) | libpcre2-8-0 (<= 10.22)', CpuArch.AMD64)
         assert vds
         assert len(vds) == 2
         assert vds[0].name == 'libnghttp2-14'
@@ -166,7 +168,7 @@ class TestApt:
         assert vds[1].version_relation == VersionRealtion.SMALLER
 
         vds = parse_depends(
-            'libnghttp2-14 | libpcre2-8-0 (<< 10.22)', 'amd64')
+            'libnghttp2-14 | libpcre2-8-0 (<< 10.22)', CpuArch.AMD64)
         assert vds
         assert len(vds) == 2
         assert vds[0].name == 'libnghttp2-14'
@@ -177,7 +179,7 @@ class TestApt:
         assert vds[1].version_relation == VersionRealtion.STRICT_SMALLER
 
         vds = parse_depends(
-            'libnghttp2-14 (= 1.50.0) | libpcre2-8-0 (10.22)', 'amd64')
+            'libnghttp2-14 (= 1.50.0) | libpcre2-8-0 (10.22)', CpuArch.AMD64)
         assert vds
         assert len(vds) == 2
         assert vds[0].name == 'libnghttp2-14'

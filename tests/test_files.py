@@ -1,6 +1,7 @@
 """ Tests for the files functions. """
 import os
 import tempfile
+import shutil
 
 from typing import Any
 
@@ -671,11 +672,18 @@ class TestParsers:
     """ Tests for the config parser functions. """
 
     fake: Fake
+    temp_dir: str
 
     @classmethod
     def setup_class(cls):
         """ Prepare apt repo object. """
         cls.fake = Fake()
+        cls.temp_dir = tempfile.mkdtemp()
+
+    @classmethod
+    def teardown_class(cls):
+        """ Remove temp_dir. """
+        shutil.rmtree(cls.temp_dir)
 
     def test_parse_scripts(self):
         """ Test the scripts parsing. """
@@ -702,6 +710,7 @@ class TestParsers:
 
         scripts = parse_scripts(
             scripts=script_files,
+            output_path=self.temp_dir,
             relative_base_dir=os.path.dirname(__file__)
         )
         assert len(scripts) == 3
@@ -737,6 +746,7 @@ class TestParsers:
 
         files = parse_files(
             files=file_files,
+            output_path=self.temp_dir,
             relative_base_dir=os.path.dirname(__file__)
         )
 

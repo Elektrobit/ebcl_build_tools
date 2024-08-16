@@ -1,5 +1,7 @@
 """ Tests for config helpers. """
 import os
+import shutil
+import tempfile
 
 from ebcl.common.config import Config
 from ebcl.common.files import EnvironmentType
@@ -11,12 +13,24 @@ from ebcl.common.types.cpu_arch import CpuArch
 class TestConfig:
     """ Tests for config helpers. """
 
+    temp_dir: str
+
+    @classmethod
+    def setup_class(cls):
+        """ Prepare cache object. """
+        cls.temp_dir = tempfile.mkdtemp()
+
+    @classmethod
+    def teardown_class(cls):
+        """ Delete cache folder. """
+        shutil.rmtree(cls.temp_dir)
+
     def test_boot_yaml(self):
         """ Try to parse boot.yaml. """
         yaml_file = os.path.join(
             os.path.dirname(__file__), 'data', 'boot.yaml')
 
-        config = Config(yaml_file)
+        config = Config(yaml_file, self.temp_dir)
 
         assert len(config.apt_repos) == 2
         assert config.apt_repos[0].distro == 'jammy'
@@ -30,11 +44,8 @@ class TestConfig:
         assert config.download_deps is True
 
         assert len(config.files) == 2
-        assert config.files[0]['source'] == 'boot/vmlinuz*'
-        assert config.files[1]['source'] == 'boot/config*'
-        assert config.files[1]['mode'] == 777
-        assert config.files[1]['uid'] == 123
-        assert config.files[1]['gid'] == 456
+        assert config.files[0] == 'boot/vmlinuz*'
+        assert config.files[1] == 'boot/config*'
 
         assert len(config.scripts) == 1
         assert config.scripts[0]['name'] == os.path.join(
@@ -45,7 +56,7 @@ class TestConfig:
         yaml_file = os.path.join(
             os.path.dirname(__file__), 'data', 'initrd.yaml')
 
-        config = Config(yaml_file)
+        config = Config(yaml_file, self.temp_dir)
 
         assert len(config.apt_repos) == 2
         assert config.apt_repos[0].distro == 'jammy'
@@ -84,7 +95,7 @@ class TestConfig:
         yaml_file = os.path.join(
             os.path.dirname(__file__), 'data', 'root.yaml')
 
-        config = Config(yaml_file)
+        config = Config(yaml_file, self.temp_dir)
 
         assert config.name == 'ubuntu'
 
@@ -105,7 +116,7 @@ class TestConfig:
         yaml_file = os.path.join(
             os.path.dirname(__file__), 'data', 'root_elbe.yaml')
 
-        config = Config(yaml_file)
+        config = Config(yaml_file, self.temp_dir)
 
         assert config.name == 'ubuntu'
 
@@ -121,14 +132,14 @@ class TestConfig:
         assert config.scripts[1]['env'] == EnvironmentType.FAKEROOT
         assert config.scripts[2]['env'] == EnvironmentType.CHROOT
 
-        config.type == BuildType.ELBE
+        assert config.type == BuildType.ELBE
 
     def test_root_kiwi_berry_yaml(self):
         """ Try to parse boot.yaml. """
         yaml_file = os.path.join(
             os.path.dirname(__file__), 'data', 'root_kiwi_berry.yaml')
 
-        config = Config(yaml_file)
+        config = Config(yaml_file, self.temp_dir)
 
         assert config.name == 'ubuntu'
 
