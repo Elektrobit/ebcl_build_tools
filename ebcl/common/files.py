@@ -77,7 +77,6 @@ class Files:
         self,
         files: list[dict[str, Any]],
         target_dir: Optional[str] = None,
-        output_path: Optional[str] = None,
         fix_ownership: bool = False
     ):
         """ Copy files. """
@@ -93,7 +92,7 @@ class Files:
                     'Invalid file entry %s, source is missing!', entry)
                 continue
 
-            src = sub_output_path(source, output_path)
+            src: str = source
 
             if not target_dir:
                 target_dir = self.target_dir
@@ -213,7 +212,6 @@ class Files:
         self,
         scripts: list[dict[str, str]],
         cwd: str,
-        output_path: Optional[str] = None,
     ):
         """ Run scripts. """
         # TODO: test
@@ -228,7 +226,7 @@ class Files:
                     'Invalid script entry %s, name is missing!', script)
                 continue
 
-            file = sub_output_path(script['name'], output_path)
+            file = script['name']
 
             self.run_script(
                 file=file,

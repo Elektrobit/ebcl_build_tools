@@ -6,6 +6,7 @@ from pathlib import Path
 
 from ebcl.common.apt import Apt, parse_depends
 from ebcl.common.deb import Package
+from ebcl.common.fake import Fake
 from ebcl.common.proxy import Proxy
 from ebcl.common.version import Version
 
@@ -33,21 +34,25 @@ class TestDeb:
         ps.sort()
         p = ps[-1]
 
-        with tempfile.TemporaryDirectory() as d:
-            pkg = self.proxy.download_package(CpuArch.AMD64, p)
-            assert pkg
-            assert pkg.local_file
-            assert os.path.isfile(pkg.local_file)
+        d = tempfile.mkdtemp()
 
-            location = pkg.extract(d)
-            assert location
-            assert location == d
+        pkg = self.proxy.download_package(CpuArch.AMD64, p)
+        assert pkg
+        assert pkg.local_file
+        assert os.path.isfile(pkg.local_file)
 
-            location = pkg.extract(None)
-            assert location is not None
-            assert os.path.isdir(os.path.join(location))
-            assert os.path.isfile(os.path.join(
-                location, 'bin', 'busybox'))
+        location = pkg.extract(d)
+        assert location
+        assert location == d
+
+        location = pkg.extract(None)
+        assert location is not None
+        assert os.path.isdir(os.path.join(location))
+        assert os.path.isfile(os.path.join(
+            location, 'bin', 'busybox'))
+
+        fake = Fake()
+        fake.run_sudo(f'rm -rf {d}', check=False)
 
     def test_download_deb_packages(self):
         """ Test download busybox and depends. """
@@ -78,11 +83,11 @@ class TestDeb:
 
     def test_pkg_form_deb(self):
         """ Test package creation from deb files. """
-        p = Package.from_deb('/path/to/my/gcab_0.7-1_i386.deb', [])
+        p = Package.from_deb('/path/to/my/gcab_0.7-1_any.deb', [])
         assert p is not None
         assert p.name == 'gcab'
         assert p.version == Version('0.7-1')
-        assert p.arch == 'i386'
+        assert p.arch == CpuArch.ANY
         assert p.local_file is None
 
         p = Package.from_deb('/path/to/my/gcab_0.7-1_i386.dsc', [])

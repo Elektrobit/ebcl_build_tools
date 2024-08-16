@@ -148,7 +148,7 @@ class TestVersion:
             package_relation=PackageRelation.DEPENDS,
             version_relation=VersionRealtion.EXACT,
             version=Version('1.2.3'),
-            arch=CpuArch.AMD64
+            arch=CpuArch.ARM64
         )
         assert a != b
 

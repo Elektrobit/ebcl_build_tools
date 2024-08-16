@@ -87,22 +87,21 @@ class BootGenerator:
         # Copy host files to target_dir folder
         logging.info('Copy host files to target dir...')
         self.fh.copy_files(self.config.host_files,
-                           self.config.target_dir,
-                           output_path)
+                           self.config.target_dir)
 
         # Copy host files package_dir folder
         logging.info('Copy host files package dir...')
-        self.fh.copy_files(self.config.host_files, package_dir, output_path)
+        self.fh.copy_files(self.config.host_files, package_dir)
 
         logging.info('Running config scripts...')
-        self.fh.run_scripts(self.config.scripts, package_dir, output_path)
+        self.fh.run_scripts(self.config.scripts, package_dir)
 
         # Copy files and directories specified in the files
         logging.info('Copy result files...')
         files = [{'source': resolve_file(f, package_dir)}
                  for f in self.config.files]
         self.fh.copy_files(files, self.config.target_dir,
-                           output_path, fix_ownership=True)
+                           fix_ownership=True)
 
         # Remove package temporary folder
         logging.info('Remove temporary package contents...')

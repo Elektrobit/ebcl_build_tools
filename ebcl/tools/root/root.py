@@ -451,7 +451,7 @@ class RootGenerator:
         kiwi_script_files = [{'source': file, 'mode': 700}
                              for file in kiwi_scripts]
         self.config.fh.copy_files(
-            kiwi_script_files, os.path.dirname(appliance), self.config.output_path)
+            kiwi_script_files, os.path.dirname(appliance))
 
         root_folder = os.path.join(os.path.dirname(appliance), 'root')
         self.config.fake.run_cmd(f'mkdir -p {root_folder}')

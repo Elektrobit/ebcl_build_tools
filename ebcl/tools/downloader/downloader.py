@@ -19,13 +19,13 @@ class PackageDownloader:
     # TODO: test
 
     @log_exception(call_exit=True)
-    def __init__(self, config_file: str):
+    def __init__(self, config_file: str, output_path: str):
         """ Parse the yaml config file.
 
         Args:
             config_file (Path): Path to the yaml config file.
         """
-        self.config: Config = Config(config_file)
+        self.config: Config = Config(config_file, output_path)
 
     @log_exception(call_exit=True)
     def download_packages(
@@ -101,7 +101,7 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    downloader = PackageDownloader(args.config)
+    downloader = PackageDownloader(args.config, args.output)
 
     # Download and extract the packages
     downloader.download_packages(
