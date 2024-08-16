@@ -2,7 +2,9 @@
 from enum import Enum
 from typing import Optional
 
-from ..config import InvalidConfiguration
+
+class UnsupportedCpuArchitecture(Exception):
+    """ Raised if a version string is requested for an unsupported architecture. """
 
 
 class CpuArch(Enum):
@@ -48,7 +50,7 @@ class CpuArch(Enum):
         elif self.value == 3:
             return "armhf"
 
-        raise InvalidConfiguration(
+        raise UnsupportedCpuArchitecture(
             f'Unsupported CPU architecture {str(self)} for elbe build!')
 
     def get_kiwi_arch(self) -> str:
@@ -58,7 +60,7 @@ class CpuArch(Enum):
         elif self.value == 2:
             return "aarch64"
 
-        raise InvalidConfiguration(
+        raise UnsupportedCpuArchitecture(
             f'Unsupported CPU architecture {str(self)} for kiwi-ng build!')
 
     def get_berrymill_arch(self) -> str:
@@ -68,7 +70,7 @@ class CpuArch(Enum):
         elif self.value == 2:
             return "arm64"
 
-        raise InvalidConfiguration(
+        raise UnsupportedCpuArchitecture(
             f'Unsupported CPU architecture {str(self)} for berrymill build!')
 
     def get_box_arch(self) -> str:
@@ -78,5 +80,5 @@ class CpuArch(Enum):
         elif self.value == 2:
             return "--aarch64"
 
-        raise InvalidConfiguration(
+        raise UnsupportedCpuArchitecture(
             f'Unsupported CPU architecture {str(self)} for berrymill build!')
