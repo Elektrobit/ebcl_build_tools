@@ -14,6 +14,7 @@ from ebcl.common import init_logging, promo, log_exception
 from ebcl.common.config import Config
 from ebcl.common.files import EnvironmentType
 from ebcl.common.templates import render_template
+from ebcl.common.version import parse_package
 
 
 class InitrdGenerator:
@@ -33,6 +34,10 @@ class InitrdGenerator:
             self.name: str = self.config.name + '.img'
         else:
             self.name = 'initrd.img'
+
+        if not self.config.busybox:
+            self.config.busybox = parse_package(
+                'busybox-static', self.config.arch)
 
     def install_busybox(self) -> bool:
         """Get busybox and add it to the initrd. """

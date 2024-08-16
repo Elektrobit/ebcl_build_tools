@@ -17,4 +17,5 @@ files:
   - boot/vmlinuz*
   - boot/config*
 scripts:
-  - config_boot.sh
+  - name: config_boot.sh
+    env: sudo
