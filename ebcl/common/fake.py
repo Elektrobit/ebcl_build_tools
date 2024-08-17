@@ -75,8 +75,7 @@ class Fake:
                 logging.critical(
                     'Execution of command %s failed with returncode %s!', cmd, p.returncode)
                 raise CommandFailed(
-                    f'Execution of command {
-                        cmd} failed with returncode {p.returncode}!\n'
+                    f'Execution of command {cmd} failed with returncode {p.returncode}!\n'
                     f'returncode: {p.returncode}\n'
                     f'STDOUT:\n{pout}'
                     f'STDERR:\n{perr}')
@@ -92,8 +91,7 @@ class Fake:
     ) -> Tuple[Optional[str], str, int]:
         """ Run a command using fakeroot. """
         return self.run_cmd(
-            cmd=f'fakeroot -i {
-                self.state} -s {self.state} -- {cmd}',
+            cmd=f'fakeroot - i {self.state} - s {self.state} - - {cmd}',
             cwd=cwd,
             stdout=stdout,
             check=check
