@@ -15,3 +15,5 @@ report.html
 htmlcov
 
 /tools/
+
+.coverage*
