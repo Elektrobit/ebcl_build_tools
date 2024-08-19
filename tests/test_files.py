@@ -326,7 +326,7 @@ class TestFiles:
         assert ret == 0
         assert not err.strip()
         assert out
-        assert f'{os.getuid()} {os.getgid()} 664' in out.strip()
+        assert f'{os.getuid()} {os.getgid()} 644' in out.strip()
 
         assert os.path.isfile(f'{self.target_dir}/adir/c')
 
@@ -416,7 +416,7 @@ class TestFiles:
         assert ret == 0
         assert not err.strip()
         assert out
-        assert '0 0 664' in out.strip()
+        assert '0 0 644' in out.strip()
 
         (out, err, ret) = self.fake.run_fake(
             f'cat  {self.target_dir}/target')

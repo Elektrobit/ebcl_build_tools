@@ -56,17 +56,22 @@ class TestDeb:
 
     def test_download_deb_packages(self):
         """ Test download busybox and depends. """
-        apt = Apt(
-            url='http://archive.ubuntu.com/ubuntu',
+        proxy = Proxy()
+        proxy.add_apt(Apt.ebcl_apt(CpuArch.ARM64))
+        proxy.add_apt(Apt(
+            url='http://ports.ubuntu.com/ubuntu-ports',
             distro='jammy',
             components=['main', 'universe'],
-            arch=CpuArch.AMD64
-        )
+            arch=CpuArch.ARM64
+        ))
+        proxy.add_apt(Apt(
+            url='http://ports.ubuntu.com/ubuntu-ports',
+            distro='jammy-security',
+            components=['main', 'universe'],
+            arch=CpuArch.ARM64
+        ))
 
-        proxy = Proxy()
-        proxy.add_apt(apt)
-
-        packages = parse_depends('busybox', CpuArch.AMD64)
+        packages = parse_depends('busybox', CpuArch.ARM64)
         assert packages
 
         (debs, contents, missing) = proxy.download_deb_packages(
