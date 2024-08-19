@@ -17,3 +17,8 @@ htmlcov
 /tools/
 
 .coverage*
+
+pytest_report.html
+
+assets/
+

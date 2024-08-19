@@ -89,7 +89,7 @@ class Fake:
     ) -> Tuple[Optional[str], str, int]:
         """ Run a command using fakeroot. """
         return self.run_cmd(
-            cmd=f'fakeroot - i {self.state} - s {self.state} - - {cmd}',
+            cmd=f'fakeroot -i {self.state} -s {self.state} -- {cmd}',
             cwd=cwd,
             stdout=stdout,
             check=check
