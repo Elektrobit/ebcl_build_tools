@@ -352,14 +352,16 @@ class RootGenerator:
                 logging.error('No key found for %s, skipping repo!', apt)
                 continue
 
-            if apt.arch not in berrymill_conf['repos']['release']:
-                berrymill_conf['repos']['release'][apt.arch] = {}
+            arch = str(apt.arch)
+
+            if arch not in berrymill_conf['repos']['release']:
+                berrymill_conf['repos']['release'][arch] = {}
 
             for component in apt.components:
                 cmp_id = f'{cnt}_{apt.distro}_{component}'
                 cnt += 1
 
-                berrymill_conf['repos']['release'][apt.arch][cmp_id] = {
+                berrymill_conf['repos']['release'][arch][cmp_id] = {
                     'url': apt.url,
                     'type': 'apt-deb',
                     'key': f'file://{apt_repo_key}',
