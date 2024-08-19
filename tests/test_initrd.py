@@ -1,6 +1,5 @@
 """ Unit tests for the EBcL initrd generator. """
 import os
-import shutil
 import tempfile
 
 from pathlib import Path
@@ -168,9 +167,13 @@ class TestInitrd:
         assert out.strip() == '123 456'
         assert not err.strip()
 
-    def test_sysroot_is_created(self):
-        """ Test that sysroot folder is created. """
-        self.generator.create_initrd()
+    def test_initrd_is_created(self):
+        """ Test that the initrd.img is created. """
+        out = tempfile.mkdtemp()
 
-        out = os.path.join(self.generator.config.output_path, 'initrd.img')
+        generator = InitrdGenerator(self.yaml, out)
+        out = generator.create_initrd()
+        assert out
         assert os.path.isfile(out)
+
+        self.fake.run_sudo(f'rm -rf {out}', check=False)

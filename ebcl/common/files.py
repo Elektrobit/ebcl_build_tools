@@ -158,7 +158,16 @@ class Files:
             file = os.path.abspath(file)
 
             if os.path.isfile(file):
-                target = os.path.join(dst, os.path.basename(file))
+                if os.path.exists(dst):
+                    if os.path.isdir(dst):
+                        # copy file to dir
+                        target = os.path.join(dst, os.path.basename(file))
+                    else:
+                        # overwrite file
+                        target = dst
+                else:
+                    # assume name if new filename
+                    target = dst
             else:
                 target = dst
 

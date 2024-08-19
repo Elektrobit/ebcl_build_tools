@@ -115,7 +115,7 @@ class BootGenerator:
                 output_dir=output_path,
                 archive_name=self.name,
                 root_dir=self.config.target_dir,
-                use_sudo=False
+                use_sudo=True
             )
 
         # copy to output folder
