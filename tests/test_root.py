@@ -4,8 +4,9 @@ import shutil
 import tempfile
 
 from ebcl.common.apt import Apt
-from ebcl.tools.root.root import RootGenerator, ImageType
+from ebcl.tools.root.root import RootGenerator
 
+from ebcl.common.types.build_type import BuildType
 from ebcl.common.types.cpu_arch import CpuArch
 
 
@@ -38,100 +39,80 @@ class TestRoot:
     def test_read_config(self):
         """ Test yaml config loading. """
         assert self.generator.config.image is None
-        assert self.generator.config.type == ImageType.ELBE
+        assert self.generator.config.type == BuildType.ELBE
 
     def test_build_kiwi_image(self):
         """ Test kiwi image build. """
-        out = tempfile.mkdtemp()
-
+        # EBcL dev container required - root generator calls berrymill as subprocess
         test_dir = os.path.dirname(os.path.abspath(__file__))
         yaml = os.path.join(test_dir, 'data', 'root_kiwi.yaml')
         generator = RootGenerator(yaml, self.temp_dir, False)
 
-        generator.apt_repos = [Apt.ebcl_apt(CpuArch.AMD64)]
-
-        archive = generator.create_root(out)
+        archive = generator.create_root()
         assert archive
         assert os.path.isfile(archive)
 
-        shutil.rmtree(out)
-
     def test_build_root_archive(self):
         """ Test build root.tar. """
-        out = tempfile.mkdtemp()
-
+        # EBcL dev container required - root generator calls elbe as subprocess
         test_dir = os.path.dirname(os.path.abspath(__file__))
         yaml = os.path.join(test_dir, 'data', 'root_elbe.yaml')
         generator = RootGenerator(yaml, self.temp_dir, False)
 
         generator.apt_repos = [Apt.ebcl_apt(CpuArch.AMD64)]
 
-        archive = generator.create_root(out)
+        archive = generator.create_root()
         assert archive
         assert os.path.isfile(archive)
 
-        shutil.rmtree(out)
-
     def test_build_kiwi_no_berry(self):
         """ Test kiwi image build without berrymill. """
-        out = tempfile.mkdtemp()
-
+        # EBcL dev container required - root generator calls kiwi-ng as subprocess
         test_dir = os.path.dirname(os.path.abspath(__file__))
         yaml = os.path.join(test_dir, 'data', 'root_kiwi_berry.yaml')
         generator = RootGenerator(yaml, self.temp_dir, False)
 
         generator.apt_repos = [Apt.ebcl_apt(CpuArch.AMD64)]
 
-        archive = generator.create_root(out)
+        archive = generator.create_root()
         assert archive
         assert os.path.isfile(archive)
 
-        shutil.rmtree(out)
-
     def test_build_kiwi_no_bootstrap(self):
         """ Test kiwi image build without bootstrap package. """
-        out = tempfile.mkdtemp()
-
+        # EBcL dev container required - root generator calls kiwi-ng as subprocess
         test_dir = os.path.dirname(os.path.abspath(__file__))
         yaml = os.path.join(test_dir, 'data', 'root_kiwi_debo.yaml')
         generator = RootGenerator(yaml, self.temp_dir, False)
 
         generator.apt_repos = [Apt()]
 
-        archive = generator.create_root(out)
+        archive = generator.create_root()
         assert archive
         assert os.path.isfile(archive)
 
-        # shutil.rmtree(out)
-
     def test_build_sysroot_kiwi(self):
         """ Test kiwi image build. """
-        out = tempfile.mkdtemp()
-
+        # EBcL dev container required - root generator calls kiwi-ng as subprocess
         test_dir = os.path.dirname(os.path.abspath(__file__))
         yaml = os.path.join(test_dir, 'data', 'sysroot_kiwi.yaml')
         generator = RootGenerator(yaml, self.temp_dir, False)
 
         generator.apt_repos = [Apt.ebcl_apt(CpuArch.AMD64)]
 
-        archive = generator.create_root(out)
+        archive = generator.create_root()
         assert archive
         assert os.path.isfile(archive)
 
-        shutil.rmtree(out)
-
     def test_build_sysroot_elbe(self):
         """ Test build root.tar. """
-        out = tempfile.mkdtemp()
-
+        # EBcL dev container required - root generator calls elbe as subprocess
         test_dir = os.path.dirname(os.path.abspath(__file__))
         yaml = os.path.join(test_dir, 'data', 'sysroot_elbe.yaml')
         generator = RootGenerator(yaml, self.temp_dir, False)
 
         generator.apt_repos = [Apt.ebcl_apt(CpuArch.AMD64)]
 
-        archive = generator.create_root(out)
+        archive = generator.create_root()
         assert archive
         assert os.path.isfile(archive)
-
-        shutil.rmtree(out)

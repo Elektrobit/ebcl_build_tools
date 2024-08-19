@@ -116,7 +116,7 @@ class Fake:
         """ Run a command using sudo. """
         cmd = cmd.replace('"', r'\"')
         return self.run_cmd(
-            cmd=f'sudo bash -c \'{cmd}\'',
+            cmd=f'sudo bash -c \"{cmd}\"',
             cwd=cwd,
             stdout=stdout,
             check=check

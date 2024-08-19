@@ -18,6 +18,7 @@ class TestInitrd:
     yaml: str
     temp_dir: str
     generator: InitrdGenerator
+    fake: Fake
 
     @classmethod
     def setup_class(cls):
@@ -27,12 +28,12 @@ class TestInitrd:
         # Prepare generator
         cls.temp_dir = tempfile.mkdtemp()
         cls.generator = InitrdGenerator(cls.yaml, cls.temp_dir)
+        cls.fake = Fake()
 
     @classmethod
     def teardown_class(cls):
         """ Remove temp_dir. """
-        fake = Fake()
-        fake.run_sudo(f'rm -rf {cls.temp_dir}')
+        cls.fake.run_sudo(f'rm -rf {cls.temp_dir}')
 
     def test_read_config(self):
         """ Test yaml config loading. """
@@ -97,10 +98,10 @@ class TestInitrd:
 
         self.generator.copy_modules(mods_temp)
 
-        shutil.rmtree(mods_temp)
+        self.fake.run_sudo(f'rm -rf {mods_temp}', check=False)
 
         assert os.path.isfile(os.path.join(
-            self.temp_dir, 'lib', 'modules', kversion, module))
+            self.generator.config.target_dir, 'lib', 'modules', kversion, module))
 
     def test_add_devices(self):
         """ Test device node creation. """
@@ -114,18 +115,18 @@ class TestInitrd:
         self.generator.install_busybox()
         self.generator.add_devices()
 
-        device = Path(self.temp_dir) / 'dev' / 'console'
+        device = Path(self.generator.config.target_dir) / 'dev' / 'console'
         assert device.is_char_device()
 
     def test_copy_files(self):
         """ Test copying of files. """
         self.generator.config.host_files = [
             {
-                'source': 'dummy.txt',
+                'source': f'{os.path.dirname(__file__)}/data/dummy.txt',
                 'destination': 'root'
             },
             {
-                'source': 'other.txt',
+                'source': f'{os.path.dirname(__file__)}/data/other.txt',
                 'destination': 'root',
                 'mode': '700',
                 'uid': '123',
@@ -133,37 +134,35 @@ class TestInitrd:
             }
         ]
 
-        os.mkdir(os.path.join(self.temp_dir, 'root'))
+        os.mkdir(os.path.join(self.generator.config.target_dir, 'root'))
 
         self.generator.install_busybox()
         self.generator.config.fh.copy_files(
             self.generator.config.host_files,
-            self.generator.config.output_path)
+            self.generator.target_dir)
 
-        fake = Fake()
-
-        (out, err, _returncode) = fake.run_sudo(
-            f'stat -c \'%a\' {self.temp_dir}/root/dummy.txt')
+        (out, err, _returncode) = self.fake.run_sudo(
+            f'stat -c \'%a\' {self.generator.target_dir}/root/dummy.txt')
         assert out is not None
         out = out.split('\n')[-2]
-        assert out.strip() == '666'
+        assert out.strip() == '600'
         assert not err.strip()
 
-        (out, err, _returncode) = fake.run_sudo(
-            f'stat -c \'%u %g\' {self.temp_dir}/root/dummy.txt')
+        (out, err, _returncode) = self.fake.run_sudo(
+            f'stat -c \'%u %g\' {self.generator.target_dir}/root/dummy.txt')
         assert out is not None
         out = out.split('\n')[-2]
-        assert out.strip() == '0 0'
+        assert out.strip() == f'0 0'
         assert not err.strip()
 
-        (out, err, _returncode) = fake.run_sudo(
-            f'stat -c \'%a\' {self.temp_dir}/root/other.txt')
+        (out, err, _returncode) = self.fake.run_sudo(
+            f'stat -c \'%a\' {self.generator.target_dir}/root/other.txt')
         assert out is not None
         out = out.split('\n')[-2]
         assert out.strip() == '700'
 
-        (out, err, _returncode) = fake.run_sudo(
-            f'stat -c \'%u %g\' {self.temp_dir}/root/other.txt')
+        (out, err, _returncode) = self.fake.run_sudo(
+            f'stat -c \'%u %g\' {self.generator.target_dir}/root/other.txt')
         assert out is not None
         out = out.split('\n')[-2]
         assert out.strip() == '123 456'
@@ -173,5 +172,5 @@ class TestInitrd:
         """ Test that sysroot folder is created. """
         self.generator.create_initrd()
 
-        out = os.path.join(self.temp_dir, 'initrd.img')
+        out = os.path.join(self.generator.config.output_path, 'initrd.img')
         assert os.path.isfile(out)
