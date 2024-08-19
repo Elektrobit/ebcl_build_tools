@@ -175,8 +175,8 @@ class Config:
                 bases = base
 
             if not isinstance(bases, list):
-                raise InvalidConfiguration(f'Unknown base value {
-                                           base} ({type(base)})!')
+                raise InvalidConfiguration(
+                    f'Unknown base value {base} ({type(base)})!')
 
             for b in bases:
                 b = resolve_file(
