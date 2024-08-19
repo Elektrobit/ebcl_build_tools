@@ -17,14 +17,11 @@ import yaml
 from ebcl.common import init_logging, promo, log_exception, ImplementationError
 from ebcl.common.apt import Apt
 from ebcl.common.config import Config, InvalidConfiguration
-from ebcl.common.fake import Fake
-from ebcl.common.files import Files, EnvironmentType, parse_scripts, parse_files
-from ebcl.common.proxy import Proxy
 from ebcl.common.templates import render_template
-from ebcl.common.version import VersionDepends, parse_package_config, parse_package
+from ebcl.common.version import parse_package_config
 
 from ebcl.common.types.cpu_arch import CpuArch
-from ebcl.common.types.image_type import ImageType
+from ebcl.common.types.build_type import BuildType
 
 from . import config_root
 
@@ -61,7 +58,7 @@ class RootGenerator:
             else:
                 self.config.console = 'ttyAMA0,115200'
 
-        use_primary_repo = self.config.type == ImageType.ELBE
+        use_primary_repo = self.config.type == BuildType.ELBE
         if self.config.primary_repo:
             use_primary_repo = True
         else:
@@ -590,9 +587,9 @@ class RootGenerator:
         logging.debug('Result directory: %s', self.result_dir)
 
         image_file = None
-        if self.config.type == ImageType.ELBE:
+        if self.config.type == BuildType.ELBE:
             image_file = self._build_elbe_image()
-        elif self.config.type == ImageType.KIWI:
+        elif self.config.type == BuildType.KIWI:
             image_file = self._build_kiwi_image()
 
         if not image_file:

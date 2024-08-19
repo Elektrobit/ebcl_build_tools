@@ -128,7 +128,7 @@ class Files:
         self,
         src: str,
         dst: str,
-        environment: Optional[EnvironmentType] = EnvironmentType.FAKEROOT,
+        environment: Optional[EnvironmentType] = EnvironmentType.SUDO,
         uid: Optional[int] = None,
         gid: Optional[int] = None,
         mode: Optional[str] = None,
@@ -157,7 +157,7 @@ class Files:
         for file in matches:
             file = os.path.abspath(file)
 
-            if os.path.isfile(file) and os.path.isdir(dst):
+            if os.path.isfile(file):
                 target = os.path.join(dst, os.path.basename(file))
             else:
                 target = dst
