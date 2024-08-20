@@ -39,7 +39,7 @@ class Config:
         'use_bootstrap_package', 'bootstrap_package', 'bootstrap', 'kiwi_root_overlays',
         'use_kiwi_defaults', 'kiwi_scripts', 'kvm', 'image_version', 'type', 'primary_repo',
         'root_password', 'hostname', 'domain', 'console', 'packer', 'sysroot_packages',
-        'sysroot_defaults', 'primary_distro'
+        'sysroot_defaults', 'primary_distro', 'base'
     ]
 
     def __init__(self, config_file: str, output_path: str):
