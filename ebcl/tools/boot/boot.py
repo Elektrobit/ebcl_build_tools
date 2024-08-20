@@ -126,7 +126,8 @@ class BootGenerator:
         self.fh.copy_file(f'{self.config.target_dir}/*',
                           output_path,
                           move=True,
-                          delete_if_exists=True)
+                          delete_if_exists=True,
+                          fix_ownership=True)
         return output_path
 
 
