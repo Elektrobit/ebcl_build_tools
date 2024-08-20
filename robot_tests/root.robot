@@ -12,7 +12,7 @@ Fakeoot config executed
     File Should Exist    /fake
 
 Fakechroot config was executed
-    File Should Exist    /chfake
+    File Should Exist    /sudo
 
 Chroot config was executed
     File Should Exist    /chroot
