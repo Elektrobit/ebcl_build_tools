@@ -10,11 +10,9 @@ Kernel exists
 
 Config is OK
     File Should Exist    /config*
-    Should Have Mode    /config*    777
-    Should Be Owned By    /config*    123    456
 
 Script was executed
-    File Should Exist    /boot/some_config    regular empty file
+    File Should Exist    /some_config    regular empty file
 
 *** Keywords ***
 Setup
