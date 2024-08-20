@@ -48,9 +48,9 @@ class RootGenerator:
         self.sysroot: bool = sysroot_build
 
         if self.config.name:
-            self.name: str = self.config.name + '.tar'
+            self.name: str = self.config.name
         else:
-            self.name = 'root.tar'
+            self.name = 'root'
 
         if not self.config.console:
             if self.config.arch == CpuArch.AMD64:
