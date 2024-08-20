@@ -36,9 +36,9 @@ Rootfs should be set up
 
 File dummy.txt should be OK
     Should Be Owned By   /root/dummy.txt    0    0
-    Should Have Mode     /root/dummy.txt    666
+    Should Have Mode     /root/dummy.txt    600
 
-File dummy should be OK
+File other.txt should be OK
     Should Be Owned By   /root/other.txt    123    456
     Should Have Mode     /root/other.txt    777
 
