@@ -1,4 +1,5 @@
 """ Yaml loading helpers. """
+import glob
 import logging
 import os
 import tempfile
@@ -219,8 +220,9 @@ class Config:
 
         for host_file in host_files:
             host_file_path = host_file['source']
-            if not os.path.exists(host_file_path):
-                raise FileNotFound(f'The file {file} referenced form config file '
+            matches = glob.glob(host_file_path)
+            if not matches:
+                raise FileNotFound(f'The file {host_file} referenced form config file '
                                    f'{conifg_file} was not found!')
 
         self.host_files += host_files
@@ -232,7 +234,8 @@ class Config:
 
         for script in scripts:
             script_path = script['name']
-            if not os.path.exists(script_path):
+            matches = glob.glob(script_path)
+            if not matches:
                 raise FileNotFound(f'The script {script_path} referenced form config file '
                                    f'{conifg_file} was not found!')
 
