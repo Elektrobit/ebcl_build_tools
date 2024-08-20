@@ -33,6 +33,9 @@ class BootGenerator:
         else:
             self.name = 'boot.tar'
 
+        if self.config.kernel:
+            self.config.packages.append(self.config.kernel)
+
         logging.debug('Using apt repos: %s', self.proxy.apts)
 
     def download_deb_packages(self, package_dir: str):

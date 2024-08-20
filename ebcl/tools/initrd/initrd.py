@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Optional
 
 from ebcl.common import init_logging, promo, log_exception
-from ebcl.common.config import Config
+from ebcl.common.config import Config, InvalidConfiguration
 from ebcl.common.files import EnvironmentType
 from ebcl.common.templates import render_template
 from ebcl.common.version import parse_package
@@ -38,6 +38,9 @@ class InitrdGenerator:
         if not self.config.busybox:
             self.config.busybox = parse_package(
                 'busybox-static', self.config.arch)
+
+        if self.config.kernel:
+            self.config.packages.append(self.config.kernel)
 
     def install_busybox(self) -> bool:
         """Get busybox and add it to the initrd. """
@@ -243,6 +246,8 @@ class InitrdGenerator:
                 logging.error('Not found packages: %s', missing)
         elif self.config.modules:
             logging.error('No module sources defined!')
+            if self.config.modules:
+                raise InvalidConfiguration('No module sources defined!')
         else:
             logging.info('No module sources defined.')
 
