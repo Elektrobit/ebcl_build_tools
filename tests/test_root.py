@@ -83,8 +83,6 @@ class TestRoot:
         yaml = os.path.join(test_dir, 'data', 'root_kiwi_debo.yaml')
         generator = RootGenerator(yaml, self.temp_dir, False)
 
-        generator.apt_repos = [Apt()]
-
         archive = generator.create_root()
         assert archive
         assert os.path.isfile(archive)

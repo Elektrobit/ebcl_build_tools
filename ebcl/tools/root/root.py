@@ -62,23 +62,30 @@ class RootGenerator:
         if self.config.primary_repo:
             use_primary_repo = True
         else:
+            # Default primary repo
             if self.config.arch == CpuArch.AMD64:
                 primary_repo = 'http://archive.ubuntu.com/ubuntu'
             else:
                 primary_repo = 'http://ports.ubuntu.com/ubuntu-ports/'
 
         if not self.config.primary_distro:
-            self.config.primary_distro = 'jammy'
+            # Default primary distro
+            primary_distro = 'jammy'
 
         self.primary_repo: Optional[Apt] = None
         if use_primary_repo:
+            self.config.primary_repo = primary_repo
+            self.config.primary_distro = primary_distro
+
             primary_apt = Apt(
                 url=primary_repo,
-                distro=self.config.primary_distro,
+                distro=primary_distro,
                 components=['main'],
                 arch=self.config.arch
             )
+
             logging.info('Adding primary repo %s...', primary_apt)
+
             self.config.proxy.add_apt(primary_apt)
             self.primary_repo = primary_apt
             self.config.apt_repos = [primary_apt] + self.config.apt_repos
