@@ -32,8 +32,11 @@ def sub_output_path(path: str, output_path: Optional[str] = None) -> str:
         if not output_path:
             raise ImplementationError('output_path missing!')
 
-        parts = path.split('$$RESULTS$$/')
-        path = os.path.abspath(os.path.join(output_path, parts[-1]))
+        if path.endswith('$$RESULTS$$'):
+            path = output_path
+        else:
+            parts = path.split('$$RESULTS$$/')
+            path = os.path.abspath(os.path.join(output_path, parts[-1]))
 
     return path
 
