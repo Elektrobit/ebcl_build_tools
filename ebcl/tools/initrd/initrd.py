@@ -232,6 +232,7 @@ class InitrdGenerator:
             logging.info('Extracting base tarball %s...', base_tarball)
             self.config.fh.extract_tarball(base_tarball, self.target_dir)
 
+        mods_dir = None
         if self.config.modules_folder:
             mods_dir = self.config.modules_folder
             logging.info('Using modules from folder %s...', mods_dir)
@@ -252,6 +253,7 @@ class InitrdGenerator:
             logging.info('No module sources defined.')
 
         if self.config.modules:
+            logging.info('Adding modules %s...', self.config.modules)
             self.copy_modules(mods_dir)
         else:
             logging.info('No modules defined.')
