@@ -313,9 +313,8 @@ class Config:
                 self.modules_folder, self.output_path)
 
             if not os.path.isdir(self.modules_folder):
-                if '$$RESULTS$$' not in self.modules_folder:
-                    raise InvalidConfiguration(f'The module folder {self.modules_folder} '
-                                               f'of config file {conifg_file} does not exist!')
+                raise InvalidConfiguration(f'The module folder {self.modules_folder} '
+                                           f'of config file {conifg_file} does not exist!')
 
         if 'result_pattern' in config:
             self.result_pattern = config.get('result_pattern', None)

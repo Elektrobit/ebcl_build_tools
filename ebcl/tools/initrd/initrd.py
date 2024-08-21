@@ -99,7 +99,8 @@ class InitrdGenerator:
         if not kversion:
             logging.error(
                 'Kernel version not found, extracting modules failed!')
-            return
+            raise InvalidConfiguration(
+                'Kernel version not found, extracting modules failed!')
 
         logging.info('Using kernel version %s.', kversion)
 
