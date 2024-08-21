@@ -197,7 +197,7 @@ class Files:
                 else:
                     if is_dir:
                         self._run_cmd(
-                            f'rsync -av {file} {target}', environment)
+                            f'rsync -a {file} {target}', environment)
                         target = os.path.join(target, os.path.basename(file))
                     else:
                         self._run_cmd(f'cp {file} {target}', environment)
@@ -334,7 +334,7 @@ class Files:
 
         # extract and rsync to avoid impact on ownership of base dir
         run_fn(f'tar xf {tar_file.absolute()} -C {temp_dir}')
-        run_fn(f'rsync -av {temp_dir}/* {target_dir}')
+        run_fn(f'rsync -a {temp_dir}/* {target_dir}')
 
         run_fn(f'rm -rf {temp_dir}', check=False)
 

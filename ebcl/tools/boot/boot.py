@@ -77,15 +77,20 @@ class BootGenerator:
 
             self.fh.extract_tarball(
                 archive=base_tarball,
-                directory=boot_tar_temp
+                directory=boot_tar_temp,
+                use_sudo=not self.config.use_fakeroot
             )
 
+            if self.config.use_fakeroot:
+                run_fn = self.fake.run_fake
+            else:
+                run_fn = self.fake.run_sudo
+
             # Merge deb content and boot tarball
-            self.fake.run_fake(
-                cmd=f'rsync -av {boot_tar_temp}/* {package_dir}')
+            run_fn(cmd=f'rsync -a {boot_tar_temp}/* {package_dir}')
 
             # Delete temporary tar folder
-            self.fake.run_fake(f'rm -rf {boot_tar_temp}', check=False)
+            run_fn(f'rm -rf {boot_tar_temp}', check=False)
 
         # Copy host files to target_dir folder
         logging.info('Copy host files to target dir...')
@@ -118,7 +123,7 @@ class BootGenerator:
                 output_dir=output_path,
                 archive_name=self.name,
                 root_dir=self.config.target_dir,
-                use_sudo=True
+                use_sudo=not self.config.use_fakeroot
             )
 
         # copy to output folder
