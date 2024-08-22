@@ -180,6 +180,7 @@ class Files:
                 if fix_ownership:
                     self.fake.run_sudo(
                         f'chown -R {os.getuid()}:{os.getgid()} {file}')
+                    self.fake.run_sudo(f'chmod -R 755 {file}')
 
                 if os.path.isfile(file):
                     self._run_cmd(
