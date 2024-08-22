@@ -17,24 +17,14 @@ from .deb import Package
 from .fake import Fake
 from .version import parse_depends, VersionDepends, PackageRelation, Version
 
+from .types.cpu_arch import CpuArch
+
 
 class Apt:
     """ Get packages from apt repositories. """
 
-    id: str
-    url: str
-    distro: str
-    components: list[str]
-    arch: str
-    packages: Optional[dict[str, list[Package]]] = {}
-    index_loaded: bool
-    state_folder: str
-    key_url: Optional[str]
-    key_gpg: Optional[str]
-    has_sources: bool
-
     @classmethod
-    def from_config(cls, repo_config: dict[str, Any], arch: str):
+    def from_config(cls, repo_config: dict[str, Any], arch: CpuArch):
         """ Get an apt repositry for a config entry. """
         if 'apt_repo' not in repo_config:
             return None
@@ -52,7 +42,7 @@ class Apt:
         )
 
     @classmethod
-    def ebcl_apt(cls, arch: str, release: str = '1.2'):
+    def ebcl_apt(cls, arch: CpuArch, release: str = '1.2'):
         """ Get the EBcL apt repo. """
         return cls(
             url=f'http://linux.elektrobit.com/eb-corbos-linux/{release}',
@@ -71,21 +61,30 @@ class Apt:
         key_url: Optional[str] = None,
         key_gpg: Optional[str] = None,
         has_sources: bool = True,
-        arch: str = "amd64",
-        state_folder: str = '/workspace/state/apt'
+        arch: CpuArch = CpuArch.AMD64,
+        state_folder: Optional[str] = None
     ) -> None:
         if components is None:
             components = ['main']
 
-        self.url = url
-        self.distro = distro
-        self.components = components
-        self.arch = arch
-        self.packages = None
-        self.state_folder = state_folder
-        self.key_url = key_url
-        self.key_gpg = key_gpg
-        self.has_sources = has_sources
+        self.index_loaded: bool = False
+
+        self.url: str = url
+        self.distro: str = distro
+        self.components: list[str] = components
+        self.arch: CpuArch = arch
+        self.packages: Optional[dict[str, list[Package]]] = None
+        self.key_url: Optional[str] = key_url
+        self.key_gpg: Optional[str] = key_gpg
+        self.has_sources: bool = has_sources
+
+        if state_folder:
+            self.state_folder = state_folder
+        else:
+            if os.path.isdir('/workspace/state/apt'):
+                self.state_folder = '/workspace/state/apt'
+            else:
+                self.state_folder = tempfile.mkdtemp()
 
         if not key_gpg and 'ubuntu.com/ubuntu' in url:
             self.key_gpg = '/etc/apt/trusted.gpg.d/ubuntu-keyring-2018-archive.gpg'
@@ -108,7 +107,7 @@ class Apt:
 
         cmp_str = '_'.join(self.components)
 
-        self.id = f'{uo.netloc}_{self.distro}_{cmp_str}'
+        self.id: str = f'{uo.netloc}_{self.distro}_{cmp_str}'
 
     def __eq__(self, value: object) -> bool:
         if not isinstance(value, Apt):
@@ -164,9 +163,13 @@ class Apt:
 
         if url.endswith('xz'):
             content_bytes = lzma.decompress(data)
-        else:
-            assert url.endswith('gz')
+        elif url.endswith('gz'):
             content_bytes = gzip.decompress(data)
+        else:
+            logging.error(
+                'Unkown compression of index %s (%s)! Cannot parse index.', url, self)
+            return
+
         content: str = content_bytes.decode(
             encoding='utf-8', errors='ignore')
         lines: list[str] = content.split('\n')
@@ -481,7 +484,7 @@ class Apt:
         if not self.key_gpg:
             fake = Fake()
             try:
-                fake.run_no_fake(
+                fake.run_cmd(
                     f'cat {key_pub_file} | gpg --dearmor > {key_gpg_file}')
             except Exception as e:
                 logging.error('Dearmoring key %s of %s as %s failed! %s',

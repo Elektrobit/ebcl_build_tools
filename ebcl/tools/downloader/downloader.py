@@ -7,42 +7,27 @@ import tempfile
 
 from typing import Optional
 
-from ebcl.common import init_logging, bug, promo
-from ebcl.common.config import load_yaml
-from ebcl.common.proxy import Proxy
+from ebcl.common import init_logging, promo, log_exception
+from ebcl.common.config import Config
 from ebcl.common.version import VersionDepends
+
+from ebcl.common.types.cpu_arch import CpuArch
 
 
 class PackageDownloader:
     """ Download and extract deb packages. """
     # TODO: test
 
-    # config file
-    config: str
-    # config values
-    arch: str
-    # proxy
-    proxy: Proxy
-
-    def __init__(self, config_file: str):
+    @log_exception(call_exit=True)
+    def __init__(self, config_file: str, output_path: str):
         """ Parse the yaml config file.
 
         Args:
             config_file (Path): Path to the yaml config file.
         """
-        config = load_yaml(config_file)
+        self.config: Config = Config(config_file, output_path)
 
-        self.config = config_file
-
-        self.arch = config.get('arch', 'arm64')
-
-        self.proxy = Proxy()
-        self.proxy.parse_apt_repos(
-            apt_repos=config.get('apt_repos', None),
-            arch=self.arch,
-            ebcl_version=config.get('ebcl_version', None)
-        )
-
+    @log_exception(call_exit=True)
     def download_packages(
         self,
         packages: str,
@@ -55,8 +40,10 @@ class PackageDownloader:
             output_path = tempfile.mkdtemp()
             assert output_path
 
-        if not arch:
-            arch = 'amd64'
+        if arch:
+            cpu_arch = CpuArch.from_str(arch)
+        else:
+            cpu_arch = self.config.arch
 
         content_path = os.path.join(output_path, 'contents')
         os.makedirs(content_path, exist_ok=True)
@@ -72,10 +59,10 @@ class PackageDownloader:
             package_relation=None,
             version_relation=None,
             version=None,
-            arch=arch
+            arch=cpu_arch
         ) for name in package_names]
 
-        (_debs, _contents, missing) = self.proxy.download_deb_packages(
+        (_debs, _contents, missing) = self.config.proxy.download_deb_packages(
             packages=vds,
             extract=True,
             debs=output_path,
@@ -90,9 +77,14 @@ class PackageDownloader:
         print(f'The packages were extracted to:\n{content_path}')
 
 
+@log_exception(call_exit=True)
 def main() -> None:
     """ Main entrypoint of EBcL boot generator. """
     init_logging()
+
+    logging.info('\n======================\n'
+                 'EBcL Package downloader\n'
+                 '=======================\n')
 
     parser = argparse.ArgumentParser(
         description='Download and extract the given packages.')
@@ -109,16 +101,11 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    downloader = PackageDownloader(args.config)
+    downloader = PackageDownloader(args.config, args.output)
 
-    try:
-        # Download and extract the packages
-        downloader.download_packages(
-            args.packages, args.output, args.arch, args.download_depends)
-    except Exception as e:
-        logging.critical('Package download failed with exception! %s', e)
-        bug()
-        exit(1)
+    # Download and extract the packages
+    downloader.download_packages(
+        args.packages, args.output, args.arch, args.download_depends)
 
     promo()
 

@@ -5,6 +5,10 @@ import os
 import ebcl
 
 
+class ImplementationError(Exception):
+    """ Raised if a assumption is not met. """
+
+
 def init_logging(level: str = 'INFO'):
     """ Initialize the logging for the EBcL build tools. """
     log_format = '[{asctime}] {levelname:<6s} {filename:s}:{lineno:d} - {message:s}'
@@ -22,8 +26,8 @@ def init_logging(level: str = 'INFO'):
         datefmt=log_date_format
     )
 
-    print(
-        f'Setting log level to {used_level}. (default: {level}, env: {env_level})')
+    logging.info('Setting log level to %s. (default: %s, env: %s)',
+                 used_level, level, env_level)
 
 
 def bug(bug_url: str = 'https://github.com/Elektrobit/ebcl_build_tools/issues'):
@@ -52,3 +56,24 @@ def promo():
         text += '\n'
 
         print(text)
+
+
+def log_exception(call_exit: bool = False, code: int = 1):
+    """ Catch and log exceptions. """
+    def _log_exception(func):
+        def inner_function(*args, **kwargs):
+            result = None
+
+            try:
+                result = func(*args, **kwargs)
+            except Exception as e:
+                logging.critical(e, exc_info=True)
+                bug()
+                if call_exit:
+                    exit(code)
+
+            return result
+
+        return inner_function
+
+    return _log_exception

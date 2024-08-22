@@ -15,12 +15,11 @@ from .cache import Cache, AddOp
 from .deb import Package, filter_packages
 from .version import VersionDepends, VersionRealtion
 
+from .types.cpu_arch import CpuArch
+
 
 class Proxy:
     """ EBcL apt proxy. """
-
-    apts: list[Apt]
-    cache: Cache
 
     def __init__(
         self,
@@ -28,12 +27,12 @@ class Proxy:
         cache: Optional[Cache] = None
     ) -> None:
         if apts is None:
-            self.apts = []
+            self.apts: list[Apt] = []
         else:
             self.apts = apts
 
         if cache is None:
-            self.cache = Cache()
+            self.cache: Cache = Cache()
         else:
             self.cache = cache
 
@@ -142,7 +141,7 @@ class Proxy:
 
     def download_package(
         self,
-        arch: str,
+        arch: CpuArch,
         package: Package,
         version_relation: Optional[VersionRealtion] = None,
         location: Optional[str] = None
@@ -334,28 +333,65 @@ class Proxy:
     def parse_apt_repos(
         self,
         apt_repos: Optional[list[dict[str, Any]]],
-        arch: str,
-        ebcl_version: Optional[str] = None
+        arch: CpuArch
     ) -> list[Apt]:
         """ Parse and add apt repositories. """
         # TODO: test
 
-        if not ebcl_version:
-            ebcl_version = '1.2'
+        if not apt_repos:
+            return []
 
         result: list[Apt] = []
 
-        if apt_repos is None:
-            ebcl = Apt.ebcl_apt(arch, ebcl_version)
-            result.append(ebcl)
-            self.add_apt(ebcl)
-        else:
-            for repo in apt_repos:
-                apt = Apt.from_config(repo, arch)
-                if apt:
-                    result.append(apt)
-                    self.add_apt(apt)
-                else:
-                    logging.error('Invalid apt repo config: %s', repo)
+        for repo in apt_repos:
+            apt = Apt.from_config(repo, arch)
+            if apt:
+                result.append(apt)
+                self.add_apt(apt)
+            else:
+                logging.error('Invalid apt repo config: %s', repo)
 
         return result
+
+    def extract_package(self, vd: VersionDepends, arch: CpuArch,
+                        target_dir: str) -> bool:
+        """Get package and add it to the target dir. """
+        # TODO: test
+        package = None
+
+        package = self.find_package(vd)
+        if not package:
+            return False
+
+        package = self.download_package(
+            arch=arch,
+            package=package
+        )
+
+        if not package:
+            logging.error('Package %s was not found!', package)
+            return False
+
+        if package.local_file and \
+                os.path.isfile(package.local_file):
+            # Download was successful.
+            logging.debug('Using package deb %s.', package.local_file)
+        else:
+            logging.critical('Package download failed!')
+            return False
+
+        if not package.local_file:
+            logging.critical('Package download failed! %s', package)
+            return False
+
+        logging.info('Using package %s (%s).', package, vd)
+
+        res = package.extract(target_dir)
+        if res is None:
+            logging.critical(
+                'Extraction of package %s (deb: %s) failed!', package, package.local_file)
+            return False
+
+        logging.debug('Package %s extracted to %s.', package, res)
+
+        return True

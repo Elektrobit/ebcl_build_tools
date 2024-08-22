@@ -2,6 +2,7 @@
 import logging
 import os
 import shutil
+import tempfile
 
 from enum import Enum
 from typing import Optional
@@ -10,6 +11,8 @@ import jsonpickle
 
 from .deb import Package, filter_packages
 from .version import Version, VersionRealtion
+
+from .types.cpu_arch import CpuArch
 
 
 class AddOp(Enum):
@@ -21,14 +24,17 @@ class AddOp(Enum):
 
 class Cache:
     """" EBcL deb package cache. """
-    # cache folder
-    folder: str
-    index_file: str
-    index: list[Package]
 
-    def __init__(self, folder: str = '/workspace/state/cache'):
+    def __init__(self, folder: Optional[str] = None):
         """ Setup the cache store. """
-        self.folder = folder
+        if folder:
+            self.folder = folder
+        else:
+            if os.path.isdir('/workspace/state/cache'):
+                self.folder = '/workspace/state/cache'
+            else:
+                self.folder = tempfile.mkdtemp()
+
         os.makedirs(self.folder, exist_ok=True)
         assert os.path.isdir(self.folder)
 
@@ -37,7 +43,7 @@ class Cache:
         if os.path.isfile(self.index_file):
             with open(self.index_file, encoding='utf8') as f:
                 data = f.read()
-                self.index = jsonpickle.decode(data)
+                self.index: list[Package] = jsonpickle.decode(data)
         else:
             self.index = []
 
@@ -93,7 +99,7 @@ class Cache:
 
     def get(
         self,
-        arch: str,
+        arch: CpuArch,
         name: str,
         version: Optional[Version] = None,
         relation: Optional[VersionRealtion] = None,

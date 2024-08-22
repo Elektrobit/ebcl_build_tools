@@ -7,6 +7,8 @@ from pathlib import Path
 
 from ebcl.tools.boot.boot import BootGenerator
 
+from ebcl.common.types.cpu_arch import CpuArch
+
 
 class TestBoot:
     """ Unit tests for the EBcL boot generator. """
@@ -21,9 +23,8 @@ class TestBoot:
         test_dir = os.path.dirname(os.path.abspath(__file__))
         cls.yaml = os.path.join(test_dir, 'data', 'boot.yaml')
         # Prepare generator
-        cls.generator = BootGenerator(cls.yaml)
         cls.temp_dir = tempfile.mkdtemp()
-        cls.generator.target_dir = cls.temp_dir
+        cls.generator = BootGenerator(cls.yaml, cls.temp_dir)
 
     @classmethod
     def teardown_class(cls):
@@ -32,12 +33,12 @@ class TestBoot:
 
     def test_read_config(self):
         """ Test yaml config loading. """
-        generator = BootGenerator(self.yaml)
-        assert generator.arch == 'amd64'
+        generator = BootGenerator(self.yaml, self.temp_dir)
+        assert generator.config.arch == CpuArch.AMD64
 
     def test_build_boot_archive(self):
         """ Test build boot.tar. """
-        self.generator.create_boot(self.temp_dir)
+        self.generator.create_boot()
 
         archive = Path(self.temp_dir) / 'boot.tar'
         assert archive.is_file()

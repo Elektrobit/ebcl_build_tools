@@ -47,22 +47,16 @@ def check_package_set(package_set: list[Package]) -> bool:
 class WordGenerator:
     """ Generates all words for the given letters. """
 
-    letters: list[list[Any]]
-    variants: list[int]
-    current: list[int]
-    pointer: int
-    word_len: int
-
     def __init__(self, letters: list[list[Any]]):
         """ Set letters to use. """
-        self.letters = letters
-        self.word_len = len(letters)
+        self.letters: list[list[Any]] = letters
+        self.word_len: int = len(letters)
 
-        self.current = [0] * self.word_len
+        self.current: list[int] = [0] * self.word_len
 
-        self.pointer = -2
+        self.pointer: int = -2
 
-        self.variants = []
+        self.variants: list[int] = []
         for a in letters:
             self.variants.append((len(a) - 1))
 

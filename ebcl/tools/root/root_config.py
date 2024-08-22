@@ -3,14 +3,13 @@
 import argparse
 import logging
 import os
-import tempfile
 
-from typing import Optional, Any
+from typing import Optional
 
-from ebcl.common import init_logging, bug, promo
-from ebcl.common.config import load_yaml
-from ebcl.common.fake import Fake
-from ebcl.common.files import Files, EnvironmentType, parse_scripts
+from ebcl.common import init_logging, promo, log_exception
+from ebcl.common.config import Config
+
+from . import config_root
 
 
 class RootConfig:
@@ -18,82 +17,29 @@ class RootConfig:
 
     # TODO: test
 
-    # config file
-    config: str
-    # config values
-    scripts: list[dict[str, Any]]
-    # Tar the root tarball in the chroot env
-    pack_in_chroot: bool
-    # fakeroot helper
-    fake: Fake
-    # files helper
-    fh: Files
-
-    def __init__(self, config_file: str):
+    @log_exception(call_exit=True)
+    def __init__(self, config_file: str, output_path: str):
         """ Parse the yaml config file.
 
         Args:
             config_file (Path): Path to the yaml config file.
         """
-        config = load_yaml(config_file)
+        self.config: Config = Config(config_file, output_path)
 
-        self.config = config_file
-
-        self.scripts = config.get('scripts', [])
-        self.scripts = parse_scripts(config.get('scripts', None))
-
-        self.pack_in_chroot = config.get('pack_in_chroot', True)
-
-        self.fake = Fake()
-        self.fh = Files(self.fake)
-
-    def _run_scripts(self):
-        """ Run scripts. """
-        for script in self.scripts:
-            logging.info('Running script: %s', script)
-
-            file = os.path.join(os.path.dirname(
-                self.config), script['name'])
-
-            env: Optional[EnvironmentType] = None
-            if 'env' in script:
-                env = script['env']
-
-            self.fh.run_script(
-                file=file,
-                params=script.get('params', None),
-                environment=env
-            )
-
+    @log_exception()
     def config_root(self, archive_in: str, archive_out: str) -> Optional[str]:
         """ Config the tarball.  """
-        if not os.path.exists(archive_in):
-            logging.critical('Archive %s does not exist!', archive_in)
-            return None
-
-        ao = None
-        if self.scripts:
-            with tempfile.TemporaryDirectory() as tmp_root_dir:
-                self.fh.target_dir = tmp_root_dir
-                self.fh.extract_tarball(archive_in, tmp_root_dir)
-                self._run_scripts()
-                ao = self.fh.pack_root_as_tarball(
-                    output_dir=os.path.dirname(archive_out),
-                    archive_name=os.path.basename(archive_out),
-                    root_dir=tmp_root_dir,
-                    use_fake_chroot=self.pack_in_chroot
-                )
-
-                if not ao:
-                    logging.critical('Repacking root failed!')
-                    return None
-
-        return ao
+        return config_root(self.config, archive_in, archive_out)
 
 
+@log_exception(call_exit=True)
 def main() -> None:
     """ Main entrypoint of EBcL root filesystem config helper. """
     init_logging()
+
+    logging.info('\n=====================\n'
+                 'EBcL Root Configurator\n'
+                 '======================\n')
 
     parser = argparse.ArgumentParser(
         description='Configure the given root tarball.')
@@ -107,17 +53,12 @@ def main() -> None:
     logging.debug('Running root_configurator with args %s', args)
 
     # Read configuration
-    generator = RootConfig(args.config_file)
+    generator = RootConfig(args.config_file, os.path.dirname(args.archive_out))
 
-    # Create the boot.tar
-    try:
-        archive = generator.config_root(args.archive_in, args.archive_out)
-    except Exception as e:
-        logging.critical('Image build failed with exception! %s', e)
-        bug()
+    archive = generator.config_root(args.archive_in, args.archive_out)
 
     if archive:
-        print('Archive was written to %s.', archive)
+        print(f'Archive was written to {archive}.')
         promo()
     else:
         exit(1)

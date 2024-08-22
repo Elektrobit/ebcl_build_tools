@@ -1,6 +1,12 @@
-base: root_kiwi.yaml
+name: ubuntu
+arch: amd64
+use_ebcl_apt: false
+packages:
+  - systemd
+  - udev        # udev will create the device node for ttyS0
+  - util-linux
 type: kiwi
-kvm: false # not using KVM acceleration
+kvm: true
 result: '*.tar.xz'
 # Use debootstrap instead of bootstrap package
 # This allows to use only one apt repo.
@@ -8,3 +14,9 @@ use_bootstrap_package: false
 # Select required bootstrap packages
 bootstrap:
   - apt
+apt_repos:
+  - apt_repo: http://archive.ubuntu.com/ubuntu
+    distro: jammy
+    components:
+      - main
+      - universe

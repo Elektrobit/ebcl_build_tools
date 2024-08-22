@@ -1,38 +1,22 @@
 """ Deb helper funktions. """
 import logging
 import os
-import shutil
-import tarfile
 import tempfile
 
 from pathlib import Path
 from typing import Optional
 
 import unix_ar
-import zstandard
 
+from .fake import Fake
+from .files import Files
 from .version import Version, VersionDepends, VersionRealtion
+
+from .types.cpu_arch import CpuArch
 
 
 class Package:
     """ APT package information. """
-
-    name: str
-    arch: str
-    repo: str
-    version: Optional[Version] = None
-    file_url: Optional[str] = None
-    local_file: Optional[str] = None
-
-    pre_depends: list[list[VersionDepends]] = []
-    depends: list[list[VersionDepends]] = []
-
-    breaks: list[list[VersionDepends]] = []
-    conflicts: list[list[VersionDepends]] = []
-
-    recommends: list[list[VersionDepends]] = []
-    suggests: list[list[VersionDepends]] = []
-    enhances: list[list[VersionDepends]] = []
 
     @classmethod
     def from_deb(cls, deb: str, depends: list[list[VersionDepends]]):
@@ -48,7 +32,7 @@ class Package:
 
         name = parts[0].strip()
         version = parts[1].strip()
-        arch = parts[2].strip()
+        arch = CpuArch.from_str(parts[2].strip())
 
         p = cls(name, arch, 'local_deb')
 
@@ -60,16 +44,32 @@ class Package:
 
         return p
 
-    def __init__(self, name: str, arch: str, repo: str):
-        self.name = name
-        self.arch = arch
-        self.repo = repo
+    def __init__(self, name: str, arch: CpuArch, repo: str):
+        self.name: str = name
+        self.arch: CpuArch = arch
+        self.repo: str = repo
+
+        self.version: Optional[Version] = None
+        self.file_url: Optional[str] = None
+        self.local_file: Optional[str] = None
+
+        self.pre_depends: list[list[VersionDepends]] = []
+        self.depends: list[list[VersionDepends]] = []
+
+        self.breaks: list[list[VersionDepends]] = []
+        self.conflicts: list[list[VersionDepends]] = []
+
+        self.recommends: list[list[VersionDepends]] = []
+        self.suggests: list[list[VersionDepends]] = []
+        self.enhances: list[list[VersionDepends]] = []
 
     def get_depends(self) -> list[list[VersionDepends]]:
         """ Get dependencies. """
         return self.depends + self.pre_depends
 
-    def extract(self, location: Optional[str] = None) -> Optional[str]:
+    def extract(self, location: Optional[str] = None,
+                files: Optional[Files] = None,
+                use_sudo: bool = True) -> Optional[str]:
         """ Extract a deb archive. """
         if not self.local_file:
             return None
@@ -86,31 +86,38 @@ class Package:
 
         # extract deb
         logging.debug('Extracting deb content of %s to %s.',
-                      self.name, deb_content_location)
-        file = unix_ar.open(self.local_file)
-        file.extractall(deb_content_location)
+                      self.local_file, deb_content_location)
+        try:
+            file = unix_ar.open(self.local_file)
+            logging.debug('ar-file: %s', file)
+            file.extractall(deb_content_location)
+        except Exception as e:
+            logging.error('Extraction of deb %s (%s) failed! %s',
+                          self.local_file, self.name, e)
+            return None
 
         # find data.tar
-        tar_file = Path(deb_content_location).glob('data.tar.*').__next__()
-        assert tar_file is not None
+        tar_files = list(Path(deb_content_location).glob('data.tar.*'))
+        if not tar_files:
+            logging.error('No tar content found in package %s!', self)
+            return None
 
-        # decompress zstd file
-        if tar_file.name.endswith('.zst'):
-            with open(tar_file, 'rb') as compressed:
-                decomp = zstandard.ZstdDecompressor()
-                output_path = Path(location) / 'data.tar'
-                with open(output_path, 'wb') as destination:
-                    decomp.copy_stream(compressed, destination)
-            tar_file = output_path
+        logging.debug('Tar-Files: %s', tar_files)
 
-        # extract data.tar
-        logging.debug('Extracting data content of %s to %s.',
-                      tar_file.absolute(), location)
-        tar = tarfile.open(tar_file.absolute())
-        tar.extractall(path=location)
-        tar.close()
+        if not files:
+            fake = Fake()
+            files = Files(fake, location)
 
-        shutil.rmtree(deb_content_location)
+        for tar_file in tar_files:
+            logging.debug('Processing tar file %s...', tar_file)
+
+            logging.debug('Extracting data content of %s to %s.',
+                          tar_file.absolute(), location)
+
+            files.extract_tarball(str(tar_file.absolute()),
+                                  location, use_sudo=use_sudo)
+
+        files.fake.run_cmd(f'rm -rf {deb_content_location}', check=False)
 
         return location
 

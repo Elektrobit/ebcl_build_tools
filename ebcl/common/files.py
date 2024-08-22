@@ -2,112 +2,216 @@
 import glob
 import logging
 import os
+import tempfile
 
-from enum import Enum
-from io import BufferedWriter
 from pathlib import Path
 from typing import Optional, Tuple, Any
 
+from . import ImplementationError
+
 from .fake import Fake
 
+from .types.environment_type import EnvironmentType
 
-class EnvironmentType(Enum):
-    """ Enum for supported script types. """
-    FAKEROOT = 1
-    FAKECHROOT = 2
-    CHROOT = 3
 
-    @classmethod
-    def from_str(cls, script_type: Optional[str]):
-        """ Get ImageType from str. """
-        if not script_type:
-            return cls.FAKEROOT
+class TarNotFound(Exception):
+    """ Raised if the tar file to extract was not found. """
 
-        if script_type == 'fake':
-            return cls.FAKEROOT
-        elif script_type == 'chfake':
-            return cls.FAKECHROOT
-        elif script_type == 'chroot':
-            return cls.CHROOT
+
+class TargetDirNotInitialized(Exception):
+    """ Raised if the target dir is needed but not set. """
+
+
+class FileNotFound(Exception):
+    """ Raised if a command returns and returncode which is not 0. """
+
+
+def sub_output_path(path: str, output_path: Optional[str] = None) -> str:
+    """ Replace $$RESULTS$$ with output path.  """
+    if '$$RESULTS$$' in path:
+        if not output_path:
+            raise ImplementationError('output_path missing!')
+
+        if path.endswith('$$RESULTS$$'):
+            path = output_path
         else:
-            return None
+            parts = path.split('$$RESULTS$$/')
+            path = os.path.abspath(os.path.join(output_path, parts[-1]))
 
-    def __str__(self) -> str:
-        if self.value == 1:
-            return "fake"
-        elif self.value == 2:
-            return "chfake"
-        elif self.value == 3:
-            return "chroot"
-        else:
-            return "UNKNOWN"
+    return path
 
 
 class Files:
     """ Files and scripts helpers. """
-    # TODO: test
-
-    target_dir: Optional[str]
-    fake: Fake
 
     def __init__(self, fake: Fake, target_dir: Optional[str] = None) -> None:
-        self.target_dir = target_dir
-        self.fake = fake
+        self.target_dir: Optional[str] = target_dir
+        self.fake: Fake = fake
+
+    def _run_cmd(
+        self, cmd: str,
+        env: Optional[EnvironmentType],
+        cwd: Optional[str] = None,
+        check: bool = True
+    ) -> Optional[Tuple[Optional[str], str, int]]:
+        """ Run the cmd using fake. """
+        if env == EnvironmentType.FAKEROOT:
+            return self.fake.run_fake(cmd, cwd=cwd, check=check)
+        elif env == EnvironmentType.SUDO:
+            return self.fake.run_sudo(cmd, cwd=cwd, check=check)
+        elif env == EnvironmentType.CHROOT:
+            chroot_dir: Optional[str] = None
+            if cwd:
+                logging.info('Using cwd %s as chroot dir.', cwd)
+                chroot_dir = cwd
+            else:
+                chroot_dir = self.target_dir
+
+            if not chroot_dir:
+                raise TargetDirNotInitialized()
+
+            cmd = cmd.replace(chroot_dir, '')
+
+            return self.fake.run_chroot(cmd, chroot=chroot_dir, check=check)
+        elif env == EnvironmentType.SHELL or env is None:
+            return self.fake.run_cmd(cmd, cwd=cwd, check=check)
+
+    def copy_files(
+        self,
+        files: list[dict[str, Any]],
+        target_dir: Optional[str] = None,
+        fix_ownership: bool = False
+    ):
+        """ Copy files. """
+        # TODO: test
+        logging.debug('Files: %s', files)
+
+        for entry in files:
+            logging.info('Processing entry: %s', entry)
+
+            source = entry.get('source', None)
+            if not source:
+                logging.error(
+                    'Invalid file entry %s, source is missing!', entry)
+                continue
+
+            src: str = source
+
+            if not target_dir:
+                target_dir = self.target_dir
+
+            if not target_dir:
+                raise TargetDirNotInitialized()
+
+            dst = target_dir
+            file_dest = entry.get('destination', None)
+            if file_dest:
+                dst = os.path.join(dst, file_dest)
+
+            mode: str = entry.get('mode', '600')
+            uid: int = int(entry.get('uid', 0))
+            gid: int = int(entry.get('gid', 0))
+
+            logging.debug('Copying files %s', src)
+
+            copied_files = self.copy_file(
+                src=src,
+                dst=dst,
+                uid=uid,
+                gid=gid,
+                mode=mode,
+                delete_if_exists=True,
+                fix_ownership=fix_ownership
+            )
+
+            if not copied_files:
+                raise FileNotFound(f'File {src} not found!')
 
     def copy_file(
         self,
         src: str,
         dst: str,
-        environment: Optional[EnvironmentType] = EnvironmentType.FAKEROOT,
+        environment: Optional[EnvironmentType] = EnvironmentType.SUDO,
         uid: Optional[int] = None,
         gid: Optional[int] = None,
         mode: Optional[str] = None,
         move: bool = False,
-        delete_if_exists: bool = False
+        delete_if_exists: bool = False,
+        fix_ownership: bool = False
     ) -> list[str]:
         """ Copy file or dir to target environment"""
         files: list[str] = []
 
-        dst = os.path.abspath(dst)
+        if environment == EnvironmentType.CHROOT:
+            if not self.target_dir:
+                raise TargetDirNotInitialized()
 
-        matches = glob.glob(src)
+            if dst.startswith('/'):
+                dst = dst[1:]
+            dst = os.path.abspath(os.path.join(self.target_dir, dst))
+
+            if src.startswith('/'):
+                src = src[1:]
+            matches = glob.glob(f'{self.target_dir}/{src}')
+        else:
+            dst = os.path.abspath(dst)
+            matches = glob.glob(src)
 
         for file in matches:
             file = os.path.abspath(file)
 
-            if os.path.isfile(file) and os.path.isdir(dst):
-                target = os.path.join(dst, os.path.basename(file))
+            if os.path.isfile(file):
+                if os.path.exists(dst):
+                    if os.path.isdir(dst):
+                        # copy file to dir
+                        target = os.path.join(dst, os.path.basename(file))
+                    else:
+                        # overwrite file
+                        target = dst
+                else:
+                    # assume name if new filename
+                    target = dst
             else:
                 target = dst
 
-            # TODO: test
+            logging.info('Copying file %s to %s...', file, target)
 
             if file != target:
-                fn_run = self.fake.run
-                if environment == EnvironmentType.CHROOT:
-                    fn_run = self.fake.run_sudo
-                elif environment is None:
-                    fn_run = self.fake.run_no_fake
+                if fix_ownership:
+                    self.fake.run_sudo(
+                        f'chown -R {os.getuid()}:{os.getgid()} {file}')
+                    self.fake.run_sudo(f'chmod -R 755 {file}')
 
                 if os.path.isfile(file):
-                    parent_dir = os.path.dirname(file)
-                    fn_run(f'mkdir -p {parent_dir}')
+                    self._run_cmd(
+                        f'mkdir -p {os.path.dirname(target)}',
+                        environment, check=False)
 
-                if delete_if_exists:
-                    if os.path.exists(target):
-                        fn_run(f'rm -rf {target}')
+                is_dir = os.path.isdir(file)
+                if is_dir:
+                    logging.debug('File %s is a dir...')
+                else:
+                    logging.debug('File %s is a file...')
+
+                if delete_if_exists and not is_dir:
+                    self._run_cmd(f'rm -rf {target}', environment)
 
                 if move:
-                    fn_run(f'mv {file} {target}')
+                    self._run_cmd(f'mv {file} {target}', environment)
                 else:
-                    fn_run(f'cp -R {file} {target}')
+                    if is_dir:
+                        self._run_cmd(
+                            f'rsync -a {file} {target}', environment)
+                        target = os.path.join(target, os.path.basename(file))
+                    else:
+                        self._run_cmd(f'cp {file} {target}', environment)
 
                 if uid:
-                    fn_run(f'chown {uid} {target}')
+                    self._run_cmd(f'chown {uid} {target}', environment)
                 if gid:
-                    fn_run(f'chown :{gid} {target}')
+                    self._run_cmd(f'chown :{gid} {target}', environment)
                 if mode:
-                    fn_run(f'chmod {mode} {target}')
+                    self._run_cmd(f'chmod {mode} {target}', environment)
 
             else:
                 logging.debug(
@@ -117,56 +221,40 @@ class Files:
 
         return files
 
-    def run_command(
+    def run_scripts(
         self,
-        cmd: str,
-        cwd: Optional[str] = None,
-        stdout: Optional[BufferedWriter] = None,
-        check=True,
-        environment: EnvironmentType = EnvironmentType.FAKEROOT
-    ) -> Optional[Tuple[Optional[str], str, int]]:
-        """ Run command. """
-        target_dir: Optional[str] = None
+        scripts: list[dict[str, str]],
+        cwd: str,
+    ):
+        """ Run scripts. """
+        # TODO: test
+        logging.debug('Target dir: %s', self.target_dir)
+        logging.debug('CWD: %s', cwd)
 
-        if not self.target_dir:
-            if cwd:
-                logging.info(
-                    'Target dir not set, using cwd %s as fall-back.', cwd)
-                target_dir = cwd
-            else:
-                logging.error('Target dir not set!')
-                return None
-        else:
-            target_dir = self.target_dir
+        for script in scripts:
+            logging.info('Running script %s.', script)
 
-        if environment == EnvironmentType.FAKEROOT:
-            return self.fake.run(
-                cmd=cmd,
-                cwd=cwd,
-                stdout=stdout,
-                check=check
+            if 'name' not in script:
+                logging.error(
+                    'Invalid script entry %s, name is missing!', script)
+                continue
+
+            file = script['name']
+
+            self.run_script(
+                file=file,
+                params=script.get('params', None),
+                environment=EnvironmentType.from_str(script.get('env', None)),
+                cwd=cwd
             )
-
-        fn_run = None
-
-        if environment == EnvironmentType.FAKECHROOT:
-            fn_run = self.fake.run_chroot
-        elif environment == EnvironmentType.CHROOT:
-            fn_run = self.fake.run_sudo_chroot
-
-        assert fn_run is not None
-
-        return fn_run(
-            cmd=cmd,
-            chroot=target_dir,
-            check=check
-        )
 
     def run_script(
         self,
         file: str,
         params: Optional[str] = None,
-        environment: Optional[EnvironmentType] = None
+        environment: Optional[EnvironmentType] = None,
+        cwd: Optional[str] = None,
+        check: bool = True
     ) -> Optional[Tuple[Optional[str], str, int]]:
         """ Run scripts. """
         if not params:
@@ -174,14 +262,21 @@ class Files:
 
         if not environment:
             environment = EnvironmentType.FAKEROOT
+            logging.debug(
+                'No environment provided. Using default %s.', environment)
 
-        if not self.target_dir:
+        target_dir = self.target_dir
+        if cwd:
+            target_dir = cwd
+
+        if not target_dir:
             logging.error('Target dir not set!')
             return None
 
-        logging.debug('Copying scripts %s', file)
+        logging.info('Using %s as workdir for script %s.', target_dir, file)
 
-        script_files = self.copy_file(file, self.target_dir)
+        logging.debug('Copying scripts %s', file)
+        script_files = self.copy_file(file, target_dir)
 
         logging.debug('Running scripts %s in environment %s',
                       script_files, environment)
@@ -196,51 +291,29 @@ class Files:
                 logging.error('Script %s not found!', script_file)
                 return None
 
-            if environment == EnvironmentType.FAKECHROOT or \
-                    environment == EnvironmentType.CHROOT:
+            if environment == EnvironmentType.CHROOT:
                 script_file = f'./{os.path.basename(script_file)}'
 
-            if logging.root.level == logging.DEBUG:
-                # Generate some more infos
-                self.run_command(
-                    cmd='echo $PWD',
-                    cwd=self.target_dir,
-                    environment=environment,
-                    check=False
-                )
-                self.run_command(
-                    cmd='ls -lah .',
-                    cwd=self.target_dir,
-                    environment=environment,
-                    check=False
-                )
-                self.run_command(
-                    cmd=f'ls -lah {script_file}',
-                    cwd=self.target_dir,
-                    environment=environment,
-                    check=False
-                )
-
-            res = self.run_command(
+            res = self._run_cmd(
                 cmd=f'{script_file} {params}',
-                cwd=self.target_dir,
-                environment=environment,
-                check=False
+                env=environment,
+                cwd=target_dir,
+                check=check
             )
 
             if os.path.abspath(script_file) != os.path.abspath(file):
                 # delete copied file
-                fn_run = self.fake.run
-                if environment == EnvironmentType.CHROOT:
-                    fn_run = self.fake.run_sudo
-
-                fn_run(f'rm -f {script_file}',
-                       cwd=self.target_dir,
-                       check=False)
+                self._run_cmd(
+                    cmd=f'rm -f {script_file}',
+                    env=environment,
+                    cwd=target_dir,
+                    check=False
+                )
 
         return res
 
-    def extract_tarball(self, archive: str, directory: Optional[str] = None) -> Optional[str]:
+    def extract_tarball(self, archive: str, directory: Optional[str] = None,
+                        use_sudo: bool = True) -> Optional[str]:
         """ Extract tar archive to directory. """
         target_dir = self.target_dir
 
@@ -249,19 +322,25 @@ class Files:
 
         if not target_dir:
             logging.error('No target dir found!')
-            return None
+            raise TargetDirNotInitialized('The target dir is not initialized!')
 
         tar_file = Path(archive)
         if not (tar_file.is_file() or tar_file.is_symlink()):
             logging.error('Archive is no file!')
-            return None
+            raise TarNotFound(f'The archive {archive} was not found!')
 
-        if tar_file.parent.absolute() != target_dir:
-            dst = Path(target_dir) / tar_file.name
-            self.fake.run(f'cp {tar_file.absolute()} {dst.absolute()}')
-            tar_file = dst
+        temp_dir = tempfile.mkdtemp()
 
-        self.fake.run(f'tar xf {tar_file.name}', cwd=target_dir)
+        if use_sudo:
+            run_fn = self.fake.run_sudo
+        else:
+            run_fn = self.fake.run_fake
+
+        # extract and rsync to avoid impact on ownership of base dir
+        run_fn(f'tar xf {tar_file.absolute()} -C {temp_dir}')
+        run_fn(f'rsync -a {temp_dir}/* {target_dir}')
+
+        run_fn(f'rm -rf {temp_dir}', check=False)
 
         return target_dir
 
@@ -270,7 +349,7 @@ class Files:
         output_dir: str,
         archive_name: str = 'root.tar',
         root_dir: Optional[str] = None,
-        use_fake_chroot: bool = True
+        use_sudo: bool = True
     ) -> Optional[str]:
         """ Create tar archive of target_dir. """
         target_dir = self.target_dir
@@ -279,40 +358,46 @@ class Files:
             target_dir = root_dir
 
         if not target_dir:
-            logging.error('No target dir found!')
-            return None
+            raise TargetDirNotInitialized()
 
         tmp_archive = os.path.join(target_dir, archive_name)
+
+        fn_run = self.fake.run_fake
+        if use_sudo:
+            fn_run = self.fake.run_sudo
 
         if os.path.isfile(tmp_archive):
             logging.info(
                 'Archive %s exists. Deleting old archive.', tmp_archive)
-            os.remove(tmp_archive)
-
-        fn_run: Any = self.fake.run
-        if use_fake_chroot:
-            fn_run = self.fake.run_chroot
+            fn_run(f'rm -f {tmp_archive}', check=False)
 
         fn_run(
             'tar --exclude=\'./proc/*\' --exclude=\'./sys/*\' --exclude=\'./dev/*\' '
-            f'-cf {archive_name} .',
+            f'--exclude=\'./{archive_name}\' -cf {archive_name} .',
             target_dir
         )
+
+        if use_sudo:
+            fn_run(
+                f'chown {os.getuid()}:{os.getgid()} {tmp_archive}',
+                check=False)
 
         archive = os.path.join(output_dir, archive_name)
 
         if os.path.isfile(archive):
             logging.info('Archive %s exists. Deleting old archive.', archive)
-            os.remove(archive)
+            fn_run(f'rm -f {archive}', check=False)
 
-        self.fake.run(f'mv {tmp_archive} {archive}')
+        self.fake.run_cmd(f'mv {tmp_archive} {archive}')
 
         return archive
 
 
 def parse_scripts(
     scripts: Optional[list[Any]],
-    env: EnvironmentType = EnvironmentType.FAKEROOT
+    output_path: str,
+    env: EnvironmentType = EnvironmentType.FAKEROOT,
+    relative_base_dir: Optional[str] = None
 ) -> list[dict[str, Any]]:
     """ Parse scripts config entry. """
     if not scripts:
@@ -324,27 +409,106 @@ def parse_scripts(
         if isinstance(script, dict):
             if 'name' not in script:
                 logging.error('Script %s has no name!', script)
+                continue
 
-            if 'env' not in script:
-                script['env'] = env
-            else:
+            script['name'] = resolve_file(
+                file=script['name'],
+                file_base_dir=script.get('base_dir', None),
+                relative_base_dir=relative_base_dir
+            )
+
+            script['name'] = sub_output_path(script['name'], output_path)
+
+            if 'env' in script:
                 se = EnvironmentType.from_str(script['env'])
                 logging.debug('Using env %s for script %s.', se, script)
-                if se:
-                    script['env'] = se
-                else:
+
+                if not se:
                     logging.error('Unknown environment type %s! '
                                   'Falling back to %s.', script, env)
-                    script['env'] = env
+                    se = env
+
+                script['env'] = se
+            else:
+                script['env'] = env
 
             result.append(script)
+
         elif isinstance(script, str):
             logging.debug('Using default env %s for script %s.', env, script)
+            name = resolve_file(
+                file=script,
+                relative_base_dir=relative_base_dir
+            )
+
+            name = sub_output_path(name, output_path)
+
             result.append({
-                'name': script,
+                'name': name,
                 'env': env
             })
         else:
             logging.error('Unkown script entry type: %s', script)
 
     return result
+
+
+def parse_files(
+    files: Optional[list[dict[str, str]]],
+    output_path: str,
+    relative_base_dir: Optional[str] = None,
+    resolve: bool = True
+) -> list[dict[str, Any]]:
+    """ Resolve file names to absolute paths. """
+    if not files:
+        return []
+
+    processed: list[Any] = []
+
+    for file in files:
+        if isinstance(file, dict):
+            if 'source' not in file:
+                logging.error('File %s has no source!', file)
+                continue
+
+            if resolve:
+                file['source'] = resolve_file(
+                    file=file['source'],
+                    file_base_dir=file.get('base_dir', None),
+                    relative_base_dir=relative_base_dir
+                )
+
+            file['source'] = sub_output_path(file['source'], output_path)
+
+            processed.append(file)
+
+        elif isinstance(file, str):
+            if resolve:
+                file = resolve_file(
+                    file=file,
+                    relative_base_dir=relative_base_dir
+                )
+
+            file = sub_output_path(file, output_path)
+
+            processed.append({
+                'source': file
+            })
+
+        else:
+            logging.error('Unknown file type %s! File is ignored.', file)
+
+    return processed
+
+
+def resolve_file(
+    file: str,
+    file_base_dir: Optional[str] = None,
+    relative_base_dir: Optional[str] = None,
+) -> str:
+    """ Resolve path of file. """
+    if file_base_dir:
+        return os.path.abspath(os.path.join(file_base_dir, file))
+    elif relative_base_dir:
+        return os.path.abspath(os.path.join(relative_base_dir, file))
+    return os.path.abspath(file)

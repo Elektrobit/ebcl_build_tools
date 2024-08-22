@@ -5,200 +5,148 @@ import logging
 import os
 import tempfile
 
-from pathlib import Path
-from typing import Optional, Any
+from typing import Optional
 
-from ebcl.common import init_logging, bug, promo
-from ebcl.common.config import load_yaml
-from ebcl.common.fake import Fake
-from ebcl.common.files import Files, parse_scripts, EnvironmentType
-from ebcl.common.proxy import Proxy
-from ebcl.common.version import VersionDepends, parse_package_config, parse_package
+from ebcl.common import init_logging, promo, log_exception
+from ebcl.common.config import Config
+from ebcl.common.files import resolve_file
 
 
 class BootGenerator:
     """ EBcL boot generator. """
 
-    # config file
-    config: str
-    # config values
-    packages: list[VersionDepends]
-    files: list[dict[str, str]]
-    scripts: list[dict[str, Any]]
-    arch: str
-    archive_name: str
-    target_dir: str
-    archive_path: str
-    download_deps: bool
-    tar: bool
-
-    # proxy
-    proxy: Proxy
-    # fakeroot helper
-    fake: Fake
-    # files helper
-    fh: Files
-
-    def __init__(self, config_file: str):
+    @log_exception(call_exit=True)
+    def __init__(self, config_file: str, output_path: str):
         """ Parse the yaml config file.
 
         Args:
             config_file (Path): Path to the yaml config file.
         """
-        config = load_yaml(config_file)
+        self.config: Config = Config(config_file, output_path)
 
-        self.config = config_file
-        self.files = config.get('files', [])
-        self.archive_name = config.get('archive_name', 'boot.tar')
-        self.download_deps = config.get('download_deps', True)
-        self.tar = config.get('tar', True)
+        self.proxy = self.config.proxy
+        self.fake = self.config.fake
+        self.fh = self.config.fh
 
-        self.scripts = parse_scripts(config.get('scripts', None))
+        if self.config.name:
+            self.name: str = self.config.name + '.tar'
+        else:
+            self.name = 'boot.tar'
 
-        self.arch = config.get('arch', 'arm64')
-
-        self.packages = parse_package_config(
-            config.get('packages', []), self.arch)
-
-        kernel = parse_package(config.get('kernel', None), self.arch)
-        if kernel:
-            self.packages.append(kernel)
-
-        self.proxy = Proxy()
-        self.proxy.parse_apt_repos(
-            apt_repos=config.get('apt_repos', None),
-            arch=self.arch,
-            ebcl_version=config.get('ebcl_version', None)
-        )
+        if self.config.kernel:
+            self.config.packages.append(self.config.kernel)
 
         logging.debug('Using apt repos: %s', self.proxy.apts)
-
-        self.fake = Fake()
-        self.fh = Files(self.fake)
 
     def download_deb_packages(self, package_dir: str):
         """ Download all needed deb packages. """
         (_debs, _contents, missing) = self.proxy.download_deb_packages(
-            packages=self.packages,
+            packages=self.config.packages,
             contents=package_dir
         )
 
         if missing:
             logging.critical('Not found packages: %s', missing)
 
-    def copy_files(self, package_dir: str):
-        """ Copy files to be used. """
-
-        logging.debug('Files: %s', self.files)
-
-        for entry in self.files:
-            logging.info('Processing entry: %s', entry)
-
-            dst = Path(self.target_dir)
-            if entry['destination']:
-                dst = dst / entry['destination']
-
-            src = Path(package_dir) / entry['source']
-
-            mode: str = entry.get('mode', '600')
-            uid: int = int(entry.get('uid', '0'))
-            gid: int = int(entry.get('gid', '0'))
-
-            logging.debug('Copying files %s', src)
-
-            self.fh.copy_file(
-                src=str(src),
-                dst=str(dst),
-                uid=uid,
-                gid=gid,
-                mode=mode
-            )
-
-    def run_scripts(self):
-        """ Run scripts. """
-        for script in self.scripts:
-            logging.info('Running script %s.', script)
-
-            file = os.path.join(os.path.dirname(
-                self.config), script['name'])
-
-            self.fh.run_script(
-                file=file,
-                params=script.get('params', None),
-                environment=EnvironmentType.from_str(
-                    script.get('env', None))
-            )
-
-    def create_boot(self, output_path: str) -> Optional[str]:
+    @log_exception()
+    def create_boot(self) -> Optional[str]:
         """ Create the boot.tar.  """
-
-        self.target_dir = tempfile.mkdtemp()
-        logging.debug('Target directory: %s', self.target_dir)
-
-        self.fh.target_dir = self.target_dir
+        logging.debug('Target directory: %s', self.config.target_dir)
 
         package_dir = tempfile.mkdtemp()
         logging.debug('Package directory: %s', package_dir)
 
-        output_path = os.path.abspath(output_path)
-        logging.debug('Output directory: %s', output_path)
-        if not os.path.isdir(output_path):
-            logging.critical('Output path %s is no folder!', output_path)
+        output_path = os.path.abspath(self.config.output_path)
+        logging.debug('Output directory: %s', self.config.output_path)
+        if not os.path.isdir(self.config.output_path):
+            logging.critical('Output path %s is no folder!',
+                             self.config.output_path)
             exit(1)
 
         logging.info('Download deb packages...')
         self.download_deb_packages(package_dir)
 
+        if self.config.base_tarball:
+            base_tarball = self.config.base_tarball
+
+            logging.info('Extracting base tarball %s...', base_tarball)
+            boot_tar_temp = tempfile.mkdtemp()
+
+            logging.debug('Extracting bsae tarball %s to %s',
+                          base_tarball, boot_tar_temp)
+
+            self.fh.extract_tarball(
+                archive=base_tarball,
+                directory=boot_tar_temp,
+                use_sudo=not self.config.use_fakeroot
+            )
+
+            if self.config.use_fakeroot:
+                run_fn = self.fake.run_fake
+            else:
+                run_fn = self.fake.run_sudo
+
+            # Merge deb content and boot tarball
+            run_fn(cmd=f'rsync -a {boot_tar_temp}/* {package_dir}')
+
+            # Delete temporary tar folder
+            run_fn(f'rm -rf {boot_tar_temp}', check=False)
+
+        # Copy host files to target_dir folder
+        logging.info('Copy host files to target dir...')
+        self.fh.copy_files(self.config.host_files,
+                           self.config.target_dir)
+
+        # Copy host files package_dir folder
+        logging.info('Copy host files package dir...')
+        self.fh.copy_files(self.config.host_files, package_dir)
+
+        logging.info('Running config scripts...')
+        self.fh.run_scripts(self.config.scripts, package_dir)
+
         # Copy files and directories specified in the files
-        logging.info('Copy files...')
-        self.copy_files(package_dir)
+        logging.info('Copy result files...')
+        files = [{'source': resolve_file(f, package_dir)}
+                 for f in self.config.files]
+        self.fh.copy_files(files, self.config.target_dir,
+                           fix_ownership=True)
 
         # Remove package temporary folder
         logging.info('Remove temporary package contents...')
-        self.fake.run(f'rm -rf {package_dir}', check=False)
+        self.fake.run_cmd(f'rm -rf {package_dir}', check=False)
 
-        logging.info('Running config scripts...')
-        self.run_scripts()
-
-        if self.tar:
+        if self.config.tar:
             # create tar archive
             logging.info('Creating tar...')
 
             return self.fh.pack_root_as_tarball(
                 output_dir=output_path,
-                archive_name=self.archive_name,
-                root_dir=self.target_dir,
-                use_fake_chroot=False
+                archive_name=self.name,
+                root_dir=self.config.target_dir,
+                use_sudo=not self.config.use_fakeroot
             )
-        else:
-            # copy to output folder
-            logging.info('Copying files...')
-            files = self.fh.copy_file(f'{self.target_dir}/*',
-                                      output_path,
-                                      move=True,
-                                      delete_if_exists=True)
-            if files:
-                return output_path
-            else:
-                logging.error(
-                    'Build faild, no files found in %s.', self.target_dir)
 
-        return None
-
-    def finalize(self):
-        """ Finalize output and cleanup. """
-
-        # delete temporary folder
-        logging.debug('Remove temporary folder...')
-        self.fake.run(f'rm -rf {self.target_dir}', check=False)
+        # copy to output folder
+        logging.info('Copying files...')
+        self.fh.copy_file(f'{self.config.target_dir}/*',
+                          output_path,
+                          move=True,
+                          delete_if_exists=True,
+                          fix_ownership=True)
+        return output_path
 
 
+@log_exception(call_exit=True)
 def main() -> None:
     """ Main entrypoint of EBcL boot generator. """
     init_logging()
 
+    logging.info('\n===================\n'
+                 'EBcL Boot Generator\n'
+                 '===================\n')
+
     parser = argparse.ArgumentParser(
-        description='Create the content of the boot partiton as boot.tar.')
+        description='Create the content of the boot partiton.')
     parser.add_argument('config_file', type=str,
                         help='Path to the YAML configuration file')
     parser.add_argument('output', type=str,
@@ -209,26 +157,18 @@ def main() -> None:
     logging.debug('Running boot_generator with args %s', args)
 
     # Read configuration
-    generator = BootGenerator(args.config_file)
+    generator = BootGenerator(args.config_file, args.output)
 
     image = None
-    try:
-        # Create the boot.tar
-        image = generator.create_boot(args.output)
-    except Exception as e:
-        logging.critical('Boot build failed with exception: %s', e)
-        bug()
 
-    try:
-        generator.finalize()
-    except Exception as e:
-        logging.error('Cleanup failed with exception! %s', e)
-        bug()
+    # Create the boot.tar
+    image = generator.create_boot()
 
     if image:
-        print('Image was written to %s.', image)
+        print(f'Results were written to {image}.')
         promo()
     else:
+        print('Build failed!')
         exit(1)
 
 
