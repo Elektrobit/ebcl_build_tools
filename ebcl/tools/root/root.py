@@ -506,7 +506,7 @@ class RootGenerator:
                     f'--target-dir {self.result_dir}'
             else:
                 cmd = f'berrymill -c {berrymill_conf} -d -a {arch} -i {appliance} ' \
-                    f'--clean build --box-memory 4G  --cpu qemu64-v1 {accel} ' \
+                    f'--clean build --box-memory 4G  {accel} ' \
                     f'--target-dir {self.result_dir}'
         else:
             logging.info('Kiwi KVM build of %s (KVM: %s).',
@@ -517,7 +517,7 @@ class RootGenerator:
             cmd = f'kiwi-ng --debug --target-arch={arch} ' \
                 f'--kiwi-file={os.path.basename(appliance)} ' \
                 f'system boxbuild {box_arch} ' \
-                f'--box ubuntu --box-memory=4G --cpu=qemu64-v1 {accel} -- ' \
+                f'--box ubuntu --box-memory=4G {accel} -- ' \
                 f'--description={os.path.dirname(appliance)} ' \
                 f'--target-dir={self.result_dir}'
 
