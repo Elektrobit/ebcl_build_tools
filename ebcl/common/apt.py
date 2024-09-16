@@ -44,13 +44,20 @@ class Apt:
     @classmethod
     def ebcl_apt(cls, arch: CpuArch, release: str = '1.2'):
         """ Get the EBcL apt repo. """
+        url = os.environ.get(
+            'EBCL_REPO_URL', 'http://linux.elektrobit.com/eb-corbos-linux')
+        release = os.environ.get('EBCL_VERSION', release)
+        key = os.environ.get(
+            'EBCL_REPO_KEY', 'file:///build/keys/elektrobit.pub')
+        gpg = os.environ.get(
+            'EBCL_REPO_GPG', '/etc/berrymill/keyrings.d/elektrobit.gpg')
         return cls(
-            url=f'http://linux.elektrobit.com/eb-corbos-linux/{release}',
+            url=f'{url}/{release}',
             distro='ebcl',
             components=['prod', 'dev'],
             arch=arch,
-            key_url='file:///build/keys/elektrobit.pub',
-            key_gpg='/etc/berrymill/keyrings.d/elektrobit.gpg'
+            key_url=key,
+            key_gpg=gpg
         )
 
     def __init__(
