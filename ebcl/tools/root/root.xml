@@ -36,6 +36,7 @@
 		<console>{{ console }}</console>
 		<debootstrap>
 			<variant>minbase</variant>
+			<include>ca-certificates</include>
 		</debootstrap>
 		<package>
 			<tar>
