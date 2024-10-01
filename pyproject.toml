@@ -85,3 +85,14 @@ show_contexts = true
 [tool.mypy]
 mypy_path = "$MYPY_CONFIG_FILE_DIR/ebcl"
 explicit_package_bases = true
+
+[tool.flake8]
+ignore = ['C901']
+per-file-ignores = [
+    'ebcl/common/dependency.py:F841',
+    'ebcl/tools/proxy/proxy.py:F841',
+]
+count = true
+statistics = true
+max-line-length = 120
+exclude = '.venv'

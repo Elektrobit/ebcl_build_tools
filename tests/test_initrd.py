@@ -151,7 +151,7 @@ class TestInitrd:
             f'stat -c \'%u %g\' {self.generator.target_dir}/root/dummy.txt')
         assert out is not None
         out = out.split('\n')[-2]
-        assert out.strip() == f'0 0'
+        assert out.strip() == '0 0'
         assert not err.strip()
 
         (out, err, _returncode) = self.fake.run_sudo(
