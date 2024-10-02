@@ -3,6 +3,8 @@ import os
 import shutil
 import tempfile
 
+import pytest
+
 from ebcl.common.apt import Apt
 from ebcl.tools.root.root import RootGenerator
 
@@ -41,6 +43,7 @@ class TestRoot:
         assert self.generator.config.image is None
         assert self.generator.config.type == BuildType.ELBE
 
+    @pytest.mark.dev_container
     def test_build_kiwi_image(self):
         """ Test kiwi image build. """
         # EBcL dev container required - root generator calls berrymill as subprocess
@@ -52,6 +55,7 @@ class TestRoot:
         assert archive
         assert os.path.isfile(archive)
 
+    @pytest.mark.dev_container
     def test_build_root_archive(self):
         """ Test build root.tar. """
         # EBcL dev container required - root generator calls elbe as subprocess
@@ -63,6 +67,7 @@ class TestRoot:
         assert archive
         assert os.path.isfile(archive)
 
+    @pytest.mark.dev_container
     def test_build_kiwi_no_berry(self):
         """ Test kiwi image build without berrymill. """
         # EBcL dev container required - root generator calls kiwi-ng as subprocess
@@ -76,6 +81,7 @@ class TestRoot:
         assert archive
         assert os.path.isfile(archive)
 
+    @pytest.mark.dev_container
     def test_build_kiwi_no_bootstrap(self):
         """ Test kiwi image build without bootstrap package. """
         # EBcL dev container required - root generator calls kiwi-ng as subprocess
@@ -87,6 +93,7 @@ class TestRoot:
         assert archive
         assert os.path.isfile(archive)
 
+    @pytest.mark.dev_container
     def test_build_sysroot_kiwi(self):
         """ Test kiwi image build. """
         # EBcL dev container required - root generator calls kiwi-ng as subprocess
@@ -100,6 +107,7 @@ class TestRoot:
         assert archive
         assert os.path.isfile(archive)
 
+    @pytest.mark.dev_container
     def test_build_sysroot_elbe(self):
         """ Test build root.tar. """
         # EBcL dev container required - root generator calls elbe as subprocess

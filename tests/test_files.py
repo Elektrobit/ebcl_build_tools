@@ -326,7 +326,9 @@ class TestFiles:
         assert ret == 0
         assert not err.strip()
         assert out
-        assert f'{os.getuid()} {os.getgid()} 644' in out.strip()
+        assert f'{os.getuid()} {os.getgid()}' in out.strip()
+        # Group permissions depend on shell config
+        assert '664' in out.strip() or '644' in out.strip()
 
         assert os.path.isfile(f'{self.target_dir}/adir/c')
 
@@ -416,7 +418,9 @@ class TestFiles:
         assert ret == 0
         assert not err.strip()
         assert out
-        assert '0 0 644' in out.strip()
+        assert '0 0' in out.strip()
+        # Group permissions depend on shell config
+        assert '664' in out.strip() or '644' in out.strip()
 
         (out, err, ret) = self.fake.run_fake(
             f'cat  {self.target_dir}/target')
@@ -454,7 +458,8 @@ class TestFiles:
         assert ret == 0
         assert not err.strip()
         assert out
-        assert f'{os.getuid()} {os.getgid()} 644' in out.strip()
+        # Do not check file permissions, since these depend on shell config.
+        assert f'{os.getuid()} {os.getgid()}' in out.strip()
 
         (out, err, ret) = self.fake.run_cmd(
             f'file {self.target_dir}/root_owner')
@@ -468,7 +473,8 @@ class TestFiles:
         assert ret == 0
         assert not err.strip()
         assert out
-        assert f'{os.getuid()} {os.getgid()} 644' in out.strip()
+        # Do not check file permissions, since these depend on shell config.
+        assert f'{os.getuid()} {os.getgid()}' in out.strip()
 
     def test_run_script_shell(self):
         """ Test for script execution. """

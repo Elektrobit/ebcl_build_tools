@@ -59,6 +59,9 @@ disable = [
 minversion = "6.2.5"
 addopts = ""
 testpaths = [ "tests" ]
+markers = [
+    "dev_container: tests requiring tools only avaiable in the dev container, e.g. elbe or kiwi-ng.",
+]
 
 [tool.coverage.paths]
 source = [
