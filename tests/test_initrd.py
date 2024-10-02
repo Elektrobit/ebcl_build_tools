@@ -4,6 +4,8 @@ import tempfile
 
 from pathlib import Path
 
+import pytest
+
 from ebcl.common.fake import Fake
 from ebcl.tools.initrd.initrd import InitrdGenerator
 from ebcl.common.version import VersionDepends
@@ -40,6 +42,7 @@ class TestInitrd:
         assert generator.config.arch == CpuArch.ARM64
         assert generator.config.root_device == '/dev/mmcblk0p2'
 
+    @pytest.mark.requires_download
     def test_install_busybox(self):
         """ Test yaml config loading. """
         self.generator.install_busybox()
@@ -49,6 +52,7 @@ class TestInitrd:
         assert os.path.islink(os.path.join(
             self.generator.target_dir, 'bin', 'sh'))
 
+    @pytest.mark.requires_download
     def test_download_deb_package(self):
         """ Test modules package download. """
         vd = VersionDepends(
@@ -67,6 +71,7 @@ class TestInitrd:
         assert pkg.local_file
         assert os.path.isfile(pkg.local_file)
 
+    @pytest.mark.requires_download
     def test_extract_modules_from_deb(self):
         """ Test modules package download. """
         vd = VersionDepends(
@@ -102,6 +107,7 @@ class TestInitrd:
         assert os.path.isfile(os.path.join(
             self.generator.config.target_dir, 'lib', 'modules', kversion, module))
 
+    @pytest.mark.requires_download
     def test_add_devices(self):
         """ Test device node creation. """
         self.generator.config.devices = [{
@@ -117,6 +123,7 @@ class TestInitrd:
         device = Path(self.generator.config.target_dir) / 'dev' / 'console'
         assert device.is_char_device()
 
+    @pytest.mark.requires_download
     def test_copy_files(self):
         """ Test copying of files. """
         self.generator.config.host_files = [
@@ -167,6 +174,7 @@ class TestInitrd:
         assert out.strip() == '123 456'
         assert not err.strip()
 
+    @pytest.mark.requires_download
     def test_initrd_is_created(self):
         """ Test that the initrd.img is created. """
         out = tempfile.mkdtemp()

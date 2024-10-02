@@ -1,6 +1,8 @@
 """ Unit tests for the EBcL apt proxy. """
 from pathlib import Path
 
+import pytest
+
 from ebcl.common.apt import Apt, parse_depends
 from ebcl.common.proxy import Proxy
 
@@ -129,6 +131,7 @@ class TestProxy:
         p = self.proxy.find_package(vds[0])
         assert p is None
 
+    @pytest.mark.requires_download
     def test_download_and_extract_linux_image(self):
         """ Extract data content of multiple debs. """
         self.proxy.add_apt(Apt())
