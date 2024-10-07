@@ -26,9 +26,9 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install "flake8==7.1.1" pytest "Flake8-pyproject==1.2.3"
-        pip install .
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        pip install -r dev-requirements.txt
+        pip install .
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
