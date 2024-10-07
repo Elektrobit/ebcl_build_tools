@@ -42,6 +42,8 @@ class InitrdGenerator:
         if self.config.kernel:
             self.config.packages.append(self.config.kernel)
 
+        self.proxy = self.config.proxy
+
     def install_busybox(self) -> bool:
         """Get busybox and add it to the initrd. """
         package = None
@@ -209,6 +211,17 @@ class InitrdGenerator:
             self.config.fake.run_sudo(
                 f'chown {uid}:{gid} {dev_folder}/{device["name"]}')
 
+    def download_deb_packages(self):
+        """ Download all needed deb packages. """
+        (_debs, _contents, missing) = self.proxy.download_deb_packages(
+            packages=self.config.packages,
+            contents=self.target_dir
+        )
+
+        if missing:
+            logging.critical('Not found packages: %s', missing)
+            raise InvalidConfiguration(f'Not found packages: {missing}')
+
     @log_exception()
     def create_initrd(self) -> Optional[str]:
         """ Create the initrd image.  """
@@ -219,6 +232,8 @@ class InitrdGenerator:
         success = self.install_busybox()
         if not success:
             return None
+
+        self.download_deb_packages()
 
         # Create necessary directories
         for dir_name in ['proc', 'sys', 'dev', 'sysroot', 'var', 'bin',
@@ -253,7 +268,7 @@ class InitrdGenerator:
         else:
             logging.info('No module sources defined.')
 
-        if self.config.modules:
+        if self.config.modules and mods_dir:
             logging.info('Adding modules %s...', self.config.modules)
             self.copy_modules(mods_dir)
         else:
