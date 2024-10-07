@@ -215,7 +215,8 @@ class InitrdGenerator:
         """ Download all needed deb packages. """
         (_debs, _contents, missing) = self.proxy.download_deb_packages(
             packages=self.config.packages,
-            contents=self.target_dir
+            contents=self.target_dir,
+            download_depends=True
         )
 
         if missing:
