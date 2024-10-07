@@ -1,6 +1,5 @@
 """ Tests for the apt functions. """
 import os
-import tempfile
 
 from ebcl.common.apt import Apt, parse_depends
 from ebcl.common.proxy import Proxy
@@ -35,11 +34,10 @@ class TestApt:
         p = self.apt.find_package('busybox-static')
         assert p
 
-        with tempfile.TemporaryDirectory() as d:
-            pkg = self.proxy.download_package(self.apt.arch, p[0])
-            assert pkg
-            assert pkg.local_file
-            assert os.path.isfile(pkg.local_file)
+        pkg = self.proxy.download_package(self.apt.arch, p[0])
+        assert pkg
+        assert pkg.local_file
+        assert os.path.isfile(pkg.local_file)
 
     def test_ebcl_apt(self):
         """ Test that EBcL apt repo works and provides busybox-static. """

@@ -57,8 +57,12 @@ disable = [
 
 [tool.pytest.ini_options]
 minversion = "6.2.5"
-addopts = "--cov --cov-context=test --cov-report html -rP"
+addopts = ""
 testpaths = [ "tests" ]
+markers = [
+    "dev_container: tests requiring tools only avaiable in the dev container, e.g. elbe or kiwi-ng.",
+    "requires_download: tests requiring downloads form public resources, which is not allowed for GH actions",
+]
 
 [tool.coverage.paths]
 source = [
@@ -85,3 +89,14 @@ show_contexts = true
 [tool.mypy]
 mypy_path = "$MYPY_CONFIG_FILE_DIR/ebcl"
 explicit_package_bases = true
+
+[tool.flake8]
+ignore = ['C901']
+per-file-ignores = [
+    'ebcl/common/dependency.py:F841',
+    'ebcl/tools/proxy/proxy.py:F841',
+]
+count = true
+statistics = true
+max-line-length = 120
+exclude = '.venv'

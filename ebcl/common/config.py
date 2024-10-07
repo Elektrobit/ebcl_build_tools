@@ -74,7 +74,7 @@ class Config:
         # Name of the template file
         self.template: Optional[str] = None
         # Name of the artifact
-        self.name:  Optional[str] = None
+        self.name: Optional[str] = None
         # Download package dependencies
         self.download_deps: bool = True
         # Base enviromnet as a tarball
