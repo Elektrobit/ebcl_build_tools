@@ -213,8 +213,12 @@ class InitrdGenerator:
 
     def download_deb_packages(self):
         """ Download all needed deb packages. """
+        packages = self.config.packages.copy()
+        if self.config.kernel:
+            packages.remove(self.config.kernel)
+
         (_debs, _contents, missing) = self.proxy.download_deb_packages(
-            packages=self.config.packages,
+            packages=packages,
             contents=self.target_dir,
             download_depends=True
         )
