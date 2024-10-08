@@ -254,7 +254,7 @@ class InitrdGenerator:
             mods_dir = tempfile.mkdtemp()
             logging.info('Using modules from kernel deb packages...')
             (_debs, _contents, missing) = self.config.proxy.download_deb_packages(
-                packages=self.config.kernel,
+                packages=[self.config.kernel],
                 contents=mods_dir
             )
             if missing:
