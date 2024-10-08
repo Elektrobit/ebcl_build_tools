@@ -39,9 +39,6 @@ class InitrdGenerator:
             self.config.busybox = parse_package(
                 'busybox-static', self.config.arch)
 
-        if self.config.kernel:
-            self.config.packages.append(self.config.kernel)
-
         self.proxy = self.config.proxy
 
     def install_busybox(self) -> bool:
@@ -213,12 +210,8 @@ class InitrdGenerator:
 
     def download_deb_packages(self):
         """ Download all needed deb packages. """
-        packages = self.config.packages.copy()
-        if self.config.kernel:
-            packages.remove(self.config.kernel)
-
         (_debs, _contents, missing) = self.proxy.download_deb_packages(
-            packages=packages,
+            packages=self.config.packages,
             contents=self.target_dir,
             download_depends=True
         )
@@ -257,11 +250,11 @@ class InitrdGenerator:
         if self.config.modules_folder:
             mods_dir = self.config.modules_folder
             logging.info('Using modules from folder %s...', mods_dir)
-        elif self.config.packages:
+        elif self.config.kernel:
             mods_dir = tempfile.mkdtemp()
-            logging.info('Using modules from deb packages...')
+            logging.info('Using modules from kernel deb packages...')
             (_debs, _contents, missing) = self.config.proxy.download_deb_packages(
-                packages=self.config.packages,
+                packages=self.config.kernel,
                 contents=mods_dir
             )
             if missing:
