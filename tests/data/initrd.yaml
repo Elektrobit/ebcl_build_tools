@@ -10,8 +10,7 @@ apt_repos:
       - nxp_public
 modules:
   - kernel/pfeng/pfeng.ko
-packages:
-  - linux-modules-5.15.0-1023-s32-eb
+kernel: linux-modules-5.15.0-1023-s32-eb
 arch: 'arm64'
 root_device: /dev/mmcblk0p2
 devices:

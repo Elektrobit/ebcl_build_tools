@@ -39,8 +39,7 @@ class InitrdGenerator:
             self.config.busybox = parse_package(
                 'busybox-static', self.config.arch)
 
-        if self.config.kernel:
-            self.config.packages.append(self.config.kernel)
+        self.proxy = self.config.proxy
 
     def install_busybox(self) -> bool:
         """Get busybox and add it to the initrd. """
@@ -209,6 +208,18 @@ class InitrdGenerator:
             self.config.fake.run_sudo(
                 f'chown {uid}:{gid} {dev_folder}/{device["name"]}')
 
+    def download_deb_packages(self):
+        """ Download all needed deb packages. """
+        (_debs, _contents, missing) = self.proxy.download_deb_packages(
+            packages=self.config.packages,
+            contents=self.target_dir,
+            download_depends=True
+        )
+
+        if missing:
+            logging.critical('Not found packages: %s', missing)
+            raise InvalidConfiguration(f'Not found packages: {missing}')
+
     @log_exception()
     def create_initrd(self) -> Optional[str]:
         """ Create the initrd image.  """
@@ -219,6 +230,8 @@ class InitrdGenerator:
         success = self.install_busybox()
         if not success:
             return None
+
+        self.download_deb_packages()
 
         # Create necessary directories
         for dir_name in ['proc', 'sys', 'dev', 'sysroot', 'var', 'bin',
@@ -237,11 +250,11 @@ class InitrdGenerator:
         if self.config.modules_folder:
             mods_dir = self.config.modules_folder
             logging.info('Using modules from folder %s...', mods_dir)
-        elif self.config.packages:
+        elif self.config.kernel:
             mods_dir = tempfile.mkdtemp()
-            logging.info('Using modules from deb packages...')
+            logging.info('Using modules from kernel deb packages...')
             (_debs, _contents, missing) = self.config.proxy.download_deb_packages(
-                packages=self.config.packages,
+                packages=[self.config.kernel],
                 contents=mods_dir
             )
             if missing:
@@ -253,7 +266,7 @@ class InitrdGenerator:
         else:
             logging.info('No module sources defined.')
 
-        if self.config.modules:
+        if self.config.modules and mods_dir:
             logging.info('Adding modules %s...', self.config.modules)
             self.copy_modules(mods_dir)
         else:

@@ -53,6 +53,23 @@ class TestInitrd:
             self.generator.target_dir, 'bin', 'sh'))
 
     @pytest.mark.requires_download
+    def test_add_cryptsetup(self):
+        """ Test yaml config loading. """
+        vd = VersionDepends(
+            name='cryptsetup-bin',
+            package_relation=None,
+            version_relation=None,
+            version=None,
+            arch=self.generator.config.arch
+        )
+        self.generator.config.packages.append(vd)
+
+        self.generator.download_deb_packages()
+
+        assert os.path.isfile(os.path.join(
+            self.generator.target_dir, 'sbin', 'cryptsetup'))
+
+    @pytest.mark.requires_download
     def test_download_deb_package(self):
         """ Test modules package download. """
         vd = VersionDepends(
