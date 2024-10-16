@@ -388,7 +388,7 @@ class Files:
             logging.info('Archive %s exists. Deleting old archive.', archive)
             fn_run(f'rm -f {archive}', check=False)
 
-        self.fake.run_cmd(f'mv {tmp_archive} {archive}')
+        self.fake.run_cmd(f'cp {tmp_archive} {archive}')
 
         return archive
 
