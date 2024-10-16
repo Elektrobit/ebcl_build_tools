@@ -84,21 +84,32 @@ def _generate_apt_config(
 def build_debootstrap_image(
     config: Config,
     name: str,
-    result_dir: str
+    result_dir: str,
+    use_multistrap: bool = True,
+    debootstrap_variant: str = 'minbase'
 ) -> Optional[str]:
-    config_file = _generate_multistrap_config(config, name, result_dir)
-
-    if not config_file:
-        logging.critical('Generating the mutlistrap configuration failed.')
-        return None
-
     fake = config.fake
 
-    fake.run_sudo(
-        f'multistrap -a {config.arch} -d {config.target_dir} -f {config_file}',
-        cwd=config.target_dir,
-        check=True
-    )
+    if use_multistrap:
+        config_file = _generate_multistrap_config(config, name, result_dir)
+
+        if not config_file:
+            logging.critical('Generating the mutlistrap configuration failed.')
+            return None
+
+        fake.run_sudo(
+            f'multistrap -a {config.arch} -d {config.target_dir} -f {config_file}',
+            cwd=config.target_dir,
+            check=True
+        )
+    else:
+        fake.run_sudo(
+            f'debootstrap --arch={config.arch} --variant={debootstrap_variant} '
+            f'{config.primary_distro} {config.target_dir} '
+            f'{config.primary_repo}',
+            cwd=config.target_dir,
+            check=True
+        )
 
     sources = _generate_apt_config(config, result_dir)
 

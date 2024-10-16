@@ -122,7 +122,7 @@ class Config:
         # Kiwi-ng image version string
         self.image_version: Optional[str] = None
         # Root filesystem build type.
-        self.type: BuildType = BuildType.DEBOOTSTRAP
+        self.type: BuildType = BuildType.MULTISTRAP
         # Primary repo for debootstrap
         self.primary_repo: Optional[str] = None
         # Primary repo for debootstrap
