@@ -90,6 +90,7 @@ def build_debootstrap_image(
     debootstrap_variant: str = 'minbase'
 ) -> Optional[str]:
     fake = config.fake
+    apt_env = 'DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC'
 
     if use_multistrap:
         config_file = _generate_multistrap_config(config, name, result_dir)
@@ -99,7 +100,8 @@ def build_debootstrap_image(
             return None
 
         fake.run_sudo(
-            f'multistrap -a {config.arch} -d {config.target_dir} -f {config_file}',
+            f'multistrap -a {config.arch} -d {config.target_dir} '
+            f'-f {config_file}',
             cwd=config.target_dir,
             check=True
         )
@@ -162,12 +164,19 @@ def build_debootstrap_image(
         )
 
         # Update root
-        apt_env = 'DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC'
         fake.run_chroot(
             f'bash -c "{apt_env} apt update"',
             chroot=config.target_dir,
             check=True
         )
+
+        if use_multistrap:
+            fake.run_chroot(
+                f'bash -c "{apt_env} apt install -y base-passwd apt-utils"',
+                chroot=config.target_dir,
+                check=True
+            )
+
         fake.run_chroot(
             f'bash -c "{apt_env} apt upgrade -y"',
             chroot=config.target_dir,
