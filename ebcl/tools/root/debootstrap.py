@@ -62,6 +62,7 @@ def _generate_apt_config(
 
     with open(apt_sources, mode='w', encoding='utf-8') as f:
         for apt in config.apt_repos:
+            logging.info('Adding apt repo %s...', str(apt))
             components = ' '.join(apt.components)
             f.write(f'deb {apt.url} {apt.distro} {components}\n\n')
 
@@ -102,7 +103,7 @@ def build_debootstrap_image(
             cwd=config.target_dir,
             check=True
         )
-        
+
         fake.run_sudo(
             f'rm -rf {config.target_dir}/etc/apt/sources.list.d/*',
             cwd=config.target_dir,
@@ -124,7 +125,7 @@ def build_debootstrap_image(
         return None
 
     error = False
-    
+
     try:
         # Prepare for chroot.
         fake.run_sudo(
@@ -210,11 +211,11 @@ def build_debootstrap_image(
             cwd=config.target_dir,
             check=False
         )
-    
+
     if error:
         # Stop the build in case of an execption.
         return None
-    
+
     # Cleanup
     fake.run_sudo(
         f'rm -rf {config.target_dir}/var/lib/apt/lists/*',
