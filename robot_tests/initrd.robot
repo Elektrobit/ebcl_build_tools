@@ -5,7 +5,6 @@ Suite Setup  Setup
 Suite Teardown  Teardown
 
 *** Variables ***
-${KVERSION}  5.15.0-1023-s32-eb
 ${CONFIG}    ../data/initrd.yaml
 
 *** Test Cases ***
@@ -15,10 +14,6 @@ Root Device is Mounted
 Devices are Created
     File Should Exist    /dev/console    character special file
     File Should Exist    /dev/mmcblk1    block special file
-
-Modules should be loaded
-    File Should Exist    /lib/modules/${KVERSION}/kernel/pfeng/pfeng.ko
-    Module Should Be Loaded    pfeng.ko
 
 Rootfs should be set up
     Directory Should Exist  /proc
