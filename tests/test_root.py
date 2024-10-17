@@ -41,7 +41,7 @@ class TestRoot:
     def test_read_config(self):
         """ Test yaml config loading. """
         assert self.generator.config.image is None
-        assert self.generator.config.type == BuildType.MULTISTRAP
+        assert self.generator.config.type == BuildType.DEBOOTSTRAP
 
     @pytest.mark.dev_container
     def test_build_kiwi_image(self):
@@ -127,20 +127,6 @@ class TestRoot:
         # Requires debootstrap and some other tools.
         test_dir = os.path.dirname(os.path.abspath(__file__))
         yaml = os.path.join(test_dir, 'data', 'root_debootstrap.yaml')
-        generator = RootGenerator(yaml, self.temp_dir, False)
-
-        generator.apt_repos = [Apt.ebcl_apt(CpuArch.AMD64)]
-
-        archive = generator.create_root(run_scripts=False)
-        assert archive
-        assert os.path.isfile(archive)
-
-    @pytest.mark.requires_download
-    def test_build_multistrap(self):
-        """ Test build root.tar. """
-        # Requires multistrap and some other tools.
-        test_dir = os.path.dirname(os.path.abspath(__file__))
-        yaml = os.path.join(test_dir, 'data', 'root_multistrap.yaml')
         generator = RootGenerator(yaml, self.temp_dir, False)
 
         generator.apt_repos = [Apt.ebcl_apt(CpuArch.AMD64)]
