@@ -53,7 +53,9 @@ class RootGenerator:
             else:
                 self.config.console = 'ttyAMA0,115200'
 
-        use_primary_repo = self.config.type == BuildType.ELBE or self.config.type == BuildType.DEBOOTSTRAP
+        use_primary_repo = self.config.type == BuildType.ELBE or \
+            self.config.type == BuildType.DEBOOTSTRAP or \
+            self.config.type == BuildType.MULTISTRAP
         if self.config.primary_repo:
             use_primary_repo = True
 
@@ -133,7 +135,15 @@ class RootGenerator:
             image_file = build_debootstrap_image(
                 self.config,
                 self.name,
-                self.result_dir
+                self.result_dir,
+                use_multistrap=False
+            )
+        elif self.config.type == BuildType.MULTISTRAP:
+            image_file = build_debootstrap_image(
+                self.config,
+                self.name,
+                self.result_dir,
+                use_multistrap=True
             )
 
         if not image_file:

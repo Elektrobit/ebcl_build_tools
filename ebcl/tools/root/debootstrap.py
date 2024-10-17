@@ -85,7 +85,7 @@ def build_debootstrap_image(
     config: Config,
     name: str,
     result_dir: str,
-    use_multistrap: bool = True,
+    use_multistrap: bool = False,
     debootstrap_variant: str = 'minbase'
 ) -> Optional[str]:
     fake = config.fake
