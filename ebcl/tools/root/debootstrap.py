@@ -102,6 +102,12 @@ def build_debootstrap_image(
             cwd=config.target_dir,
             check=True
         )
+        
+        fake.run_sudo(
+            f'rm -rf {config.target_dir}/etc/apt/sources.list.d/*',
+            cwd=config.target_dir,
+            check=True
+        )
     else:
         fake.run_sudo(
             f'debootstrap --arch={config.arch} --variant={debootstrap_variant} '
@@ -117,87 +123,97 @@ def build_debootstrap_image(
         logging.critical('Generating the apt sources failed.')
         return None
 
-    # Prepare for chroot.
-    fake.run_sudo(
-        f'mount -o bind /dev {config.target_dir}/dev',
-        cwd=config.target_dir,
-        check=True
-    )
-    fake.run_sudo(
-        f'mount -o bind /dev/pts {config.target_dir}/dev/pts',
-        cwd=config.target_dir,
-        check=True
-    )
-    fake.run_sudo(
-        f'mount -t sysfs /sys {config.target_dir}/sys',
-        cwd=config.target_dir,
-        check=True
-    )
-    fake.run_sudo(
-        f'mount -t proc /proc {config.target_dir}/proc',
-        cwd=config.target_dir,
-        check=True
-    )
-    fake.run_sudo(
-        f'cp /proc/mounts {config.target_dir}/etc/mtab',
-        cwd=config.target_dir,
-        check=True
-    )
+    error = False
+    
+    try:
+        # Prepare for chroot.
+        fake.run_sudo(
+            f'mount -o bind /dev {config.target_dir}/dev',
+            cwd=config.target_dir,
+            check=True
+        )
+        fake.run_sudo(
+            f'mount -o bind /dev/pts {config.target_dir}/dev/pts',
+            cwd=config.target_dir,
+            check=True
+        )
+        fake.run_sudo(
+            f'mount -t sysfs /sys {config.target_dir}/sys',
+            cwd=config.target_dir,
+            check=True
+        )
+        fake.run_sudo(
+            f'mount -t proc /proc {config.target_dir}/proc',
+            cwd=config.target_dir,
+            check=True
+        )
+        fake.run_sudo(
+            f'cp /proc/mounts {config.target_dir}/etc/mtab',
+            cwd=config.target_dir,
+            check=True
+        )
 
-    # Copy resolv.conf to enable name resolution.
-    fake.run_sudo(
-        f'cp /etc/resolv.conf {config.target_dir}/etc/resolv.conf',
-        cwd=config.target_dir,
-        check=True
-    )
+        # Copy resolv.conf to enable name resolution.
+        fake.run_sudo(
+            f'cp /etc/resolv.conf {config.target_dir}/etc/resolv.conf',
+            cwd=config.target_dir,
+            check=True
+        )
 
-    # Update root
-    apt_env = 'DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC'
-    fake.run_chroot(
-        f'bash -c "{apt_env} apt update"',
-        chroot=config.target_dir,
-        check=True
-    )
-    fake.run_chroot(
-        f'bash -c "{apt_env} apt upgrade -y"',
-        chroot=config.target_dir,
-        check=True
-    )
+        # Update root
+        apt_env = 'DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC'
+        fake.run_chroot(
+            f'bash -c "{apt_env} apt update"',
+            chroot=config.target_dir,
+            check=True
+        )
+        fake.run_chroot(
+            f'bash -c "{apt_env} apt upgrade -y"',
+            chroot=config.target_dir,
+            check=True
+        )
 
-    # Install additional packages
-    packages = ' '.join(list(map(lambda vd: vd.name, config.packages)))
-    fake.run_chroot(
-        f'bash -c "{apt_env} apt install -y {packages}"',
-        chroot=config.target_dir,
-        check=True
-    )
-
-    # Unmount special folders.
-    fake.run_sudo(
-        f'umount {config.target_dir}/dev/pts',
-        cwd=config.target_dir,
-        check=True
-    )
-    fake.run_sudo(
-        f'umount {config.target_dir}/dev',
-        cwd=config.target_dir,
-        check=True
-    )
-    fake.run_sudo(
-        f'umount {config.target_dir}/sys',
-        cwd=config.target_dir,
-        check=True
-    )
-    fake.run_sudo(
-        f'umount {config.target_dir}/proc',
-        cwd=config.target_dir,
-        check=True
-    )
-    fake.run_sudo(
-        f'rm {config.target_dir}/etc/mtab',
-        cwd=config.target_dir,
-        check=True
-    )
+        # Install additional packages
+        packages = ' '.join(list(map(lambda vd: vd.name, config.packages)))
+        fake.run_chroot(
+            f'bash -c "{apt_env} apt install -y {packages}"',
+            chroot=config.target_dir,
+            check=True
+        )
+    except Exception as e:
+        logging.critical(f'Error while generating root! {e}')
+        error = True
+    finally:
+        # Unmount special folders.
+        fake.run_sudo(
+            f'umount {config.target_dir}/dev/pts',
+            cwd=config.target_dir,
+            check=False
+        )
+        fake.run_sudo(
+            f'umount {config.target_dir}/dev',
+            cwd=config.target_dir,
+            check=False
+        )
+        fake.run_sudo(
+            f'umount {config.target_dir}/sys',
+            cwd=config.target_dir,
+            check=False
+        )
+        fake.run_sudo(
+            f'umount {config.target_dir}/proc',
+            cwd=config.target_dir,
+            check=False
+        )
+        fake.run_sudo(
+            f'rm {config.target_dir}/etc/mtab',
+            cwd=config.target_dir,
+            check=False
+        )
+    
+    if error:
+        # Stop the build in case of an execption.
+        return None
     
     # Cleanup
     fake.run_sudo(
