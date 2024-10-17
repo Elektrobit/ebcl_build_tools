@@ -35,8 +35,8 @@ def _generate_kiwi_repo_config(config: Config) -> Optional[str]:
             cmp_id = f'{cnt}_{apt.distro}_{component}'
             repos += f'<repository alias="{cmp_id}" type="apt-deb" ' \
                 f'distribution="{apt.distro}" components="{component}" ' \
-                f'use_for_bootstrap="{
-                    bootstrap}" repository_gpgcheck="false" >\n'
+                f'use_for_bootstrap="{bootstrap}" ' \
+                'repository_gpgcheck="false" >\n'
             repos += f'    <source path = "{apt.url}" />\n'
             repos += '</repository>\n\n'
 
