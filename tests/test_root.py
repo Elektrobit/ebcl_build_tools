@@ -41,7 +41,7 @@ class TestRoot:
     def test_read_config(self):
         """ Test yaml config loading. """
         assert self.generator.config.image is None
-        assert self.generator.config.type == BuildType.ELBE
+        assert self.generator.config.type == BuildType.MULTISTRAP
 
     @pytest.mark.dev_container
     def test_build_kiwi_image(self):
