@@ -210,6 +210,23 @@ def build_debootstrap_image(
         cwd=config.target_dir,
         check=True
     )
+    
+    # Cleanup
+    fake.run_sudo(
+        'rm -rf {config.target_dir}/var/lib/apt/lists/*',
+        cwd=config.target_dir,
+        check=True
+    )
+    fake.run_sudo(
+        'rm -rf {config.target_dir}/var/cache/apt/*',
+        cwd=config.target_dir,
+        check=True
+    )
+    fake.run_sudo(
+        'rm -rf {config.target_dir}/usr/share/man/*',
+        cwd=config.target_dir,
+        check=True
+    )
 
     # Create archive.
     ao: Optional[str] = config.fh.pack_root_as_tarball(
