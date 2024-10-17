@@ -172,7 +172,7 @@ def build_debootstrap_image(
 
         if use_multistrap:
             fake.run_chroot(
-                f'bash -c "{apt_env} apt install -y base-passwd apt-utils"',
+                f'bash -c "{apt_env} apt --reinstall install -y base-passwd apt-utils"',
                 chroot=config.target_dir,
                 check=True
             )
@@ -191,7 +191,7 @@ def build_debootstrap_image(
             check=True
         )
     except Exception as e:
-        logging.critical(f'Error while generating root! {e}')
+        logging.critical('Error while generating root! %s', str(e))
         error = True
     finally:
         # Unmount special folders.
