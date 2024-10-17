@@ -172,18 +172,6 @@ def build_debootstrap_image(
         check=True
     )
 
-    # Cleanup
-    fake.run_sudo(
-        'rm -rf {config.target_dir}/var/lib/apt/lists/*',
-        cwd=config.target_dir,
-        check=True
-    )
-    fake.run_sudo(
-        'rm -rf {config.target_dir}/var/cache/apt/*',
-        cwd=config.target_dir,
-        check=True
-    )
-
     # Unmount special folders.
     fake.run_sudo(
         f'umount {config.target_dir}/dev/pts',
