@@ -2,38 +2,9 @@
 import logging
 import os
 
-from typing import Optional, Any
+from typing import Optional
 
 from ebcl.common.config import Config
-from ebcl.common.templates import render_template
-
-
-def _generate_multistrap_config(
-    config: Config,
-    name: str,
-    result_dir: str
-) -> Optional[str]:
-    """ Generate a multistrap repo config. """
-    params: dict[str, Any] = {}
-
-    params['repo_url'] = config.primary_repo
-    params['distro'] = config.primary_distro
-    params['repo_keyring_package'] = config.primary_key_deb
-
-    if config.template is None:
-        template = os.path.join(os.path.dirname(__file__), 'multistrap.cfg')
-    else:
-        template = config.template
-
-    (config_file, _content) = render_template(
-        template_file=template,
-        params=params,
-        generated_file_name=f'{name}.multistrap.cfg',
-        results_folder=result_dir,
-        template_copy_folder=result_dir
-    )
-
-    return config_file
 
 
 def _generate_apt_config(
@@ -86,39 +57,18 @@ def build_debootstrap_image(
     config: Config,
     name: str,
     result_dir: str,
-    use_multistrap: bool = False,
     debootstrap_variant: str = 'minbase'
 ) -> Optional[str]:
     fake = config.fake
     apt_env = 'DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC'
 
-    if use_multistrap:
-        config_file = _generate_multistrap_config(config, name, result_dir)
-
-        if not config_file:
-            logging.critical('Generating the mutlistrap configuration failed.')
-            return None
-
-        fake.run_sudo(
-            f'multistrap -a {config.arch} -d {config.target_dir} '
-            f'-f {config_file}',
-            cwd=config.target_dir,
-            check=True
-        )
-
-        fake.run_sudo(
-            f'rm -rf {config.target_dir}/etc/apt/sources.list.d/*',
-            cwd=config.target_dir,
-            check=True
-        )
-    else:
-        fake.run_sudo(
-            f'debootstrap --arch={config.arch} --variant={debootstrap_variant} '
-            f'{config.primary_distro} {config.target_dir} '
-            f'{config.primary_repo}',
-            cwd=config.target_dir,
-            check=True
-        )
+    fake.run_sudo(
+        f'debootstrap --arch={config.arch} --variant={debootstrap_variant} '
+        f'{config.primary_distro} {config.target_dir} '
+        f'{config.primary_repo}',
+        cwd=config.target_dir,
+        check=True
+    )
 
     sources = _generate_apt_config(config, result_dir)
 
@@ -169,13 +119,6 @@ def build_debootstrap_image(
             chroot=config.target_dir,
             check=True
         )
-
-        if use_multistrap:
-            fake.run_chroot(
-                f'bash -c "{apt_env} apt --reinstall install -y base-passwd apt-utils"',
-                chroot=config.target_dir,
-                check=True
-            )
 
         fake.run_chroot(
             f'bash -c "{apt_env} apt upgrade -y"',

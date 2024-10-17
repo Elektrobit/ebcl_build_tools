@@ -8,7 +8,6 @@ class BuildType(Enum):
     ELBE = 1
     KIWI = 2
     DEBOOTSTRAP = 3
-    MULTISTRAP = 4
 
     @classmethod
     def from_str(cls, build_type: Optional[str]):
@@ -25,8 +24,6 @@ class BuildType(Enum):
             return cls.KIWI
         elif build_type == 'debootstrap':
             return cls.DEBOOTSTRAP
-        elif build_type == 'multistrap':
-            return cls.MULTISTRAP
         else:
             return None
 
@@ -37,7 +34,5 @@ class BuildType(Enum):
             return "kiwi-ng"
         elif self.value == 3:
             return "debootstrap"
-        elif self.value == 4:
-            return "multistrap"
         else:
             return "UNKNOWN"
