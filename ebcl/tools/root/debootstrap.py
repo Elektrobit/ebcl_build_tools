@@ -201,17 +201,17 @@ def build_debootstrap_image(
     
     # Cleanup
     fake.run_sudo(
-        'rm -rf {config.target_dir}/var/lib/apt/lists/*',
+        f'rm -rf {config.target_dir}/var/lib/apt/lists/*',
         cwd=config.target_dir,
         check=True
     )
     fake.run_sudo(
-        'rm -rf {config.target_dir}/var/cache/apt/*',
+        f'rm -rf {config.target_dir}/var/cache/apt/*',
         cwd=config.target_dir,
         check=True
     )
     fake.run_sudo(
-        'rm -rf {config.target_dir}/usr/share/man/*',
+        f'rm -rf {config.target_dir}/usr/share/man/*',
         cwd=config.target_dir,
         check=True
     )
