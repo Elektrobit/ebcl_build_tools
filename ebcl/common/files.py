@@ -389,6 +389,7 @@ class Files:
             fn_run(f'rm -f {archive}', check=False)
 
         self.fake.run_cmd(f'cp {tmp_archive} {archive}')
+        self.fake.run_cmd(f'rm {tmp_archive}', check=False)
 
         return archive
 

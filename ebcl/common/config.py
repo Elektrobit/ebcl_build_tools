@@ -127,8 +127,6 @@ class Config:
         self.primary_repo: Optional[str] = None
         # Primary repo for debootstrap
         self.primary_distro: Optional[str] = None
-        # Primary repo key package
-        self.primary_key_deb: Optional[str] = 'ubuntu-keyring'
         # Password for the root user
         self.root_password: Optional[str] = 'linux'
         # Hostname for the root filesystem
@@ -404,9 +402,6 @@ class Config:
 
         if 'primary_distro' in config:
             self.primary_distro = config.get('primary_distro', None)
-
-        if 'primary_key_deb' in config:
-            self.primary_key_deb = config.get('primary_key_deb', None)
 
         if 'root_password' in config:
             self.root_password = config.get('root_password', 'linux')

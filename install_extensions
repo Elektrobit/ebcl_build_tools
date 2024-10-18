@@ -5,7 +5,7 @@ set -e
 which code
 
 # Install extensions
-extensions="ms-vscode.makefile-tools ms-vscode.cpptools-extension-pack ms-python.python robocorp.robotframework-lsp ms-python.autopep8 ms-python.pylint ms-python.mypy-type-checker WolfiesHorizon.python-auto-venv donjayamanne.python-environment-manager Gruntfuggly.todo-tree robocorp.robotframework-lsp"
+extensions="ms-vscode.makefile-tools ms-vscode.cpptools-extension-pack ms-python.python robocorp.robotframework-lsp ms-python.autopep8 ms-python.pylint ms-python.mypy-type-checker WolfiesHorizon.python-auto-venv donjayamanne.python-environment-manager Gruntfuggly.todo-tree"
 
 if [ ! -f /workspace/tools/user_config/extensions_installed ]; then
     for ext in $extensions; do
