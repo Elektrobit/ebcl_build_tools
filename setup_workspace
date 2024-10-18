@@ -2,27 +2,14 @@
 
 set -e
 
-python3 -m venv .venv
-
-source ./.venv/bin/activate
-
-rm -rf tools
-mkdir -p tools
-
 # install embdgen dependencies
 sudo apt install libparted-dev python3-dev pkg-config udev \
     mtools e2fsprogs cryptsetup-bin dosfstools fakeroot fdisk \
     debootstrap
 
 
-# install embdgen
-git clone --branch v0.1.1 https://github.com/Elektrobit/embdgen.git tools/embdgen
-pushd .
-cd tools/embdgen
-pip install -e embdgen-core
-pip install -e embdgen-cominit
-pip install -e embdgen-config-yaml
-popd
+# remove container ebcl installation
+yes | pip uninstall ebcl
 
 # install the build tools
 pip install -e .

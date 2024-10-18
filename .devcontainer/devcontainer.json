@@ -5,6 +5,8 @@
 	"image": "linux.elektrobit.com/ebcl/sdk:v1.3.8",
 	// This script will get the container and tag it with the local container tag. 
 	"initializeCommand": "${PWD}/init_workspace",
+	"postCreateCommand": "${PWD}/setup_workspace",
+	"postStartCommand": "${PWD}/install_extensions",
 	"customizations": {
 		"vscode": {
 			"settings": {
@@ -18,10 +20,11 @@
 		}
 	},
 	"remoteUser": "ebcl",
-	"privileged": false,
+	// Required for mount operations.
+	"privileged": true,
 	"mounts": [
 		// SSH Keys
-		"type=bind,source=/home/${localEnv:USER}/.ssh,target=/root/.ssh,readonly",
+		"type=bind,source=/home/${localEnv:USER}/.ssh,target=/home/ebcl/.ssh,readonly",
 		// Bind-mount the /dev folder, to get access to losetup devices
 		"type=bind,source=/dev,target=/dev"
 	],

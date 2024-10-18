@@ -15,8 +15,6 @@ from . import config_root
 class RootConfig:
     """ EBcL root filesystem config helper. """
 
-    # TODO: test
-
     @log_exception(call_exit=True)
     def __init__(self, config_file: str, output_path: str):
         """ Parse the yaml config file.

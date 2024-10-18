@@ -7,6 +7,7 @@ import tempfile
 
 from typing import Optional
 
+from ebcl import __version__
 from ebcl.common import init_logging, promo, log_exception
 from ebcl.common.apt import Apt
 from ebcl.common.config import Config
@@ -210,9 +211,9 @@ def main() -> None:
     """ Main entrypoint of EBcL root generator. """
     init_logging('DEBUG')
 
-    logging.info('\n===================\n'
-                 'EBcL Root Generator\n'
-                 '===================\n')
+    logging.info('\n=========================\n'
+                 'EBcL Root Generator %s\n'
+                 '=========================\n', __version__)
 
     parser = argparse.ArgumentParser(
         description='Create the content of the root partiton as root.tar.')
