@@ -67,7 +67,7 @@ class Root:
 
     def cleanup(self):
         """ Remove generated artefacts. """
-        self._run(f'rm -rf {self.target}')
+        # self._run(f'rm -rf {self.target}')
 
     def file_should_exist(self, path: str, file_type: str = 'regular file'):
         """ Check that a file exists. """

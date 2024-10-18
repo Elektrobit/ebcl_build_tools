@@ -147,7 +147,7 @@ class RootGenerator:
                 name = self.config.name + '.tar'
             else:
                 name = 'root.tar'
-            archive_out = os.path.join(self.config.output_path, name)
+            archive_out = os.path.join(self.result_dir, name)
             image_file = config_root(self.config, image_file, archive_out)
 
             if not image_file:

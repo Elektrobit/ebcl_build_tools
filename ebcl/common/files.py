@@ -189,9 +189,9 @@ class Files:
 
                 is_dir = os.path.isdir(file)
                 if is_dir:
-                    logging.debug('File %s is a dir...')
+                    logging.debug('File %s is a dir...', file)
                 else:
-                    logging.debug('File %s is a file...')
+                    logging.debug('File %s is a file...', file)
 
                 if delete_if_exists and not is_dir:
                     self._run_cmd(f'rm -rf {target}', environment)
