@@ -12,12 +12,9 @@ echo "Using EBcL container ${CONTAINER_TAG}."
 # Test if docker image is available
 if [ -z "$(docker images -q "linux.elektrobit.com/ebcl/sdk:${CONTAINER_TAG}")" ]; then
     if [ -z "${EBCL_CONTAINER_URL}" ]; then
-        echo "No container download url found! Please ensure the dev container image is available."
-        exit 1
-    else
-        # Download and import the image
-        $CONTAINER_TOOL import "${EBCL_CONTAINER_URL}/ebcl_dev_container_${CONTAINER_TAG}.tar.xz" "linux.elektrobit.com/ebcl/sdk:${CONTAINER_TAG}"
+        EBCL_CONTAINER_URL="http://linux.elektrobit.com/images"
     fi
+    $CONTAINER_TOOL import "${EBCL_CONTAINER_URL}/ebcl_dev_container_${CONTAINER_TAG}.tar.xz" "linux.elektrobit.com/ebcl/sdk:${CONTAINER_TAG}"
 else
     echo "Dev container image "linux.elektrobit.com/ebcl/sdk:${CONTAINER_TAG}" is available."
 fi
