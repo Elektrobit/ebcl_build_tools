@@ -66,7 +66,7 @@ class TestConfig:
         assert config.modules[0] == 'kernel/pfeng/pfeng.ko'
 
         assert len(config.packages) == 0
-        assert config.kernel is not None and config.kernel.name == 'linux-modules-5.15.0-1023-s32-eb'
+        assert config.kernel is not None and config.kernel.name == 'linux-image-generic'
 
         assert config.arch == CpuArch.ARM64
 
