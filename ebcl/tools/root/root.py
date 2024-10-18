@@ -148,9 +148,9 @@ class RootGenerator:
             else:
                 name = 'root.tar'
             archive_out = os.path.join(self.config.output_path, name)
-            image = config_root(self.config, image_file, archive_out)
+            image_file = config_root(self.config, image_file, archive_out)
 
-            if not image:
+            if not image_file:
                 logging.critical('Configuration failed!')
                 return None
         else:
@@ -168,7 +168,8 @@ class RootGenerator:
             ext = '.' + image_name.split('.', maxsplit=1)[-1]
 
         out_image = f'{self.config.output_path}/{self.name}{ext}'
-        self.config.fake.run_fake(f'mv {image_file} {out_image}')
+        if image_file != out_image:
+            self.config.fake.run_fake(f'mv {image_file} {out_image}')
 
         return out_image
 
