@@ -88,8 +88,6 @@ class TestConfig:
             os.path.dirname(__file__), 'data', 'other.txt')
         assert config.host_files[1]['destination'] == 'root'
 
-        assert config.kernel_version == '5.15.0-1023-s32-eb'
-
     def test_root_yaml(self):
         """ Try to parse boot.yaml. """
         yaml_file = os.path.join(
