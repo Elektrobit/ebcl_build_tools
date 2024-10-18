@@ -131,6 +131,6 @@ class TestRoot:
 
         generator.apt_repos = [Apt.ebcl_apt(CpuArch.AMD64)]
 
-        archive = generator.create_root(run_scripts=False)
+        archive = generator.create_root()
         assert archive
         assert os.path.isfile(archive)
