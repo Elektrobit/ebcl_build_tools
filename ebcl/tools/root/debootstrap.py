@@ -113,6 +113,25 @@ def build_debootstrap_image(
             check=True
         )
 
+        # Set root password
+        if config.root_password:
+            fake.run_chroot(
+                f'echo "{config.root_password}" | passwd root --stdin',
+                chroot=config.target_dir,
+                check=True
+            )
+
+        # Set the hostname
+        if config.hostname:
+            hostname = config.hostname
+            if config.domain:
+                hostname = f'{hostname}.{config.domain}'
+            fake.run_chroot(
+                f'echo "{hostname}" | /etc/hostname',
+                chroot=config.target_dir,
+                check=True
+            )
+
         # Update root
         fake.run_chroot(
             f'bash -c "{apt_env} apt update"',
