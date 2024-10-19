@@ -99,7 +99,7 @@ class Fake:
         """ Run a command using sudo and chroot. """
         cmd = cmd.replace('"', '\\"')
         (out, err, returncode) = self.run_cmd(
-            cmd=f'sudo chroot {chroot} bash -c "{cmd}"',
+            cmd=f'sudo chroot {chroot} {cmd}',
             check=check
         )
 

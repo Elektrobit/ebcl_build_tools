@@ -116,7 +116,7 @@ def build_debootstrap_image(
         # Set root password
         if config.root_password:
             fake.run_chroot(
-                f'echo "root:{config.root_password}" | chpasswd',
+                f'bash -c "echo \"root:{config.root_password}\" | chpasswd"',
                 chroot=config.target_dir,
                 check=True
             )
@@ -127,7 +127,7 @@ def build_debootstrap_image(
             if config.domain:
                 hostname = f'{hostname}.{config.domain}'
             fake.run_chroot(
-                f'echo "{hostname}" > /etc/hostname',
+                f'bash -c "echo \"{hostname}\" > /etc/hostname"',
                 chroot=config.target_dir,
                 check=True
             )
