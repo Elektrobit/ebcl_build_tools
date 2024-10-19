@@ -97,7 +97,6 @@ class Fake:
 
     def run_chroot(self, cmd: str, chroot: str, check=True) -> Tuple[str, str, int]:
         """ Run a command using sudo and chroot. """
-        cmd = cmd.replace('"', '\\"')
         (out, err, returncode) = self.run_cmd(
             cmd=f'sudo chroot {chroot} {cmd}',
             check=check
