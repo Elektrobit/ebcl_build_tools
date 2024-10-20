@@ -10,9 +10,8 @@ apt_repos:
       - nxp_public
 modules:
   - kernel/pfeng/pfeng.ko
-packages:
-  - linux-modules-5.15.0-1023-s32-eb
-arch: 'arm64'
+kernel: linux-image-generic
+arch: "arm64"
 root_device: /dev/mmcblk0p2
 devices:
   - name: mmcblk1
@@ -31,4 +30,3 @@ host_files:
     mode: 777
     uid: 123
     gid: 456
-kversion: 5.15.0-1023-s32-eb

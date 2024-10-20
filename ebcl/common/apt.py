@@ -50,7 +50,7 @@ class Apt:
         key = os.environ.get(
             'EBCL_REPO_KEY', 'file:///build/keys/elektrobit.pub')
         gpg = os.environ.get(
-            'EBCL_REPO_GPG', '/etc/berrymill/keyrings.d/elektrobit.gpg')
+            'EBCL_REPO_GPG', '/etc/apt/trusted.gpg.d/elektrobit.gpg')
         return cls(
             url=f'{url}/{release}',
             distro='ebcl',

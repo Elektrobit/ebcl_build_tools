@@ -66,7 +66,7 @@ class TestConfig:
         assert config.modules[0] == 'kernel/pfeng/pfeng.ko'
 
         assert len(config.packages) == 0
-        assert config.kernel is not None and config.kernel.name == 'linux-modules-5.15.0-1023-s32-eb'
+        assert config.kernel is not None and config.kernel.name == 'linux-image-generic'
 
         assert config.arch == CpuArch.ARM64
 
@@ -87,8 +87,6 @@ class TestConfig:
         assert config.host_files[1]['source'] == os.path.join(
             os.path.dirname(__file__), 'data', 'other.txt')
         assert config.host_files[1]['destination'] == 'root'
-
-        assert config.kernel_version == '5.15.0-1023-s32-eb'
 
     def test_root_yaml(self):
         """ Try to parse boot.yaml. """

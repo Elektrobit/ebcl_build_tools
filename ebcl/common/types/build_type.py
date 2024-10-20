@@ -7,6 +7,7 @@ class BuildType(Enum):
     """ Build type for the root filesystem build. """
     ELBE = 1
     KIWI = 2
+    DEBOOTSTRAP = 3
 
     @classmethod
     def from_str(cls, build_type: Optional[str]):
@@ -21,6 +22,8 @@ class BuildType(Enum):
             return cls.ELBE
         elif build_type == 'kiwi':
             return cls.KIWI
+        elif build_type == 'debootstrap':
+            return cls.DEBOOTSTRAP
         else:
             return None
 
@@ -29,5 +32,7 @@ class BuildType(Enum):
             return "elbe"
         elif self.value == 2:
             return "kiwi-ng"
+        elif self.value == 3:
+            return "debootstrap"
         else:
             return "UNKNOWN"

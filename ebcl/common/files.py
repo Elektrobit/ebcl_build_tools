@@ -189,9 +189,9 @@ class Files:
 
                 is_dir = os.path.isdir(file)
                 if is_dir:
-                    logging.debug('File %s is a dir...')
+                    logging.debug('File %s is a dir...', file)
                 else:
-                    logging.debug('File %s is a file...')
+                    logging.debug('File %s is a file...', file)
 
                 if delete_if_exists and not is_dir:
                     self._run_cmd(f'rm -rf {target}', environment)
@@ -388,7 +388,8 @@ class Files:
             logging.info('Archive %s exists. Deleting old archive.', archive)
             fn_run(f'rm -f {archive}', check=False)
 
-        self.fake.run_cmd(f'mv {tmp_archive} {archive}')
+        self.fake.run_cmd(f'cp {tmp_archive} {archive}')
+        self.fake.run_cmd(f'rm {tmp_archive}', check=False)
 
         return archive
 

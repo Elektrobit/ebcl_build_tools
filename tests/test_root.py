@@ -41,7 +41,7 @@ class TestRoot:
     def test_read_config(self):
         """ Test yaml config loading. """
         assert self.generator.config.image is None
-        assert self.generator.config.type == BuildType.ELBE
+        assert self.generator.config.type == BuildType.DEBOOTSTRAP
 
     @pytest.mark.dev_container
     def test_build_kiwi_image(self):
@@ -113,6 +113,20 @@ class TestRoot:
         # EBcL dev container required - root generator calls elbe as subprocess
         test_dir = os.path.dirname(os.path.abspath(__file__))
         yaml = os.path.join(test_dir, 'data', 'sysroot_elbe.yaml')
+        generator = RootGenerator(yaml, self.temp_dir, False)
+
+        generator.apt_repos = [Apt.ebcl_apt(CpuArch.AMD64)]
+
+        archive = generator.create_root()
+        assert archive
+        assert os.path.isfile(archive)
+
+    @pytest.mark.requires_download
+    def test_build_debootstrap(self):
+        """ Test build root.tar. """
+        # Requires debootstrap and some other tools.
+        test_dir = os.path.dirname(os.path.abspath(__file__))
+        yaml = os.path.join(test_dir, 'data', 'root_debootstrap.yaml')
         generator = RootGenerator(yaml, self.temp_dir, False)
 
         generator.apt_repos = [Apt.ebcl_apt(CpuArch.AMD64)]
