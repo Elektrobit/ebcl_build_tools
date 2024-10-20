@@ -206,7 +206,7 @@ def build_kiwi_image(
         image: Optional[str] = config.image
     else:
         generate_repos = not use_berrymill
-        image = _generate_kiwi_image(config, name, result_dir, generate_repos)
+        image = _generate_kiwi_image(config, image_name, result_dir, generate_repos)
 
     if not image:
         logging.critical('No kiwi image description found!')
