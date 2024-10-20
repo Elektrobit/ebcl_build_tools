@@ -177,7 +177,7 @@ def _generate_berrymill_config(
 
 def build_kiwi_image(
     config: Config,
-    name: str,
+    image_name: str,
     result_dir: str
 ) -> Optional[str]:
     """ Run kiwi image build. """
@@ -340,7 +340,7 @@ def build_kiwi_image(
 
     # rename result archive
     ext = pattern.split('.', maxsplit=1)[-1]
-    result_name = f'{name}.{ext}'
+    result_name = f'{image_name}.{ext}'
 
     logging.debug('Using result name %s...', result_name)
 
