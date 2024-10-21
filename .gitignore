@@ -23,7 +23,7 @@ htmlcov
 
 pytest_report.html
 
-assets/
+/assets/
 
 /tmp
 
