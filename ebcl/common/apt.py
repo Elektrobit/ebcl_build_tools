@@ -477,8 +477,8 @@ class Apt:
             key_pub_file = os.path.join(output_folder, f'{self.get_id()}.pub')
             key_gpg_file = os.path.join(output_folder, f'{self.get_id()}.gpg')
         else:
-            key_pub_file = tempfile.mktemp()
-            key_gpg_file = tempfile.mktemp()
+            key_pub_file = tempfile.mktemp(suffix=".pub")
+            key_gpg_file = tempfile.mktemp(suffix=".gpg")
 
         try:
             with open(key_pub_file, 'w', encoding='utf8') as f:
