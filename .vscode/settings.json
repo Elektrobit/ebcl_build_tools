@@ -10,8 +10,6 @@
         "--disable=W0718"
     ],
     "python.testing.pytestArgs": [
-        "--capture=no",
-        "--log-level=DEBUG",
         "tests"
     ],
     "python.testing.unittestEnabled": false,

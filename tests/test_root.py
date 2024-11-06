@@ -55,6 +55,7 @@ class TestRoot:
         assert archive
         assert os.path.isfile(archive)
 
+    @pytest.mark.skip(reason="Elbe is not part of dev container anymore.")
     @pytest.mark.dev_container
     def test_build_root_archive(self):
         """ Test build root.tar. """
@@ -107,6 +108,7 @@ class TestRoot:
         assert archive
         assert os.path.isfile(archive)
 
+    @pytest.mark.skip(reason="Elbe is not part of dev container anymore.")
     @pytest.mark.dev_container
     def test_build_sysroot_elbe(self):
         """ Test build root.tar. """

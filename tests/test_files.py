@@ -81,19 +81,19 @@ class TestFiles:
         )
         assert files
 
-        (out, err, ret) = self.fake.run_cmd(
+        (out, err, ret) = self.fake.run_sudo(
             f'file {self.target_dir}/cp_root_shell')
         assert ret == 0
         assert not err.strip()
         assert out
         assert 'ASCII text' in out
 
-        (out, err, ret) = self.fake.run_cmd(
+        (out, err, ret) = self.fake.run_sudo(
             f'stat -c \'%u %g %a\'  {self.target_dir}/cp_root_shell')
         assert ret == 0
         assert not err.strip()
         assert out
-        (mode, _err, _ret) = self.fake.run_cmd(
+        (mode, _err, _ret) = self.fake.run_sudo(
             f'stat -c \'%a\'  {self.other_dir}/root')
         assert mode
         mode = mode.strip()
