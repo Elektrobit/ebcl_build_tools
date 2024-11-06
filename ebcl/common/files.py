@@ -108,7 +108,7 @@ class Files:
             if file_dest:
                 dst = os.path.join(dst, file_dest)
 
-            mode: str = entry.get('mode', '600')
+            mode: str = entry.get('mode', None)
             uid: int = int(entry.get('uid', 0))
             gid: int = int(entry.get('gid', 0))
 
@@ -178,14 +178,14 @@ class Files:
 
             if file != target:
                 if fix_ownership:
+                    # Change owner to host user and group.
                     self.fake.run_sudo(
                         f'chown -R {os.getuid()}:{os.getgid()} {file}')
-                    self.fake.run_sudo(f'chmod -R 755 {file}')
 
-                if os.path.isfile(file):
-                    self._run_cmd(
-                        f'mkdir -p {os.path.dirname(target)}',
-                        environment, check=False)
+                # Create target directory if it does not exist.
+                self._run_cmd(
+                    f'mkdir -p {os.path.dirname(target)}',
+                    environment, check=False)
 
                 is_dir = os.path.isdir(file)
                 if is_dir:
@@ -194,6 +194,7 @@ class Files:
                     logging.debug('File %s is a file...', file)
 
                 if delete_if_exists and not is_dir:
+                    # Delete the target file or folder if it exists.
                     self._run_cmd(f'rm -rf {target}', environment)
 
                 if move:
@@ -210,6 +211,12 @@ class Files:
                     self._run_cmd(f'chown {uid} {target}', environment)
                 if gid:
                     self._run_cmd(f'chown :{gid} {target}', environment)
+
+                if not mode and not move:
+                    # Take over mode from source file.
+                    mode = oct(os.stat(file).st_mode)
+                    mode = mode[-4:]
+
                 if mode:
                     self._run_cmd(f'chmod {mode} {target}', environment)
 
