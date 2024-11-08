@@ -43,6 +43,7 @@ initrd_generator = "ebcl.tools.initrd.initrd:main"
 root_generator = "ebcl.tools.root.root:main"
 root_configurator = "ebcl.tools.root.root_config:main"
 package_downloader = "ebcl.tools.downloader.downloader:main"
+hypervisor_config = "ebcl.tools.hypervisor.config_gen:main"
 
 
 [tool.pylint.format]

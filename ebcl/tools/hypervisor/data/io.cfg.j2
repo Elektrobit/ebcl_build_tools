@@ -1,0 +1,32 @@
+local Res = Io.Res
+local Hw = Io.Hw
+
+local hw = Io.system_bus();
+
+Io.Dt.add_children(hw, function()
+{% for vbus in config.vbus %}
+{% for dev in vbus.devices %}
+    {{dev.name}} = Hw.Device(function()
+{% if dev.compatible %}
+        compatible = {"{{dev.compatible}}"}
+{% endif %}
+{%for mmio in dev.mmios %}
+        Resource.reg{{loop.index0}} = Res.mmio({{"0x%x"|format(mmio.address)}}, {{"0x%x"|format(mmio.address + mmio.size - 1)}}{% if mmio.cached %}, Io.Resource.F_cached_mem | Io.Resource.F_prefetchable{% endif %})
+{% endfor %}
+{%for irq in dev.irqs %}
+        Resource.irq{{loop.index0}} = Res.irq({{irq.irq + irq.offset}}, Io.Resource.Irq_type_{{irq.is_edge and "raising_edge" or "level_high"}})
+{% endfor %}
+    end)
+{% endfor %}
+{% endfor %}
+end)
+
+Io.add_vbusses({
+{% for vbus in config.vbus %}
+    {{vbus.name}} = Io.Vi.System_bus(function()
+{% for dev in vbus.devices %}
+        {{dev.name}} = wrap(hw.{{dev.name}})
+{% endfor %}
+    end),
+{% endfor %}
+})
