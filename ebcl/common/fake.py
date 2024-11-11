@@ -36,15 +36,24 @@ class Fake:
         cmd: str,
         cwd: Optional[str] = None,
         stdout: Optional[BufferedWriter] = None,
-        check=True
-    ) -> Tuple[Optional[str], str, int]:
+        check=True,
+        capture_output=False,
+    ) -> Tuple[Optional[str], Optional[str], int]:
         """ Run a command. """
         logging.info('Running command: %s', cmd)
 
         out: Any
-        if stdout is None:
-            out = PIPE
+        if capture_output:
+            err = PIPE
+            if stdout is None:
+                out = PIPE
+            else:
+                out = stdout
         else:
+            err = None
+            out = None
+
+        if stdout is not None:
             out = stdout
 
         p = subprocess.run(
@@ -52,20 +61,24 @@ class Fake:
             check=False,
             shell=True,
             stdout=out,
-            stderr=PIPE,
+            stderr=err,
             cwd=cwd
         )
 
-        if stdout is None:
-            pout = p.stdout.decode('utf8')
-            if pout.strip():
-                logging.info('STDOUT: %s', pout)
+        pout: Optional[str]
+        perr: Optional[str]
+        if capture_output:
+            if stdout is None:
+                pout = p.stdout.decode('utf8')
+                if pout.strip():
+                    logging.info('STDOUT: %s', pout)
+
+            perr = p.stderr.decode('utf8')
+            if perr.strip():
+                logging.error('%s has stderr output.\nSTDERR: %s', cmd, perr)
         else:
             pout = None
-
-        perr = p.stderr.decode('utf8')
-        if perr.strip():
-            logging.error('%s has stderr output.\nSTDERR: %s', cmd, perr)
+            perr = None
 
         if p.returncode != 0:
             logging.info('Returncode: %s', p.returncode)
@@ -85,21 +98,30 @@ class Fake:
         cmd: str,
         cwd: Optional[str] = None,
         stdout: Optional[BufferedWriter] = None,
-        check=True
-    ) -> Tuple[Optional[str], str, int]:
+        check=True,
+        capture_output=False,
+    ) -> Tuple[Optional[str], Optional[str], int]:
         """ Run a command using fakeroot. """
         return self.run_cmd(
             cmd=f'fakeroot -i {self.state} -s {self.state} -- {cmd}',
             cwd=cwd,
             stdout=stdout,
-            check=check
+            check=check,
+            capture_output=capture_output
         )
 
-    def run_chroot(self, cmd: str, chroot: str, check=True) -> Tuple[str, str, int]:
+    def run_chroot(
+        self,
+        cmd: str,
+        chroot: str,
+        check=True,
+        capture_output=False
+    ) -> Tuple[Optional[str], Optional[str], int]:
         """ Run a command using sudo and chroot. """
         (out, err, returncode) = self.run_cmd(
             cmd=f'sudo chroot {chroot} {cmd}',
-            check=check
+            check=check,
+            capture_output=capture_output
         )
 
         if out is None:
@@ -111,13 +133,15 @@ class Fake:
             self, cmd: str,
             cwd: Optional[str] = None,
             stdout: Optional[BufferedWriter] = None,
-            check=True
-    ) -> Tuple[Optional[str], str, int]:
+            check=True,
+            capture_output=False,
+    ) -> Tuple[Optional[str], Optional[str], int]:
         """ Run a command using sudo. """
         cmd = cmd.replace('"', r'\"')
         return self.run_cmd(
             cmd=f'sudo bash -c \"{cmd}\"',
             cwd=cwd,
             stdout=stdout,
-            check=check
+            check=check,
+            capture_output=capture_output
         )

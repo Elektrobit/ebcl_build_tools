@@ -2,6 +2,8 @@
 import logging
 import os
 
+from pathlib import Path
+
 import ebcl
 
 
@@ -77,3 +79,18 @@ def log_exception(call_exit: bool = False, code: int = 1):
         return inner_function
 
     return _log_exception
+
+
+def get_cache_folder(folder: str):
+    """ Get the shared cache folder.  """
+    if os.path.isdir('/workspace/state'):
+        cache = f'/workspace/state/{folder}'
+    else:
+        home = Path.home()
+        cache_folder = home / ".ebcl_build_cache" / folder
+        cache = str(cache_folder.absolute())
+
+    if not os.path.isdir(cache):
+        os.makedirs(cache, exist_ok=True)
+
+    return cache

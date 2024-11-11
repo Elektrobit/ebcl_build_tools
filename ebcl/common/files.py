@@ -52,13 +52,14 @@ class Files:
         self, cmd: str,
         env: Optional[EnvironmentType],
         cwd: Optional[str] = None,
-        check: bool = True
-    ) -> Optional[Tuple[Optional[str], str, int]]:
+        check: bool = True,
+        capture_output=True
+    ) -> Optional[Tuple[Optional[str], Optional[str], int]]:
         """ Run the cmd using fake. """
         if env == EnvironmentType.FAKEROOT:
-            return self.fake.run_fake(cmd, cwd=cwd, check=check)
+            return self.fake.run_fake(cmd, cwd=cwd, check=check, capture_output=capture_output)
         elif env == EnvironmentType.SUDO:
-            return self.fake.run_sudo(cmd, cwd=cwd, check=check)
+            return self.fake.run_sudo(cmd, cwd=cwd, check=check, capture_output=capture_output)
         elif env == EnvironmentType.CHROOT:
             chroot_dir: Optional[str] = None
             if cwd:
@@ -72,9 +73,9 @@ class Files:
 
             cmd = cmd.replace(chroot_dir, '')
 
-            return self.fake.run_chroot(cmd, chroot=chroot_dir, check=check)
+            return self.fake.run_chroot(cmd, chroot=chroot_dir, check=check, capture_output=capture_output)
         elif env == EnvironmentType.SHELL or env is None:
-            return self.fake.run_cmd(cmd, cwd=cwd, check=check)
+            return self.fake.run_cmd(cmd, cwd=cwd, check=check, capture_output=capture_output)
 
     def copy_files(
         self,
@@ -261,8 +262,9 @@ class Files:
         params: Optional[str] = None,
         environment: Optional[EnvironmentType] = None,
         cwd: Optional[str] = None,
-        check: bool = True
-    ) -> Optional[Tuple[Optional[str], str, int]]:
+        check: bool = True,
+        capture_output=True
+    ) -> Optional[Tuple[Optional[str], Optional[str], int]]:
         """ Run scripts. """
         if not params:
             params = ''
@@ -305,7 +307,8 @@ class Files:
                 cmd=f'{script_file} {params}',
                 env=environment,
                 cwd=target_dir,
-                check=check
+                check=check,
+                capture_output=capture_output
             )
 
             if os.path.abspath(script_file) != os.path.abspath(file):

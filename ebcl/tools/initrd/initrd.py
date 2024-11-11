@@ -208,7 +208,7 @@ class InitrdGenerator:
             self.config.fake.run_sudo(
                 f'chown {uid}:{gid} {dev_folder}/{device["name"]}')
 
-    def download_deb_packages(self):
+    def download_deb_packages(self, allow_missing=False):
         """ Download all needed deb packages. """
         (_debs, _contents, missing) = self.proxy.download_deb_packages(
             packages=self.config.packages,
@@ -216,7 +216,7 @@ class InitrdGenerator:
             download_depends=True
         )
 
-        if missing:
+        if not allow_missing and missing:
             logging.critical('Not found packages: %s', missing)
             raise InvalidConfiguration(f'Not found packages: {missing}')
 

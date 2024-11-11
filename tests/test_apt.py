@@ -3,7 +3,7 @@ import os
 
 from ebcl.common.apt import Apt, parse_depends
 from ebcl.common.proxy import Proxy
-from ebcl.common.version import Version, VersionRealtion
+from ebcl.common.version import Version, VersionRelation
 
 from ebcl.common.types.cpu_arch import CpuArch
 
@@ -137,7 +137,7 @@ class TestApt:
         assert len(vds) == 1
         assert vds[0].name == 'init-system-helpers'
         assert vds[0].version == Version('1.54~')
-        assert vds[0].version_relation == VersionRealtion.LARGER
+        assert vds[0].version_relation == VersionRelation.LARGER
         assert vds[0].package_relation is None
 
         vds = parse_depends(
@@ -160,10 +160,10 @@ class TestApt:
         assert len(vds) == 2
         assert vds[0].name == 'libnghttp2-14'
         assert vds[0].version == Version('1.50.0')
-        assert vds[0].version_relation == VersionRealtion.STRICT_LARGER
+        assert vds[0].version_relation == VersionRelation.STRICT_LARGER
         assert vds[1].name == 'libpcre2-8-0'
         assert vds[1].version == Version('10.22')
-        assert vds[1].version_relation == VersionRealtion.SMALLER
+        assert vds[1].version_relation == VersionRelation.SMALLER
 
         vds = parse_depends(
             'libnghttp2-14 | libpcre2-8-0 (<< 10.22)', CpuArch.AMD64)
@@ -174,7 +174,7 @@ class TestApt:
         assert vds[0].version_relation is None
         assert vds[1].name == 'libpcre2-8-0'
         assert vds[1].version == Version('10.22')
-        assert vds[1].version_relation == VersionRealtion.STRICT_SMALLER
+        assert vds[1].version_relation == VersionRelation.STRICT_SMALLER
 
         vds = parse_depends(
             'libnghttp2-14 (= 1.50.0) | libpcre2-8-0 (10.22)', CpuArch.AMD64)
@@ -182,7 +182,7 @@ class TestApt:
         assert len(vds) == 2
         assert vds[0].name == 'libnghttp2-14'
         assert vds[0].version == Version('1.50.0')
-        assert vds[0].version_relation == VersionRealtion.EXACT
+        assert vds[0].version_relation == VersionRelation.EXACT
         assert vds[1].name == 'libpcre2-8-0'
         assert vds[1].version == Version('10.22')
-        assert vds[1].version_relation == VersionRealtion.EXACT
+        assert vds[1].version_relation == VersionRelation.EXACT

@@ -2,15 +2,15 @@
 import logging
 import os
 import shutil
-import tempfile
 
 from enum import Enum
 from typing import Optional
 
 import jsonpickle
 
+from . import get_cache_folder
 from .deb import Package, filter_packages
-from .version import Version, VersionRealtion
+from .version import Version, VersionRelation
 
 from .types.cpu_arch import CpuArch
 
@@ -30,10 +30,7 @@ class Cache:
         if folder:
             self.folder = folder
         else:
-            if os.path.isdir('/workspace/state/cache'):
-                self.folder = '/workspace/state/cache'
-            else:
-                self.folder = tempfile.mkdtemp()
+            self.folder = get_cache_folder('cache')
 
         os.makedirs(self.folder, exist_ok=True)
         assert os.path.isdir(self.folder)
@@ -102,7 +99,7 @@ class Cache:
         arch: CpuArch,
         name: str,
         version: Optional[Version] = None,
-        relation: Optional[VersionRealtion] = None,
+        relation: Optional[VersionRelation] = None,
     ) -> Optional[Package]:
         """ Get a deb file from the cache. """
         logging.debug('Get package %s/%s/%s from cache.', name, version, arch)
@@ -111,7 +108,7 @@ class Cache:
 
         if version is not None:
             if relation is None:
-                relation = VersionRealtion.LARGER
+                relation = VersionRelation.LARGER
             packages = [p for p in packages if filter_packages(
                 p, version, relation)]
 

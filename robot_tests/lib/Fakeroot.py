@@ -43,11 +43,16 @@ class Fakeroot:
             stdout=PIPE,
             stderr=PIPE)
 
-        pout = p.stdout.decode('utf8')
-        logging.info('STDOUT: %s', pout)
+        pout = ''
+        perr = ''
 
-        perr = p.stderr.decode('utf8')
-        logging.info('STDERR: %s', perr)
+        if p.stdout:
+            pout = p.stdout.decode('utf8', errors='ignore')
+            logging.info('STDOUT: %s', pout)
+
+        if p.stderr:
+            perr = p.stderr.decode('utf8', errors='ignore')
+            logging.info('STDERR: %s', perr)
 
         if check:
             assert p.returncode == 0

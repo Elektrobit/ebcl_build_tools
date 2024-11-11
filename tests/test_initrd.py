@@ -165,32 +165,35 @@ class TestInitrd:
             self.generator.target_dir)
 
         (out, err, _returncode) = self.fake.run_sudo(
-            f'stat -c \'%a\' {self.generator.target_dir}/root/dummy.txt')
+            f'stat -c \'%a\' {self.generator.target_dir}/root/dummy.txt', capture_output=True)
         assert out is not None
         out = out.split('\n')[-2]
         mode = oct(
             os.stat(f'{os.path.dirname(__file__)}/data/dummy.txt').st_mode)
         assert out.strip() == mode[-3:]
+        assert err is not None
         assert not err.strip()
 
         (out, err, _returncode) = self.fake.run_sudo(
-            f'stat -c \'%u %g\' {self.generator.target_dir}/root/dummy.txt')
+            f'stat -c \'%u %g\' {self.generator.target_dir}/root/dummy.txt', capture_output=True)
         assert out is not None
         out = out.split('\n')[-2]
         assert out.strip() == '0 0'
+        assert err is not None
         assert not err.strip()
 
         (out, err, _returncode) = self.fake.run_sudo(
-            f'stat -c \'%a\' {self.generator.target_dir}/root/other.txt')
+            f'stat -c \'%a\' {self.generator.target_dir}/root/other.txt', capture_output=True)
         assert out is not None
         out = out.split('\n')[-2]
         assert out.strip() == '700'
 
         (out, err, _returncode) = self.fake.run_sudo(
-            f'stat -c \'%u %g\' {self.generator.target_dir}/root/other.txt')
+            f'stat -c \'%u %g\' {self.generator.target_dir}/root/other.txt', capture_output=True)
         assert out is not None
         out = out.split('\n')[-2]
         assert out.strip() == '123 456'
+        assert err is not None
         assert not err.strip()
 
     @pytest.mark.requires_download
@@ -202,5 +205,8 @@ class TestInitrd:
         out = generator.create_initrd()
         assert out
         assert os.path.isfile(out)
+
+        file_stats = os.stat(out)
+        assert file_stats.st_size > 10
 
         self.fake.run_sudo(f'rm -rf {out}', check=False)
