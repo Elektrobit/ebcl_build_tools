@@ -5,7 +5,7 @@ import tempfile
 
 from ebcl.common.cache import Cache
 from ebcl.common.deb import Package
-from ebcl.common.version import Version, VersionRealtion
+from ebcl.common.version import Version, VersionRelation
 
 from ebcl.common.types.cpu_arch import CpuArch
 
@@ -38,14 +38,14 @@ class TestCache:
 
         v = Version('1.36.1-3ubuntu1')
         p = self.cache.get(CpuArch.AMD64, 'busybox-static', v,
-                           relation=VersionRealtion.EXACT)
+                           relation=VersionRelation.EXACT)
         assert p
         assert p.name == 'busybox-static'
         assert p.arch == CpuArch.AMD64
         assert p.version == v
 
         p = self.cache.get(CpuArch.AMD64, 'busybox-static',
-                           Version('anotherversion'), VersionRealtion.EXACT)
+                           Version('anotherversion'), VersionRelation.EXACT)
         assert not p
 
     def test_get_no_version(self):
@@ -69,7 +69,7 @@ class TestCache:
         assert p is None
 
         p = self.cache.get(CpuArch.AMD64, 'busybox', Version('nonversion'),
-                           VersionRealtion.EXACT)
+                           VersionRelation.EXACT)
         assert p is None
 
     def test_restore_cache(self):

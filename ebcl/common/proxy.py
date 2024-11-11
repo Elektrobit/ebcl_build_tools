@@ -13,7 +13,7 @@ import requests
 from .apt import Apt
 from .cache import Cache, AddOp
 from .deb import Package, filter_packages
-from .version import VersionDepends, VersionRealtion
+from .version import VersionDepends, VersionRelation
 
 from .types.cpu_arch import CpuArch
 
@@ -84,7 +84,7 @@ class Proxy:
                 arch=lp.arch,
                 name=lp.name,
                 version=lp.version,
-                relation=VersionRealtion.EXACT)
+                relation=VersionRelation.EXACT)
             if p:
                 logging.info('Found %s in cache...', p)
                 lp.local_file = p.local_file
@@ -143,12 +143,12 @@ class Proxy:
         self,
         arch: CpuArch,
         package: Package,
-        version_relation: Optional[VersionRealtion] = None,
+        version_relation: Optional[VersionRelation] = None,
         location: Optional[str] = None
     ) -> Optional[Package]:
         """ Download a deb package. """
         if not version_relation:
-            version_relation = VersionRealtion.LARGER
+            version_relation = VersionRelation.EXACT
 
         if location is None:
             location = self.cache.folder

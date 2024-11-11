@@ -14,7 +14,7 @@ from ebcl.common.config import Config
 from ebcl.common.version import parse_package_config
 from ebcl.tools.root.elbe import build_elbe_image
 from ebcl.tools.root.kiwi import build_kiwi_image
-from ebcl.tools.root.debootstrap import build_debootstrap_image
+from ebcl.tools.root.debootstrap import DebootstrapRootGenerator
 
 from ebcl.common.types.cpu_arch import CpuArch
 from ebcl.common.types.build_type import BuildType
@@ -132,11 +132,8 @@ class RootGenerator:
                 self.result_dir
             )
         elif self.config.type == BuildType.DEBOOTSTRAP:
-            image_file = build_debootstrap_image(
-                self.config,
-                self.name,
-                self.result_dir
-            )
+            generator = DebootstrapRootGenerator(self.config, self.result_dir)
+            image_file = generator.build_debootstrap_image(self.name)
 
         if not image_file:
             logging.critical('Image build failed!')

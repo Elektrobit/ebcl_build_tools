@@ -164,7 +164,7 @@ class Version:
         return self.__str__()
 
 
-class VersionRealtion(Enum):
+class VersionRelation(Enum):
     """ Debian package version relation. """
     STRICT_SMALLER = 1
     SMALLER = 2
@@ -241,7 +241,7 @@ class VersionDepends:
     """ Debian package version dependency. """
     name: str
     package_relation: Optional[PackageRelation]
-    version_relation: Optional[VersionRealtion]
+    version_relation: Optional[VersionRelation]
     version: Optional[Version]
     arch: CpuArch
 
@@ -325,11 +325,11 @@ def parse_depends(
             v = parts[1].strip()[1:-1]
             if ' ' in v:
                 vp = v.split(' ', maxsplit=1)
-                version_relation = VersionRealtion.from_str(vp[0].strip())
+                version_relation = VersionRelation.from_str(vp[0].strip())
                 version = Version(vp[1].strip())
             else:
                 version = Version(v.strip())
-                version_relation = VersionRealtion.EXACT
+                version_relation = VersionRelation.EXACT
 
         vd = VersionDepends(
             name,

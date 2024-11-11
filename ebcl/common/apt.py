@@ -13,6 +13,7 @@ from urllib.parse import urlparse
 
 import requests
 
+from . import get_cache_folder
 from .deb import Package
 from .fake import Fake
 from .version import parse_depends, VersionDepends, PackageRelation, Version
@@ -88,18 +89,12 @@ class Apt:
         if state_folder:
             self.state_folder = state_folder
         else:
-            if os.path.isdir('/workspace/state/apt'):
-                self.state_folder = '/workspace/state/apt'
-            else:
-                self.state_folder = tempfile.mkdtemp()
+            self.state_folder = get_cache_folder('apt')
 
         if not key_gpg and 'ubuntu.com/ubuntu' in url:
             self.key_gpg = '/etc/apt/trusted.gpg.d/ubuntu-keyring-2018-archive.gpg'
             logging.info('Using default Ubuntu key %s for %s.',
                          self.key_gpg, self.url)
-
-        if os.path.isfile(self.state_folder):
-            self.state_folder = os.path.dirname(self.state_folder)
 
         if not os.path.exists(self.state_folder):
             os.makedirs(self.state_folder, exist_ok=True)

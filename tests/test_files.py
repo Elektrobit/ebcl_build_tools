@@ -82,19 +82,21 @@ class TestFiles:
         assert files
 
         (out, err, ret) = self.fake.run_sudo(
-            f'file {self.target_dir}/cp_root_shell')
+            f'file {self.target_dir}/cp_root_shell', capture_output=True)
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         assert 'ASCII text' in out
 
         (out, err, ret) = self.fake.run_sudo(
-            f'stat -c \'%u %g %a\'  {self.target_dir}/cp_root_shell')
+            f'stat -c \'%u %g %a\'  {self.target_dir}/cp_root_shell', capture_output=True)
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         (mode, _err, _ret) = self.fake.run_sudo(
-            f'stat -c \'%a\'  {self.other_dir}/root')
+            f'stat -c \'%a\'  {self.other_dir}/root', capture_output=True)
         assert mode
         mode = mode.strip()
         assert f'{os.getuid()} {os.getgid()} {mode}' in out.strip()
@@ -107,19 +109,21 @@ class TestFiles:
         assert files
 
         (out, err, ret) = self.fake.run_cmd(
-            f'file {self.target_dir}/cp_user_shell')
+            f'file {self.target_dir}/cp_user_shell', capture_output=True)
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         assert 'ASCII text' in out
 
         (out, err, ret) = self.fake.run_cmd(
-            f'stat -c \'%u %g %a\'  {self.target_dir}/cp_user_shell')
+            f'stat -c \'%u %g %a\'  {self.target_dir}/cp_user_shell', capture_output=True)
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         (mode, _err, _ret) = self.fake.run_cmd(
-            f'stat -c \'%a\'  {self.other_dir}/user')
+            f'stat -c \'%a\'  {self.other_dir}/user', capture_output=True)
         assert mode
         mode = mode.strip()
         assert f'{os.getuid()} {os.getgid()} {mode}' in out.strip()
@@ -134,19 +138,21 @@ class TestFiles:
         assert files
 
         (out, err, ret) = self.fake.run_cmd(
-            f'file {self.target_dir}/cp_root_sudo')
+            f'file {self.target_dir}/cp_root_sudo', capture_output=True)
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         assert 'ASCII text' in out
 
         (out, err, ret) = self.fake.run_cmd(
-            f'stat -c \'%u %g %a\'  {self.target_dir}/cp_root_sudo')
+            f'stat -c \'%u %g %a\'  {self.target_dir}/cp_root_sudo', capture_output=True)
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         (mode, _err, _ret) = self.fake.run_cmd(
-            f'stat -c \'%a\'  {self.other_dir}/root')
+            f'stat -c \'%a\'  {self.other_dir}/root', capture_output=True)
         assert mode
         mode = mode.strip()
         assert f'0 0 {mode}' in out.strip()
@@ -159,15 +165,17 @@ class TestFiles:
         assert files
 
         (out, err, ret) = self.fake.run_cmd(
-            f'file {self.target_dir}/cp_user_sudo')
+            f'file {self.target_dir}/cp_user_sudo', capture_output=True)
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         assert 'ASCII text' in out
 
         (out, err, ret) = self.fake.run_cmd(
-            f'stat -c \'%u %g %a\'  {self.target_dir}/cp_user_sudo')
+            f'stat -c \'%u %g %a\'  {self.target_dir}/cp_user_sudo', capture_output=True)
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         assert '0 0 644' in out.strip()
@@ -182,19 +190,21 @@ class TestFiles:
         assert files
 
         (out, err, ret) = self.fake.run_fake(
-            f'file {self.target_dir}/cp_root_fake')
+            f'file {self.target_dir}/cp_root_fake', capture_output=True)
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         assert 'ASCII text' in out
 
         (out, err, ret) = self.fake.run_fake(
-            f'stat -c \'%u %g %a\'  {self.target_dir}/cp_root_fake')
+            f'stat -c \'%u %g %a\'  {self.target_dir}/cp_root_fake', capture_output=True)
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         (mode, _err, _ret) = self.fake.run_fake(
-            f'stat -c \'%a\'  {self.other_dir}/root')
+            f'stat -c \'%a\'  {self.other_dir}/root', capture_output=True)
         assert mode
         mode = mode.strip()
         assert f'0 0 {mode}' in out.strip()
@@ -207,19 +217,21 @@ class TestFiles:
         assert files
 
         (out, err, ret) = self.fake.run_fake(
-            f'file {self.target_dir}/cp_user_fake')
+            f'file {self.target_dir}/cp_user_fake', capture_output=True)
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         assert 'ASCII text' in out
 
         (out, err, ret) = self.fake.run_fake(
-            f'stat -c \'%u %g %a\'  {self.target_dir}/cp_user_fake')
+            f'stat -c \'%u %g %a\'  {self.target_dir}/cp_user_fake', capture_output=True)
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         (mode, _err, _ret) = self.fake.run_fake(
-            f'stat -c \'%a\'  {self.other_dir}/user')
+            f'stat -c \'%a\'  {self.other_dir}/user', capture_output=True)
         assert mode
         mode = mode.strip()
         assert f'0 0 {mode}' in out.strip()
@@ -241,7 +253,8 @@ class TestFiles:
 
         # Install busybox
         (_stdout, stderr, _returncode) = self.fake.run_chroot(
-            '/bin/busybox --install -s /bin', self.target_dir)
+            '/bin/busybox --install -s /bin', self.target_dir, capture_output=True)
+        assert stderr is not None
         assert not stderr.strip()
 
     def test_copy_file_chroot(self):
@@ -249,8 +262,9 @@ class TestFiles:
         self._prepare_chroot()
 
         (out, err, ret) = self.fake.run_cmd(
-            f'stat -c \'%u %g %a\'  {self.target_dir}/bin/busybox')
+            f'stat -c \'%u %g %a\'  {self.target_dir}/bin/busybox', capture_output=True)
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         assert '0 0 755' in out.strip()
@@ -272,16 +286,18 @@ class TestFiles:
         assert files
 
         (out, err, ret) = self.fake.run_sudo(
-            f'file {self.target_dir}/root_chroot')
+            f'file {self.target_dir}/root_chroot', capture_output=True)
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         assert 'ASCII text' in out
 
         (out, err, ret) = self.fake.run_chroot(
             'stat -c \'%u %g %a\'  /root_chroot',
-            chroot=self.target_dir)
+            chroot=self.target_dir, capture_output=True)
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         assert '0 0 644' in out.strip()
@@ -301,29 +317,33 @@ class TestFiles:
         assert os.path.isdir(f'{self.target_dir}/adir/subdir')
 
         (out, err, ret) = self.fake.run_cmd(
-            f'file {self.target_dir}/adir/subdir/a')
+            f'file {self.target_dir}/adir/subdir/a', capture_output=True)
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         assert 'ASCII text' in out
 
         (out, err, ret) = self.fake.run_cmd(
-            f'stat -c \'%u %g %a\'  {self.target_dir}/adir/subdir/a')
+            f'stat -c \'%u %g %a\'  {self.target_dir}/adir/subdir/a', capture_output=True)
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         assert '0 0 644' in out.strip()
 
         (out, err, ret) = self.fake.run_cmd(
-            f'file {self.target_dir}/adir/subdir/b')
+            f'file {self.target_dir}/adir/subdir/b', capture_output=True)
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         assert 'ASCII text' in out
 
         (out, err, ret) = self.fake.run_cmd(
-            f'stat -c \'%u %g %a\'  {self.target_dir}/adir/subdir/b')
+            f'stat -c \'%u %g %a\'  {self.target_dir}/adir/subdir/b', capture_output=True)
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         assert f'{os.getuid()} {os.getgid()}' in out.strip()
@@ -345,15 +365,17 @@ class TestFiles:
         assert files
 
         (out, err, ret) = self.fake.run_fake(
-            f'file {self.target_dir}/cp_root_mode')
+            f'file {self.target_dir}/cp_root_mode', capture_output=True)
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         assert 'ASCII text' in out
 
         (out, err, ret) = self.fake.run_fake(
-            f'stat -c \'%u %g %a\'  {self.target_dir}/cp_root_mode')
+            f'stat -c \'%u %g %a\'  {self.target_dir}/cp_root_mode', capture_output=True)
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         assert '123 456 774' in out.strip()
@@ -376,15 +398,17 @@ class TestFiles:
         assert files
 
         (out, err, ret) = self.fake.run_fake(
-            f'file {self.target_dir}/mv_root_move')
+            f'file {self.target_dir}/mv_root_move', capture_output=True)
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         assert 'ASCII text' in out
 
         (out, err, ret) = self.fake.run_fake(
-            f'stat -c \'%u %g %a\'  {self.target_dir}/mv_root_move')
+            f'stat -c \'%u %g %a\'  {self.target_dir}/mv_root_move', capture_output=True)
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         assert '0 0 644' in out.strip()
@@ -407,15 +431,17 @@ class TestFiles:
         assert files
 
         (out, err, ret) = self.fake.run_fake(
-            f'file {self.target_dir}/target')
+            f'file {self.target_dir}/target', capture_output=True)
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         assert 'ASCII text' in out
 
         (out, err, ret) = self.fake.run_fake(
-            f'stat -c \'%u %g %a\'  {self.target_dir}/target')
+            f'stat -c \'%u %g %a\'  {self.target_dir}/target', capture_output=True)
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         assert '0 0' in out.strip()
@@ -423,8 +449,9 @@ class TestFiles:
         assert '664' in out.strip() or '644' in out.strip()
 
         (out, err, ret) = self.fake.run_fake(
-            f'cat  {self.target_dir}/target')
+            f'cat  {self.target_dir}/target', capture_output=True)
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         assert 'owned by user' in out.strip()
@@ -447,30 +474,34 @@ class TestFiles:
         assert files
 
         (out, err, ret) = self.fake.run_cmd(
-            f'file {self.target_dir}/owned')
+            f'file {self.target_dir}/owned', capture_output=True)
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         assert 'ASCII text' in out
 
         (out, err, ret) = self.fake.run_cmd(
-            f'stat -c \'%u %g %a\'  {self.target_dir}/owned')
+            f'stat -c \'%u %g %a\'  {self.target_dir}/owned', capture_output=True)
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         # Do not check file permissions, since these depend on shell config.
         assert f'{os.getuid()} {os.getgid()}' in out.strip()
 
         (out, err, ret) = self.fake.run_cmd(
-            f'file {self.target_dir}/root_owner')
+            f'file {self.target_dir}/root_owner', capture_output=True)
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         assert 'ASCII text' in out
 
         (out, err, ret) = self.fake.run_cmd(
-            f'stat -c \'%u %g %a\'  {self.target_dir}/root_owner')
+            f'stat -c \'%u %g %a\'  {self.target_dir}/root_owner', capture_output=True)
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         # Do not check file permissions, since these depend on shell config.
@@ -487,11 +518,13 @@ class TestFiles:
             script,
             params=f'{self.target_dir} 1234',
             environment=EnvironmentType.SHELL,
-            cwd=self.target_dir
+            cwd=self.target_dir,
+            capture_output=True
         )
         assert res
         (out, err, ret) = res
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         assert f'Temporary boot folder is {self.target_dir}' in out
@@ -507,11 +540,13 @@ class TestFiles:
             script,
             params=f'{self.target_dir} 1234',
             environment=EnvironmentType.SUDO,
-            cwd=self.target_dir
+            cwd=self.target_dir,
+            capture_output=True
         )
         assert res
         (out, err, ret) = res
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         assert f'Temporary boot folder is {self.target_dir}' in out
@@ -527,11 +562,13 @@ class TestFiles:
             script,
             params=f'{self.target_dir} 1234',
             environment=EnvironmentType.FAKEROOT,
-            cwd=self.target_dir
+            cwd=self.target_dir,
+            capture_output=True
         )
         assert res
         (out, err, ret) = res
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         assert f'Temporary boot folder is {self.target_dir}' in out
@@ -547,11 +584,13 @@ class TestFiles:
             script,
             params='/ 1234',
             environment=EnvironmentType.CHROOT,
-            cwd=self.target_dir
+            cwd=self.target_dir,
+            capture_output=True
         )
         assert res
         (out, err, ret) = res
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         assert 'Temporary boot folder is /' in out
@@ -565,8 +604,9 @@ class TestFiles:
         self.files.extract_tarball(tar, tempdir, True)
 
         (out, err, ret) = self.fake.run_cmd(
-            f'stat -c \'%u %g %a\'  {tempdir}/bin/busybox')
+            f'stat -c \'%u %g %a\'  {tempdir}/bin/busybox', capture_output=True)
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         assert '0 0 755' in out.strip()
@@ -575,8 +615,9 @@ class TestFiles:
         self.files.extract_tarball(tar, tempdir, True)
 
         (out, err, ret) = self.fake.run_cmd(
-            f'stat -c \'%u %g %a\'  {tempdir}/bin/busybox')
+            f'stat -c \'%u %g %a\'  {tempdir}/bin/busybox', capture_output=True)
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         assert '0 0 755' in out.strip()
@@ -596,15 +637,17 @@ class TestFiles:
             use_sudo=False)
 
         (out, err, ret) = self.fake.run_fake(
-            f'stat -c \'%u %g %a\'  {temp}/bin/busybox')
+            f'stat -c \'%u %g %a\'  {temp}/bin/busybox', capture_output=True)
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         assert '0 0 755' in out.strip()
 
         (out, err, ret) = self.fake.run_cmd(
-            f'stat -c \'%u %g %a\'  {temp}/bin/busybox')
+            f'stat -c \'%u %g %a\'  {temp}/bin/busybox', capture_output=True)
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         assert f'{os.getuid()} {os.getgid()} 755' in out.strip()
@@ -616,8 +659,9 @@ class TestFiles:
             use_sudo=False)
 
         (out, err, ret) = self.fake.run_fake(
-            f'stat -c \'%u %g %a\'  {temp}/bin/busybox')
+            f'stat -c \'%u %g %a\'  {temp}/bin/busybox', capture_output=True)
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         assert '0 0 755' in out.strip()
@@ -642,15 +686,17 @@ class TestFiles:
         )
 
         (out, err, ret) = self.fake.run_cmd(
-            f'stat -c \'%u %g %a\'  {outdir}/myroot.tar')
+            f'stat -c \'%u %g %a\'  {outdir}/myroot.tar', capture_output=True)
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         assert f'{os.getuid()} {os.getgid()} 644' in out.strip()
 
         (out, err, ret) = self.fake.run_cmd(
-            f'tar --list --verbose --file={outdir}/myroot.tar | grep ./bin/busybox')
+            f'tar --list --verbose --file={outdir}/myroot.tar | grep ./bin/busybox', capture_output=True)
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         assert '-rwxr-xr-x root/root' in out.strip()
@@ -664,8 +710,9 @@ class TestFiles:
         )
 
         (out, err, ret) = self.fake.run_cmd(
-            f'stat -c \'%u %g %a\'  {outdir}/myroot.tar')
+            f'stat -c \'%u %g %a\'  {outdir}/myroot.tar', capture_output=True)
         assert ret == 0
+        assert err is not None
         assert not err.strip()
         assert out
         assert f'{os.getuid()} {os.getgid()} 644' in out.strip()

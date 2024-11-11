@@ -10,7 +10,7 @@ import unix_ar
 
 from .fake import Fake
 from .files import Files
-from .version import Version, VersionDepends, VersionRealtion
+from .version import Version, VersionDepends, VersionRelation
 
 from .types.cpu_arch import CpuArch
 
@@ -172,7 +172,7 @@ class Package:
         return self < o
 
 
-def filter_packages(p: Package, v: Version, r: Optional[VersionRealtion]) -> bool:
+def filter_packages(p: Package, v: Version, r: Optional[VersionRelation]) -> bool:
     """ Filter for matching packages. """
     # TODO: test
     if not p.version:
@@ -180,15 +180,15 @@ def filter_packages(p: Package, v: Version, r: Optional[VersionRealtion]) -> boo
 
     pv = p.version
 
-    if r == VersionRealtion.STRICT_LARGER:
+    if r == VersionRelation.STRICT_LARGER:
         return pv > v
-    elif r == VersionRealtion.LARGER:
+    elif r == VersionRelation.LARGER:
         return pv >= v
-    elif r == VersionRealtion.EXACT:
+    elif r == VersionRelation.EXACT:
         return pv == v
-    elif r == VersionRealtion.SMALLER:
+    elif r == VersionRelation.SMALLER:
         return pv <= v
-    elif r == VersionRealtion.STRICT_SMALLER:
+    elif r == VersionRelation.STRICT_SMALLER:
         return pv < v
 
     return False

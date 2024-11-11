@@ -23,5 +23,16 @@
     "[makefile]": {
         "editor.insertSpaces": false,
         "editor.detectIndentation": false
-    }
+    },
+    "cSpell.words": [
+        "debootstrap",
+        "ebcl",
+        "fakeroot",
+        "jsonpickle",
+        "minbase",
+        "mtab",
+        "noninteractive",
+        "resolv",
+        "sysfs"
+    ]
 }
