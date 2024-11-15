@@ -6,6 +6,7 @@ import hashlib
 from typing import Optional
 
 from ebcl.common import get_cache_folder
+from ebcl.common.apt import Apt
 from ebcl.common.config import Config
 
 
@@ -37,7 +38,7 @@ class DebootstrapRootGenerator:
     def _get_debootstrap_hash(self) -> str:
         """ Generate hash for the debootstrap configuration. """
         params = f'{self.config.arch} {self.debootstrap_variant} ' \
-            f'{self.config.primary_distro} {self.config.primary_repo}'
+            f'{self.config.primary_distro} {self._find_deboostrap_repo()}'
 
         return hashlib.md5(params.encode('utf-8')).digest().hex()
 
@@ -141,14 +142,36 @@ class DebootstrapRootGenerator:
             check=False
         )
 
+    def _find_deboostrap_repo(self) -> Optional[Apt]:
+        """ Find apt repository for debootstrap. """
+        for apt in self.config.apt_repos:
+            if apt.distro == self.config.primary_distro:
+                if 'main' in apt.components:
+                    return apt
+        return None
+
     def _run_debootstrap(self) -> bool:
         """ Run debootstrap and store result in cache. """
         fake = self.config.fake
 
+        repo = self._find_deboostrap_repo()
+        if repo is None:
+            logging.critical('No apt repo for deboostrap found!')
+            return False
+
+        keyring = ''
+        (_pub, gpg) = repo.get_key_files()
+        if gpg is not None:
+            keyring = f' --keyring={gpg} '
+
+        user_flags = ''
+        if self.config.debootstrap_flags:
+            user_flags = self.config.debootstrap_flags
+
         fake.run_sudo(
-            f'debootstrap --arch={self.config.arch} --variant={self.debootstrap_variant} '
-            f'{self.config.primary_distro} {self.config.target_dir} '
-            f'{self.config.primary_repo}',
+            f'debootstrap --arch={self.config.arch} {keyring} {user_flags} --variant={self.debootstrap_variant} '
+            f'{repo.distro} {self.config.target_dir} '
+            f'{repo.url}',
             cwd=self.config.target_dir,
             check=True
         )

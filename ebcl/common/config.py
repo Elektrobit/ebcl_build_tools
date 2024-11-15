@@ -38,9 +38,9 @@ class Config:
         'kernel', 'tar', 'busybox', 'modules', 'root_device', 'devices', 'kernel_version',
         'modules_folder', 'result_pattern', 'image', 'berrymill_conf', 'use_berrymill',
         'use_bootstrap_package', 'bootstrap_package', 'bootstrap', 'kiwi_root_overlays',
-        'use_kiwi_defaults', 'kiwi_scripts', 'kvm', 'image_version', 'type', 'primary_repo',
-        'root_password', 'hostname', 'domain', 'console', 'packer', 'sysroot_packages',
-        'sysroot_defaults', 'primary_distro', 'base'
+        'use_kiwi_defaults', 'kiwi_scripts', 'kvm', 'image_version', 'type',
+        'root_password', 'hostname', 'domain', 'console', 'sysroot_packages',
+        'sysroot_defaults', 'primary_distro', 'base', 'debootstrap_flags'
     ]
 
     def __init__(self, config_file: str, output_path: str):
@@ -124,9 +124,9 @@ class Config:
         # Root filesystem build type.
         self.type: BuildType = BuildType.DEBOOTSTRAP
         # Primary repo for debootstrap
-        self.primary_repo: Optional[str] = None
-        # Primary repo for debootstrap
         self.primary_distro: Optional[str] = None
+        # Additional debootstrap parameters
+        self.debootstrap_flags: Optional[str] = None
         # Password for the root user
         self.root_password: Optional[str] = 'linux'
         # Hostname for the root filesystem
@@ -135,8 +135,6 @@ class Config:
         self.domain: str = 'elektrobit.com'
         # Console
         self.console: Optional[str] = None
-        # Packer for the result of the elbe build.
-        self.packer: str = 'none'
         # Additional sysroot packages.
         self.sysroot_packages: list[VersionDepends] = []
         # Add default extensions for sysroot builds
@@ -212,6 +210,9 @@ class Config:
                 ebcl_apt = Apt.ebcl_apt(self.arch)
                 self.proxy.add_apt(ebcl_apt)
                 self.apt_repos.append(ebcl_apt)
+                ebcl_main = Apt.ebcl_primary_repo(self.arch)
+                self.proxy.add_apt(ebcl_main)
+                self.apt_repos.append(ebcl_main)
 
         host_files = parse_files(
             config.get('host_files', None),
@@ -397,11 +398,11 @@ class Config:
         if 'type' in config:
             self.type = BuildType.from_str(config.get('type', None))
 
-        if 'primary_repo' in config:
-            self.primary_repo = config.get('primary_repo', None)
-
         if 'primary_distro' in config:
             self.primary_distro = config.get('primary_distro', None)
+
+        if 'debootstrap_flags' in config:
+            self.debootstrap_flags = config.get('debootstrap_flags', None)
 
         if 'root_password' in config:
             self.root_password = config.get('root_password', 'linux')
@@ -414,9 +415,6 @@ class Config:
 
         if 'console' in config:
             self.console = config.get('console', None)
-
-        if 'packer' in config:
-            self.packer = config.get('packer', 'none')
 
         if 'sysroot_packages' in config:
             if inherit_packages:

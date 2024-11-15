@@ -55,19 +55,6 @@ class TestRoot:
         assert archive
         assert os.path.isfile(archive)
 
-    @pytest.mark.skip(reason="Elbe is not part of dev container anymore.")
-    @pytest.mark.dev_container
-    def test_build_root_archive(self):
-        """ Test build root.tar. """
-        # EBcL dev container required - root generator calls elbe as subprocess
-        test_dir = os.path.dirname(os.path.abspath(__file__))
-        yaml = os.path.join(test_dir, 'data', 'root_elbe.yaml')
-        generator = RootGenerator(yaml, self.temp_dir, False)
-
-        archive = generator.create_root()
-        assert archive
-        assert os.path.isfile(archive)
-
     @pytest.mark.dev_container
     def test_build_kiwi_no_berry(self):
         """ Test kiwi image build without berrymill. """
@@ -100,21 +87,6 @@ class TestRoot:
         # EBcL dev container required - root generator calls kiwi-ng as subprocess
         test_dir = os.path.dirname(os.path.abspath(__file__))
         yaml = os.path.join(test_dir, 'data', 'sysroot_kiwi.yaml')
-        generator = RootGenerator(yaml, self.temp_dir, False)
-
-        generator.apt_repos = [Apt.ebcl_apt(CpuArch.AMD64)]
-
-        archive = generator.create_root()
-        assert archive
-        assert os.path.isfile(archive)
-
-    @pytest.mark.skip(reason="Elbe is not part of dev container anymore.")
-    @pytest.mark.dev_container
-    def test_build_sysroot_elbe(self):
-        """ Test build root.tar. """
-        # EBcL dev container required - root generator calls elbe as subprocess
-        test_dir = os.path.dirname(os.path.abspath(__file__))
-        yaml = os.path.join(test_dir, 'data', 'sysroot_elbe.yaml')
         generator = RootGenerator(yaml, self.temp_dir, False)
 
         generator.apt_repos = [Apt.ebcl_apt(CpuArch.AMD64)]
