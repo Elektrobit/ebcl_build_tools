@@ -1,5 +1,6 @@
 name: ubuntu
 arch: amd64
+use_ebcl_apt: true
 packages:
   - systemd
   - udev        # udev will create the device node for ttyS0

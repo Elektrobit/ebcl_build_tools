@@ -18,7 +18,7 @@ _finalize_ to cleanup temporary artifacts.
 The build process implemented in *create_root* executes the following high level steps:
 
 - In case of a sysroot build: Add additional packages to the list of selected packages.
-- Create the root tarball using either _elbe_, _kiwi_ or _debootstrap_.
+- Create the root tarball using either _kiwi_ or _debootstrap_.
 - In case of not skipping the configuration: Copy the overlays and run the config scripts.
 - Move the resulting tarball to the output folder.
 

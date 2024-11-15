@@ -43,7 +43,7 @@ class Apt:
         )
 
     @classmethod
-    def ebcl_apt(cls, arch: CpuArch, release: str = '1.2'):
+    def ebcl_apt(cls, arch: CpuArch, release: str = '1.4'):
         """ Get the EBcL apt repo. """
         url = os.environ.get(
             'EBCL_REPO_URL', 'http://linux.elektrobit.com/eb-corbos-linux')
@@ -56,6 +56,25 @@ class Apt:
             url=f'{url}/{release}',
             distro='ebcl',
             components=['prod', 'dev'],
+            arch=arch,
+            key_url=key,
+            key_gpg=gpg
+        )
+
+    @classmethod
+    def ebcl_primary_repo(cls, arch: CpuArch, release: str = '1.4'):
+        """ Get the EBcL apt repo. """
+        url = os.environ.get(
+            'EBCL_REPO_URL', 'http://linux.elektrobit.com/eb-corbos-linux')
+        release = os.environ.get('EBCL_VERSION', release)
+        key = os.environ.get(
+            'EBCL_REPO_KEY', 'file:///build/keys/elektrobit.pub')
+        gpg = os.environ.get(
+            'EBCL_REPO_GPG', '/etc/apt/trusted.gpg.d/elektrobit.gpg')
+        return cls(
+            url=f'{url}/{release}',
+            distro='jammy',
+            components=['main'],
             arch=arch,
             key_url=key,
             key_gpg=gpg

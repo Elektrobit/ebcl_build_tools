@@ -9,10 +9,8 @@ from typing import Optional
 
 from ebcl import __version__
 from ebcl.common import init_logging, promo, log_exception
-from ebcl.common.apt import Apt
 from ebcl.common.config import Config
 from ebcl.common.version import parse_package_config
-from ebcl.tools.root.elbe import build_elbe_image
 from ebcl.tools.root.kiwi import build_kiwi_image
 from ebcl.tools.root.debootstrap import DebootstrapRootGenerator
 
@@ -54,36 +52,9 @@ class RootGenerator:
             else:
                 self.config.console = 'ttyAMA0,115200'
 
-        use_primary_repo = self.config.type == BuildType.ELBE or \
-            self.config.type == BuildType.DEBOOTSTRAP
-        if self.config.primary_repo:
-            use_primary_repo = True
-
         if not self.config.primary_distro:
             # Default primary distro
             self.config.primary_distro = 'jammy'
-
-        self.primary_repo: Optional[Apt] = None
-        if use_primary_repo:
-            if not self.config.primary_repo:
-                # Default primary repo
-                if self.config.arch == CpuArch.AMD64:
-                    self.config.primary_repo = 'http://archive.ubuntu.com/ubuntu'
-                else:
-                    self.config.primary_repo = 'http://ports.ubuntu.com/ubuntu-ports/'
-
-            primary_apt = Apt(
-                url=self.config.primary_repo,
-                distro=self.config.primary_distro,
-                components=['main'],
-                arch=self.config.arch
-            )
-
-            logging.info('Adding primary repo %s...', primary_apt)
-
-            self.config.proxy.add_apt(primary_apt)
-            self.primary_repo = primary_apt
-            self.config.apt_repos = [primary_apt] + self.config.apt_repos
 
     @log_exception()
     def create_root(
@@ -118,14 +89,7 @@ class RootGenerator:
         logging.debug('Result directory: %s', self.result_dir)
 
         image_file = None
-        if self.config.type == BuildType.ELBE:
-            image_file = build_elbe_image(
-                self.config,
-                self.primary_repo,
-                self.name,
-                self.result_dir
-            )
-        elif self.config.type == BuildType.KIWI:
+        if self.config.type == BuildType.KIWI:
             image_file = build_kiwi_image(
                 self.config,
                 self.name,

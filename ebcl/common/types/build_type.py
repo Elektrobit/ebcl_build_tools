@@ -5,7 +5,6 @@ from typing import Optional
 
 class BuildType(Enum):
     """ Build type for the root filesystem build. """
-    ELBE = 1
     KIWI = 2
     DEBOOTSTRAP = 3
 
@@ -13,13 +12,11 @@ class BuildType(Enum):
     def from_str(cls, build_type: Optional[str]):
         """ Get ImageType from str. """
         if not build_type:
-            return cls.ELBE
+            return cls.DEBOOTSTRAP
 
         if isinstance(build_type, cls):
             return build_type
 
-        if build_type == 'elbe':
-            return cls.ELBE
         elif build_type == 'kiwi':
             return cls.KIWI
         elif build_type == 'debootstrap':
@@ -28,9 +25,7 @@ class BuildType(Enum):
             return None
 
     def __str__(self) -> str:
-        if self.value == 1:
-            return "elbe"
-        elif self.value == 2:
+        if self.value == 2:
             return "kiwi-ng"
         elif self.value == 3:
             return "debootstrap"
