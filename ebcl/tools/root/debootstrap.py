@@ -89,6 +89,12 @@ class DebootstrapRootGenerator:
             cwd=self.config.target_dir,
             check=True
         )
+        # Show apt sources list in build logs.
+        fake.run_sudo(
+            f'cat {apt_sources_target}',
+            cwd=self.config.target_dir,
+            check=True
+        )
 
     def _mount_special_folders(self):
         """ Mount special file systems to chroot folder. """
@@ -259,6 +265,8 @@ class DebootstrapRootGenerator:
     def _run_install_packages(self, apt_hash: Optional[str]) -> bool:
         """ Update the packages in the root using apt. """
         fake = self.config.fake
+
+        self._generate_apt_config()
 
         try:
             self._mount_special_folders()
