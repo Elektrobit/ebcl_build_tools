@@ -97,7 +97,12 @@ class Package:
             return None
 
         # find data.tar
-        tar_files = list(Path(deb_content_location).glob('data.tar.*'))
+        data_tar = Path(deb_content_location) / 'data.tar'
+        if data_tar.exists():
+            tar_files = [data_tar]
+        else:  # find compressed data.tar
+            tar_files = list(Path(deb_content_location).glob('data.tar.*'))
+
         if not tar_files:
             logging.error('No tar content found in package %s!', self)
             return None
