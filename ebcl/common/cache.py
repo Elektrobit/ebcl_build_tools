@@ -38,9 +38,13 @@ class Cache:
         self.index_file = os.path.join(self.folder, 'index.json')
 
         if os.path.isfile(self.index_file):
-            with open(self.index_file, encoding='utf8') as f:
-                data = f.read()
-                self.index: list[Package] = jsonpickle.decode(data)
+            try:
+                with open(self.index_file, encoding='utf8') as f:
+                    data = f.read()
+                    self.index: list[Package] = jsonpickle.decode(data)
+            except Exception as e:
+                logging.error('Loading cache state failed! %s', e)
+                self.index = []
         else:
             self.index = []
 
