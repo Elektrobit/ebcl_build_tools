@@ -126,7 +126,7 @@ class Config:
         # Primary repo for debootstrap
         self.primary_distro: Optional[str] = None
         # Additional debootstrap parameters
-        self.debootstrap_flags: Optional[str] = None
+        self.debootstrap_flags: Optional[str] = '--include=ca-certificates'
         # Password for the root user
         self.root_password: Optional[str] = 'linux'
         # Hostname for the root filesystem

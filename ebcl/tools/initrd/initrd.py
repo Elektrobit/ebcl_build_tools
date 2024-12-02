@@ -5,6 +5,7 @@ import glob
 import logging
 import os
 import queue
+import shutil
 import tempfile
 
 from pathlib import Path
@@ -210,11 +211,13 @@ class InitrdGenerator:
 
     def download_deb_packages(self, allow_missing=False):
         """ Download all needed deb packages. """
-        (_debs, _contents, missing) = self.proxy.download_deb_packages(
+        (debs, _contents, missing) = self.proxy.download_deb_packages(
             packages=self.config.packages,
             contents=self.target_dir,
             download_depends=True
         )
+
+        shutil.rmtree(debs)
 
         if not allow_missing and missing:
             logging.critical('Not found packages: %s', missing)
@@ -253,10 +256,12 @@ class InitrdGenerator:
         elif self.config.kernel:
             mods_dir = tempfile.mkdtemp()
             logging.info('Using modules from kernel deb packages...')
-            (_debs, _contents, missing) = self.config.proxy.download_deb_packages(
+            (debs, _contents, missing) = self.config.proxy.download_deb_packages(
                 packages=[self.config.kernel],
                 contents=mods_dir
             )
+            shutil.rmtree(debs)
+
             if missing:
                 logging.error('Not found packages: %s', missing)
         elif self.config.modules:

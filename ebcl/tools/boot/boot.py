@@ -3,6 +3,7 @@
 import argparse
 import logging
 import os
+import shutil
 import tempfile
 
 from typing import Optional
@@ -40,10 +41,11 @@ class BootGenerator:
 
     def download_deb_packages(self, package_dir: str):
         """ Download all needed deb packages. """
-        (_debs, _contents, missing) = self.proxy.download_deb_packages(
+        (debs, _contents, missing) = self.proxy.download_deb_packages(
             packages=self.config.packages,
             contents=package_dir
         )
+        shutil.rmtree(debs)
 
         if missing:
             logging.critical('Not found packages: %s', missing)
@@ -113,7 +115,7 @@ class BootGenerator:
 
         # Remove package temporary folder
         logging.info('Remove temporary package contents...')
-        self.fake.run_cmd(f'rm -rf {package_dir}', check=False)
+        self.fake.run_sudo(f'rm -rf {package_dir}', check=False)
 
         if self.config.tar:
             # create tar archive
@@ -134,6 +136,13 @@ class BootGenerator:
                           delete_if_exists=True,
                           fix_ownership=True)
         return output_path
+
+    @log_exception()
+    def finalize(self):
+        """ Finalize output and cleanup. """
+
+        # delete temporary folder
+        self.config.fake.run_sudo(f'rm -rf {self.config.target_dir}')
 
 
 @log_exception(call_exit=True)
@@ -163,6 +172,7 @@ def main() -> None:
 
     # Create the boot.tar
     image = generator.create_boot()
+    generator.finalize()
 
     if image:
         print(f'Results were written to {image}.')
