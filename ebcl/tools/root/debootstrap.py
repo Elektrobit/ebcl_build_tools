@@ -38,7 +38,8 @@ class DebootstrapRootGenerator:
     def _get_debootstrap_hash(self) -> str:
         """ Generate hash for the debootstrap configuration. """
         params = f'{self.config.arch} {self.debootstrap_variant} ' \
-            f'{self.config.primary_distro} {self._find_deboostrap_repo()}'
+            f'{self.config.primary_distro} {self._find_deboostrap_repo()} ' \
+            f'{self.config.debootstrap_flags}'
 
         return hashlib.md5(params.encode('utf-8')).digest().hex()
 
@@ -77,7 +78,10 @@ class DebootstrapRootGenerator:
                 components = ' '.join(apt.components)
                 f.write(f'deb {apt.url} {apt.distro} {components}\n\n')
 
-                (_key_pub_file, key_gpg_file) = apt.get_key_files()
+                (key_pub_file, key_gpg_file) = apt.get_key_files()
+                if key_pub_file:
+                    os.remove(key_pub_file)
+
                 fake.run_sudo(
                     f'cp {key_gpg_file} {apt_key_dir}',
                     cwd=self.config.target_dir,
@@ -160,7 +164,10 @@ class DebootstrapRootGenerator:
             return False
 
         keyring = ''
-        (_pub, gpg) = repo.get_key_files()
+        (pub, gpg) = repo.get_key_files()
+        if pub:
+            os.remove(pub)
+
         if gpg is not None:
             keyring = f' --keyring={gpg} '
 
