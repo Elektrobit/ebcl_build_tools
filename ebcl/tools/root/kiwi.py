@@ -137,7 +137,10 @@ def _generate_berrymill_config(
     cnt = 1
     for apt in config.apt_repos:
         apt_repo_key = None
-        (_pub, apt_repo_key) = apt.get_key_files(result_dir)
+        (pub, apt_repo_key) = apt.get_key_files(result_dir)
+        if pub:
+            os.remove(pub)
+
         if not apt_repo_key:
             logging.error('No key found for %s, skipping repo!', apt)
             continue

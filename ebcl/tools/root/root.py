@@ -171,7 +171,7 @@ class RootGenerator:
 @log_exception(call_exit=True)
 def main() -> None:
     """ Main entrypoint of EBcL root generator. """
-    init_logging('DEBUG')
+    init_logging()
 
     logging.info('\n=========================\n'
                  'EBcL Root Generator %s\n'
