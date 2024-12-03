@@ -1,0 +1,134 @@
+# yaml-language-server: $schema=model.schema.json
+
+version: 1
+
+classes:
+  HVConfig:
+    vbus:
+      type: VBus
+      aggregate: list
+      default: []
+    cons:
+      type: Cons
+      optional: true
+    shms:
+      type: SHM
+      aggregate: list
+      default: []
+    vms:
+      type: VM
+      aggregate: list
+      default: []
+
+  VM:
+    name:
+      type: string
+    kernel:
+      type: string
+    ram:
+      type: integer
+    cpus:
+      type: integer
+    cmdline:
+      type: string
+      default: ""
+    initrd:
+      type: string
+      optional: true
+    dtb:
+      type: string
+    vbus:
+      type: string
+      optional: true
+    vmnets:
+      type: string
+      aggregate: list
+      default: []
+    shms:
+      type: string
+      aggregate: list
+      default: []
+    virtio_block:
+      type: VirtioBlockNode
+      optional: true
+    vnets:
+      type: string
+      aggregate: list
+      default: []
+
+
+  VirtioBlockNode:
+    servers:
+      type: string
+      aggregate: list
+      default: []
+
+    clients:
+      type: string
+      aggregate: list
+      default: []
+
+  SHM:
+    name:
+      type: string
+    size:
+      type: integer
+    address:
+      type: integer
+      optional: true
+
+  Cons:
+    default_vm:
+      type: string
+      optional: true
+
+  VBus:
+    name:
+      type: string
+    devices:
+      type: Device
+      aggregate: list
+
+  Device:
+    name:
+      type: string
+    compatible:
+      type: string
+      optional: true
+    mmios:
+      type: MMIO
+      aggregate: list
+      optional: true
+    irqs:
+      type: IRQ
+      aggregate: list
+      optional: true
+  MMIO:
+    address:
+      type: integer
+    size:
+      type: integer
+    cached:
+      type: boolean
+      default: false
+  IRQ:
+    irq:
+      type: integer
+    type:
+      type: enum
+      enum_values:
+        - SGI
+        - PPI
+        - SPI
+      default: SPI
+    trigger:
+      type: enum
+      enum_values:
+        - level_high
+        - rising_edge
+
+root: HVConfig
+
+templates:
+  - io.cfg.j2
+  - system.lua

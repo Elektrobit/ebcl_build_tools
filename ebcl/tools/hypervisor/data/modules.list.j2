@@ -1,0 +1,26 @@
+default-kernel fiasco -serial_esc
+
+entry hv-image
+roottask moe rom/init.ned
+
+module l4re
+module ned
+module cons
+module io
+{% if config.vms %}
+module uvmm
+{% endif %}
+{% if config.vio_block %}
+module virtio-block
+{% endif %}
+{% if config.vnets %}
+module l4vio_net_p2p
+{% endif %}
+
+module init.ned
+module io.cfg
+module system.lua
+
+{% for module in config.modules %}
+module {{module}}
+{% endfor %}

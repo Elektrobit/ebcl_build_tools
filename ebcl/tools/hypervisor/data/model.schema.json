@@ -1,0 +1,45 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://linux.elektrobit.com.com/model.schema.json",
+    "title": "Hypervisor Configuration Model",
+    "description": "Hypervisor configuration model",
+    "type": "object",
+    "additionalProperties": false,
+    "default": {},
+    "properties": {
+        "version": {
+            "type": "integer"
+        },
+        "classes": {
+            "type": "object",
+            "default": {},
+            "additionalProperties": {
+                "type": "object",
+                "additionalProperties": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "type": {"type": "string"},
+                        "default": {"type": ["string", "number", "boolean", "array"]},
+                        "aggregate": {
+                            "enum": ["None", "list"],
+                            "default": "None"
+                        },
+                        "optional": {"type": "boolean", "default": false},
+                        "enum_values": {"type": "array", "items": {"type": "string"}}
+                    }
+                }
+            }
+        },
+        "root": {
+            "type": "string",
+            "optional": false
+        },
+        "templates": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        }
+    }
+}
