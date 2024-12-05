@@ -223,7 +223,7 @@ class Files:
 
             else:
                 logging.debug(
-                    'Not copying %s, source and destionation are identical.')
+                    'Not copying %s, source and destination are identical.')
 
             files.append(target)
 
@@ -398,8 +398,16 @@ class Files:
             logging.info('Archive %s exists. Deleting old archive.', archive)
             fn_run(f'rm -f {archive}', check=False)
 
-        self.fake.run_cmd(f'cp {tmp_archive} {archive}')
-        self.fake.run_cmd(f'rm {tmp_archive}', check=False)
+        # mv the file in two steps:
+        # The first mv may move the file to another filesystem which is a copy followed by a remove
+        # Due to The copy a half-copied file may be picked up by another process or even worse
+        # two processes are writing to the file at the same time
+        # Moving it to the same directory with the pid as filename extension ensures a unique name
+        # The moving it to the correct name ensures that the move is atomic and so no half-copied file
+        # can ever be seen by other processes
+        pid_name = f"{archive}.{os.getpid()}"
+        self.fake.run_cmd(f'mv -f {tmp_archive} {pid_name}')
+        self.fake.run_cmd(f'mv -f {pid_name} {archive}')
 
         return archive
 
