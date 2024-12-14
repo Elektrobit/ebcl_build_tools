@@ -116,6 +116,10 @@ class Cache:
             packages = [p for p in packages if filter_packages(
                 p, version, relation)]
 
+        # Ensure cache file exists.
+        packages = [
+            p for p in packages if p.local_file is not None and os.path.isfile(p.local_file)]
+
         packages.sort()
 
         if len(packages) > 0:
