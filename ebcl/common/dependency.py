@@ -34,8 +34,6 @@ def _contains_package(
 
 def check_package_set(package_set: list[Package]) -> bool:
     """ Check if the given  """
-    forbidden = []
-
     for p in package_set:
         for fbs in p.breaks:
             for fb in fbs:

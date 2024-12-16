@@ -6,7 +6,7 @@ import tempfile
 from pathlib import Path
 from typing import Optional
 
-import unix_ar
+import unix_ar  # type: ignore
 
 from .fake import Fake
 from .files import Files
