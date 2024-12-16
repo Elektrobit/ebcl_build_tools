@@ -7,6 +7,7 @@ import shutil
 import tempfile
 
 from typing import Optional, Tuple, Any
+from urllib.parse import urlparse
 
 import requests
 
@@ -129,8 +130,7 @@ class Proxy:
     ) -> Optional[Package]:
         """ Download a deb package. """
         p = self._download_from_cache(vd, location)
-        if p and p.local_file \
-                and os.path.isfile(p.local_file):
+        if p and p.local_file and os.path.isfile(p.local_file):
             # Package was found in cache.
             return p
 
@@ -168,12 +168,10 @@ class Proxy:
             if p.local_file:
                 logging.debug('Local file of cache package: %s', p.local_file)
                 if os.path.isfile(p.local_file):
-                    logging.info(
-                        'Using %s of cache package %s.', p.local_file, p)
+                    logging.info('Using %s of cache package %s.', p.local_file, p)
                     return p
                 else:
-                    logging.debug(
-                        'File %s of cache package %s does not exist!', p.local_file, p)
+                    logging.debug('File %s of cache package %s does not exist!', p.local_file, p)
 
         else:
             logging.debug('Package %s not found in cache.', package)
@@ -191,8 +189,7 @@ class Proxy:
             )
 
             if not p or not p.file_url:
-                logging.error(
-                    'Package download of %s failed! URL not found.', p)
+                logging.error('Package download of %s failed! URL not found.', p)
                 return None
 
             package = p
@@ -200,37 +197,41 @@ class Proxy:
         if not package.file_url:
             return None
 
-        # Download package.
-        logging.info('Downloading package %s from %s...',
-                     package, package.file_url)
-        try:
-            result = requests.get(
-                package.file_url, allow_redirects=True, timeout=10)
-        except Exception as e:
-            logging.error('Downloading package %s of %s failed! %s',
-                          package, package.file_url, e)
-            return None
-
-        if result.status_code != 200:
-            return None
-
-        local_filename = package.file_url.split('/')[-1]
-        local_filename = os.path.join(location, local_filename)
-        with open(local_filename, 'wb') as f:
-            for chunk in result.iter_content(chunk_size=512 * 1024):
-                if chunk:  # filter out keep-alive new chunks
-                    f.write(chunk)
-
-        package.local_file = local_filename
-
-        if location == self.cache.folder:
-            # Add package to cache
-            logging.debug('Adding package %s to cache.', package)
-            package.local_file = self.cache.add(package, AddOp.MOVE)
+        parsed_url = urlparse(package.file_url)
+        if parsed_url.scheme == "file":
+            logging.info('Using package %s from %s...', package, parsed_url.path)
+            package.local_file = parsed_url.path
+            if location != self.cache.folder:
+                shutil.copy(package.local_file, location)
         else:
-            logging.info(
-                'Download folder is not cache folder. Copying %s to cache.', package)
-            package.local_file = self.cache.add(package, AddOp.COPY)
+            # Download package.
+            logging.info('Downloading package %s from %s...', package, package.file_url)
+            try:
+                result = requests.get(package.file_url, allow_redirects=True, timeout=10)
+            except Exception as e:
+                logging.error('Downloading package %s of %s failed! %s', package, package.file_url, e)
+                return None
+
+            if result.status_code != requests.codes.ok:
+                logging.error("Download failed with status code %d: %s", result.status_code, result.reason)
+                return None
+
+            local_filename = package.file_url.split('/')[-1]
+            local_filename = os.path.join(location, local_filename)
+            with open(local_filename, 'wb') as f:
+                for chunk in result.iter_content(chunk_size=512 * 1024):
+                    if chunk:  # filter out keep-alive new chunks
+                        f.write(chunk)
+
+            package.local_file = local_filename
+
+            if location == self.cache.folder:
+                # Add package to cache
+                logging.debug('Adding package %s to cache.', package)
+                package.local_file = self.cache.add(package, AddOp.MOVE)
+            else:
+                logging.info('Download folder is not cache folder. Copying %s to cache.', package)
+                package.local_file = self.cache.add(package, AddOp.COPY)
 
         return package
 
