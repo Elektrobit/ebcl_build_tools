@@ -90,7 +90,7 @@ show_contexts = true
 
 
 [tool.mypy]
-mypy_path = "$MYPY_CONFIG_FILE_DIR/ebcl"
+mypy_path = "$MYPY_CONFIG_FILE_DIR"
 explicit_package_bases = true
 
 [tool.flake8]

@@ -33,6 +33,9 @@ jobs:
       run: |
         # Run flake8 with settings from pyproject.yaml
         flake8
+    - name: Check typing with mypy
+      run: |
+        mypy ebcl
     - name: Test with pytest
       run: |
         pytest -m "not dev_container and not requires_download"

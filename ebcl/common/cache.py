@@ -6,7 +6,7 @@ import shutil
 from enum import Enum
 from typing import Optional
 
-import jsonpickle
+import jsonpickle  # type: ignore
 
 from . import get_cache_folder
 from .deb import Package, filter_packages
