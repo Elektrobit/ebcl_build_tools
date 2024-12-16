@@ -65,8 +65,7 @@ class Proxy:
                 ps = apt.find_package(vd.name)
                 if ps:
                     packages += ps
-                    logging.debug('Found %s in apt repo %s %s...',
-                                  ps, apt.url, apt.distro)
+                    logging.debug('Found %s in apt repo %s...', ps, repr(apt))
 
         if vd.version:
             packages = [p for p in packages if filter_packages(
