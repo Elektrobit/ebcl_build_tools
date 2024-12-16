@@ -115,6 +115,12 @@ class Apt:
             logging.info('Using default Ubuntu key %s for %s.',
                          self.key_gpg, self.url)
 
+        if not key_gpg and 'local' in distro:
+            local_gpg = '/etc/apt/trusted.gpg.d/local.gpg'
+            if os.path.exists(local_gpg):
+                self.key_gpg = local_gpg
+                logging.info('Using generated gpg: %s', local_gpg)
+
         if not os.path.exists(self.state_folder):
             os.makedirs(self.state_folder, exist_ok=True)
 
