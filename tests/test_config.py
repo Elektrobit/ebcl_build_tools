@@ -3,6 +3,7 @@ import os
 import shutil
 import tempfile
 
+from ebcl.common.apt import AptDebRepo, AptFlatRepo
 from ebcl.common.config import Config
 from ebcl.common.files import EnvironmentType
 
@@ -33,8 +34,10 @@ class TestConfig:
         config = Config(yaml_file, self.temp_dir)
 
         assert len(config.apt_repos) == 2
-        assert config.apt_repos[0].distro == 'jammy'
-        assert config.apt_repos[1].distro == 'jammy-security'
+        assert isinstance(config.apt_repos[0].repo, AptDebRepo)
+        assert config.apt_repos[0].repo.dist == 'jammy'
+        assert isinstance(config.apt_repos[1].repo, AptDebRepo)
+        assert config.apt_repos[1].repo.dist == 'jammy-security'
 
         assert config.arch == CpuArch.AMD64
 
@@ -52,15 +55,17 @@ class TestConfig:
             os.path.dirname(__file__), 'data', 'config_boot.sh')
 
     def test_initrd_yaml(self):
-        """ Try to parse boot.yaml. """
+        """ Try to parse initrd.yaml. """
         yaml_file = os.path.join(
             os.path.dirname(__file__), 'data', 'initrd.yaml')
 
         config = Config(yaml_file, self.temp_dir)
 
         assert len(config.apt_repos) == 2
-        assert config.apt_repos[0].distro == 'jammy'
-        assert config.apt_repos[1].distro == 'ebcl_nxp_public'
+        assert isinstance(config.apt_repos[0].repo, AptDebRepo)
+        assert config.apt_repos[0].repo.dist == 'jammy'
+        assert isinstance(config.apt_repos[1].repo, AptDebRepo)
+        assert config.apt_repos[1].repo.dist == 'ebcl_nxp_public'
 
         assert len(config.modules) == 1
         assert config.modules[0] == 'kernel/pfeng/pfeng.ko'
@@ -87,6 +92,20 @@ class TestConfig:
         assert config.host_files[1]['source'] == os.path.join(
             os.path.dirname(__file__), 'data', 'other.txt')
         assert config.host_files[1]['destination'] == 'root'
+
+    def test_initrd_with_flat_repo_yaml(self):
+        """ Try to parse initrd_with_flat.yaml. """
+        yaml_file = os.path.join(
+            os.path.dirname(__file__), 'data', 'initrd_with_flat.yaml')
+
+        config = Config(yaml_file, self.temp_dir)
+
+        assert len(config.apt_repos) == 2
+        assert isinstance(config.apt_repos[0].repo, AptDebRepo)
+        assert config.apt_repos[0].repo.dist == 'jammy'
+        assert isinstance(config.apt_repos[1].repo, AptFlatRepo)
+        assert config.apt_repos[1].repo.url == 'http://example.com/'
+        assert config.apt_repos[1].repo._directory == 'flat_repo'
 
     def test_root_yaml(self):
         """ Try to parse boot.yaml. """

@@ -31,7 +31,8 @@ dependencies = [
     "jsonpickle",
     "unix_ar",
     "zstandard",
-    "jinja2"
+    "jinja2",
+    "typing_extensions"
 ]
 
 [project.urls]
