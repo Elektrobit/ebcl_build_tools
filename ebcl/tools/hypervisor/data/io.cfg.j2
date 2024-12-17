@@ -13,9 +13,11 @@ Io.Dt.add_children(hw, function()
 {%for mmio in dev.mmios %}
         Resource.reg{{loop.index0}} = Res.mmio({{"0x%x"|format(mmio.address)}}, {{"0x%x"|format(mmio.address + mmio.size - 1)}}{% if mmio.cached %}, Io.Resource.F_cached_mem | Io.Resource.F_prefetchable{% endif %})
 {% endfor %}
+{% if dev.irqs and dev.irqs|length > 0 %}
 {%for irq in dev.irqs %}
         Resource.irq{{loop.index0}} = Res.irq({{irq.irq + irq.offset}}, Io.Resource.Irq_type_{{irq.is_edge and "raising_edge" or "level_high"}})
 {% endfor %}
+{% endif %}
     end)
 {% endfor %}
 {% endfor %}
