@@ -1,7 +1,10 @@
 {
 	"name": "Build tools",
-	"image": "debian:latest",
+	"build": {
+        "dockerfile": "Dockerfile"
+    },
 	"postCreateCommand": "${PWD}/.devcontainer/init.sh",
+	"remoteUser": "developer",
 	"features": {
 		"ghcr.io/greybeaglelinux/image-dev-features/imagedev:latest": {}
 	},

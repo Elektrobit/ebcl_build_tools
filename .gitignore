@@ -1,9 +1,8 @@
 
 /tmp
-/book
 
-book
 .venv
+/build
 
 log.html
 output.xml
