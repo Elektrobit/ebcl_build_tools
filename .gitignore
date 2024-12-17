@@ -27,4 +27,8 @@ pytest_report.html
 
 /tmp
 
+/node_modules
+/docs/site
 
+.mypy_cache
+.pytest_cache

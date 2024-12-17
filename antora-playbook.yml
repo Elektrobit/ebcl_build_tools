@@ -1,0 +1,34 @@
+site:
+  title: Build Tools
+  start_page: build-tools::index.adoc
+  robots: allow
+  # url: https://greybeaglelinux.github.io/documentation/
+
+content:
+  sources:
+    - url: .
+      branches: HEAD
+      start_path: docs
+
+ui:
+  bundle:
+    url: https://github.com/GreyBeagleLinux/antora-ui/releases/download/1.0.3/ui-bundle.zip
+    snapshot: true
+  supplemental_files:
+    - path: ui.yml
+      contents: |
+        static_files:
+        - .nojekyll
+    - path: .nojekyll
+
+antora:
+  extensions:
+    - "@antora/lunr-extension"
+
+runtime:
+  fetch: true
+
+output:
+  destinations:
+    - provider: fs
+      path: docs/site

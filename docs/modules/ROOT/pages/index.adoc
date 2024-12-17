@@ -1,0 +1,8 @@
+= The Build Tools
+
+The build tools is a collection of Python scripts which allows to build
+embedded Linux images from a given specification in a reproducible way,
+as far as the installation of the selected packages and the image specific
+configuration is reproducible.
+
+
