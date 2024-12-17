@@ -8,3 +8,4 @@
 ** xref:helper_tools.adoc[]
 *** xref:downloader.adoc[]
 *** xref:proxy.adoc[]
+** xref:contributing.adoc[]

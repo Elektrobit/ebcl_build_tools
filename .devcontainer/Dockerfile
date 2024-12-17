@@ -21,4 +21,7 @@ RUN groupadd --gid $HOST_GROUP $CONTAINER_USER \
     && echo $CONTAINER_USER ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$CONTAINER_USER \
     && chmod 0440 /etc/sudoers.d/$CONTAINER_USER
 
+# Create mount point for stand-alone usage
+RUN mkdir -p /workspace
+
 ENTRYPOINT /usr/bin/bash

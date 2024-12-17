@@ -46,7 +46,7 @@ class TestRoot:
     @pytest.mark.dev_container
     def test_build_kiwi_image(self):
         """ Test kiwi image build. """
-        # EBcL dev container required - root generator calls berrymill as subprocess
+        # EBcL devcontainer required - root generator calls berrymill as subprocess
         test_dir = os.path.dirname(os.path.abspath(__file__))
         yaml = os.path.join(test_dir, 'data', 'root_kiwi.yaml')
         generator = RootGenerator(yaml, self.temp_dir, False)
@@ -58,7 +58,7 @@ class TestRoot:
     @pytest.mark.dev_container
     def test_build_kiwi_no_berry(self):
         """ Test kiwi image build without berrymill. """
-        # EBcL dev container required - root generator calls kiwi-ng as subprocess
+        # EBcL devcontainer required - root generator calls kiwi-ng as subprocess
         test_dir = os.path.dirname(os.path.abspath(__file__))
         yaml = os.path.join(test_dir, 'data', 'root_kiwi_berry.yaml')
         generator = RootGenerator(yaml, self.temp_dir, False)
@@ -72,7 +72,7 @@ class TestRoot:
     @pytest.mark.dev_container
     def test_build_kiwi_no_bootstrap(self):
         """ Test kiwi image build without bootstrap package. """
-        # EBcL dev container required - root generator calls kiwi-ng as subprocess
+        # EBcL devcontainer required - root generator calls kiwi-ng as subprocess
         test_dir = os.path.dirname(os.path.abspath(__file__))
         yaml = os.path.join(test_dir, 'data', 'root_kiwi_debo.yaml')
         generator = RootGenerator(yaml, self.temp_dir, False)
@@ -84,7 +84,7 @@ class TestRoot:
     @pytest.mark.dev_container
     def test_build_sysroot_kiwi(self):
         """ Test kiwi image build. """
-        # EBcL dev container required - root generator calls kiwi-ng as subprocess
+        # EBcL devcontainer required - root generator calls kiwi-ng as subprocess
         test_dir = os.path.dirname(os.path.abspath(__file__))
         yaml = os.path.join(test_dir, 'data', 'sysroot_kiwi.yaml')
         generator = RootGenerator(yaml, self.temp_dir, False)
