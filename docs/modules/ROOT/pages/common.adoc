@@ -1,2 +1,99 @@
 = The common functions
 
+The shared code is implemented in _ebcl/common_ and consist of
+a bunch of classes, functions and types used by all build tools.
+
+== Classes
+
+ImplementationError:: The _ImplementationError_ exception is implemented in _ebcl/common/__init__.py_.
+  It is raised if a build tool ends up in an unexpected state.
+Apt:: The _Apt_ class is implemented in _ebcl/common/apt.py_. It provides 
+  It implements the handling of apt repositories, including the parsing of the repository metadata.
+Cache:: The _Cache_ class is implemented in _ebcl/common/cache.py_. It provides 
+  It implements the caching of the downloaded Debian packages for the _boot_generator_ and the
+  _initrd_generator_. The caching for the _root_generator_ is handled separately in
+  _ebcl/tools/root/debootstrap.py_.
+FileNotFound:: The _FileNotFound_ exception is implemented in _ebcl/common/config.py_.
+  It is raised if a file is not found.
+InvalidConfiguration:: The _InvalidConfiguration_ exception is implemented in _ebcl/common/config.py_.
+  It is raised if a invalid configuration is provided.
+Config:: The _Config_ class is implemented in _ebcl/common/config.py_. It implements
+  the parsing of the _yaml_ configuration for all build tools.
+Package:: The _Package_ class is implemented in _ebcl/common/deb.py_. It represents a single
+  Debian package and implements the extraction of Debian packages.
+WordGenerator:: The _WordGenerator_ class is implemented in _ebcl/common/dependency.py_.
+  It is not used at the moment. It may help to improve the resolution of dependency conflicts
+  in the future.
+CommandFailed:: The _CommandFailed_ exception is implemented in _ebcl/common/fake.py_. It is
+  raised if the execution of a command fails unexpectedly.
+Fake:: The _Fake_ class is implemented in _ebcl/common/fake.py_. It provides generic functions
+  and log and error handling for running CLI commands in different environments.
+TarNotFound:: The _TarNotFound_ exception is implemented in _ebcl/common/files.py_.
+  It is raised if a expected tar file is not found.
+TargetDirNotInitialized:: The _TargetDirNotInitialized_ exception is implemented in _ebcl/common/files.py_.
+  It is raised of a function expects a target directory but the value is not set.
+FileNotFound:: The _FileNotFound_ exception is implemented in _ebcl/common/files.py_.
+  It is raised if an expect file is not found.
+Files:: The _Files_ class is implemented in _ebcl/common/files.py_. It provides a bunch
+  of file related functions, like copying and execution of scripts.
+Proxy:: The _Proxy_ class is implemented in _ebcl/common/proxy.py_.
+  It implements a simple proxy for downloading Debian packages which makes use of the _Cache_.
+Version:: The _Version_ class is implemented in _ebcl/common/version.py_. It represents
+  a Debian package versions and support comparison with other versions.
+VersionRelation:: The _VersionRelation_ class is implemented in _ebcl/common/version.py_.
+  It represents a relation to another Debian package and groups a package name,
+  a package version and a package architecture.
+PackageRelation:: The _PackageRelation_ enum is implemented in _ebcl/common/version.py_.
+  It implement the Debian package relations like _DEPENDS_ or _CONFLICTS_.
+VersionDepends:: The _VersionDepends_ class is implemented in _ebcl/common/version.py_.
+  It groups the package name and information like version, version relation and package relation.
+
+== Functions
+
+init_logging:: The __ function is implemented in _ebcl/common/__init__.py_.
+  It initializes the Python logging framework for the build tools. It makes use of the
+  environment variable LOG_LEVEL to overwrite the default log level, which is _INFO_ or
+  given when the function is called.
+bug:: The _bug_ function is implemented in _ebcl/common/__init__.py_.
+  It prints an info text how to report a bug ticket if a tool hits an exception.
+promo:: The _promo_ function is implemented in _ebcl/common/__init__.py_.
+  It prints some advertising if the build worked well.
+log_exception:: The _log_exception_ annotation is implemented in _ebcl/common/__init__.py_.
+  It takes care of the default exception handling for all build tools.
+get_cache_folder:: The _get_cache_folder_ function is implemented in _ebcl/common/__init__.py_.
+  It decides which folder to use to cache packages and build results.
+filter_packages:: The _filter_packages_ function is implemented in _ebcl/common/deb.py_.
+  It implements package filtering according to a given _Version_ and _VersionRelation_.
+vds_to_package:: The _vds_to_package_ function is implemented in _ebcl/common/dependency.py_.
+  It converts a list of _VersionDepends_ to a list of _Package_s.
+sub_output_folder:: The _sub_output_folder_ function is implemented in _ebcl/common/files.py_.
+  It replaces the _$$RESULTS$$_ placeholder with the real output path.
+parse_scripts:: The _parse_scripts_ function is implemented in _ebcl/common/files.py_.
+  It parses a _scripts_ parameter and sets the default for all not given options.
+parse_files:: The _parse_files_ function is implemented in _ebcl/common/files.py_.
+  It parses a _host_files_ parameter, sets the default for all not given options, and takes care
+  of completing relative paths with respect to the config file containing the relative path.
+resolve_files:: The _resolve_files_ function is implemented in _ebcl/common/files.py_.
+  It implements the completion of relative paths with respect to the config file containing
+  the relative path.
+render_template:: The _render_template_ function is implemented in _ebcl/common/templates.py_.
+  It renders a Jinja2 template.
+parse_depends:: The _parse_depends_ function is implemented in _ebcl/common/version.py_.
+  It parses the dependency information given in Debian package metadata as _VersionDepends_.
+parse_package_config:: The _parse_package_config_ function is implemented in _ebcl/common/version.py_.
+  It parses a package given in a specification file as _VersionDepends_.
+parse_package:: The _parse_package_ function is implemented in _ebcl/common/version.py_.
+  It parses a single package given in a specification file as _VersionDepends_.
+
+== Types
+
+The module _ebcl/common/types_ provides the commonly used type enums
+and classes.
+
+CpuArch:: The _CpuArch_ enum is implemented in _ebcl/common/types/cpu_arch.py_.
+  It provides values for the CPU architecture of an artifact and is e.g. used
+  for tagging the Debian package objects.
+
+EnvironmentType:: The _EnvironmentType_ enum is implemented in
+  _ebcl/common/types/environment_type.py_ and used for tagging scripts
+  with the required execution environment.

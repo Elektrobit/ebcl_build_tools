@@ -1,1 +1,211 @@
 = The Initrd Generator
+
+NOTE: Many commands run by the _initrd_generator_ are executed using _sudo_.
+  The environment is expected to allow running _sudo_ without password.
+  This is done to avoid access right issues, but a better solution may be possible.
+
+The _initrd_generator_ is responsible for creating the _initrd.img_ which is
+loaded as initial ramdisk when the Linux kernel boots. The _initrd_generator_
+supports the following options:
+
+[source,bash]
+----
+============================
+EBcL Initrd Generator 1.3.5
+============================
+
+usage: initrd_generator [-h] config_file output
+
+Create an initrd image for Linux.
+
+positional arguments:
+  config_file  Path to the YAML configuration file
+  output       Path to the output directory
+
+options:
+  -h, --help   show this help message and exit
+----
+
+== Parameters
+
+The _initrd_generator_ supports the following configuration parameters:
+
+base:: Parent configuration file. If specified, the values from the parent
+  file will be used if not otherwise specified in the current file.
+arch (default: arm64):: The CPU architecture of the target hardware.
+  The supported values are arm64, amd64 and armhf.
+use_fakeroot (default: False):: Use fakeroot in the generator tools where possible,
+  instead of sudo and chroot. This may cause issues for edge-cases.
+apt_repos (default: None):: A list of apt repositories to download the required Debian packages.
+  In addition, an armored public key file or URL can be given as “key”, and a unarmored gpg file
+  can be given as “gpg”, to authenticate the package sources. Example:
+
+[source,yaml]
+----
+apt_repos:
+  - apt_repo: http://archive.ubuntu.com/ubuntu
+    distro: jammy
+    components:
+      - main
+      - universe
+  - apt_repo: http://archive.ubuntu.com/ubuntu
+    distro: jammy-security
+    components:
+      - main
+      - universe
+----
+
+use_ebcl_apt (default: No):: If yes, the public apt repository of _EB corbos Linux_ will be added.
+  By default, the latest release will be used if the _ebcl_version_ parameter is not given.
+  This is a convenience feature, but be aware that this public apt repository doesn’t provide
+  customer specific or proprietary packages.
+ebcl_version (default: latest release):: EB corbos Linux release version,
+  for the automatically generated apt repository.
+host_files (default: None):: Files to include from the host or container environment.
+  The destination is the path in the target root filesystem or chroot environment.
+  In addition, the parameters _mode_, to specify the mode of the file,
+  _uid_, to specify the owner of the file, and _gid_, to specify the owning group
+  of the file, can be used. Example:
+
+[source,yaml]
+----
+host_files:
+  - source: bootargs-overlay.dts
+    destination: boot
+  - source: bootargs.its
+    destination: boot
+----
+
+scripts (default: None):: The scripts which shall be executed.
+  The supported environments are _chroot_, to run the script in a chroot environment,
+  _fake_, to run the script in a fakeroot environment,
+  _sudo_ to run the script with root privileges,
+  or _shell_ to run the script in a plain shell environment.
+  For _chroot_ the script will be placed at _/_ and executed from this folder.
+  For all other environments, the current work directory will be the folder
+  containing the target environment. In addition, parameters which are forwarded
+  to the script can be provided as _params_.
+
+[source,yaml]
+----
+scripts:
+  - name: config_root.sh
+    env: chroot
+----
+
+template (default: None):: A Jinja2 template for the init script. By default the file
+  _ebcl/tools/initrd/init.sh_  is used as template. The available variables for the template
+  are _mods_, which is a list of the selected kernel modules ready to be used with _modprobe_,
+  and _root_, which is the configured root device parameter.
+name (default: root):: A name which is used in the filenames of the generated artifacts.
+download_deps (default: True):: Download the dependencies of the specified packages.
+  This parameter must be True, to use e.g. a meta-package for the kernel binary and modules.
+base_tarball (default: None): A base chroot environment for the _initrd.img_. If no base 
+  chroot environment is given, a minimal busybox based environment will be used.
+packages (default: None):: A list of packages. These packages will be downloaded,
+  extracted and integrated into the resulting _initrd.img_.
+kernel (default: None):: Name of the kernel package. This package and it's dependencies will be
+  downloaded and extracted to a temporary folder to get the required kernel modules.
+busybox (default: busybox-static)_: Name of the busybox package for the minimal busybox environment
+  used in the initrd image.
+modules (default: None):: List of kernel modules to add and load from the _initrd.img_. Example:
+
+[source,yaml]
+----
+modules:
+  - kernel/drivers/virtio/virtio.ko 
+  - kernel/drivers/virtio/virtio_ring.ko 
+  - kernel/drivers/block/virtio_blk.ko 
+  - kernel/net/core/failover.ko 
+  - kernel/drivers/net/net_failover.ko 
+  - kernel/drivers/net/virtio_net.ko
+----
+
+root_device (default: None):: Name of the root device to mount.
+devices (default: None):: List of device nodes to add. For each device node a
+the parameters _mode_, to specify the mode of the device node, 
+_uid_, to specify the owner of the device node, and 
+_gid_, to specify the owning group of the device node, can be used. Example:
+
+[source,yaml]
+----
+devices:
+  - name: mmcblk1
+    type: block
+    major: 8
+    minor: 0
+  - name: console
+    type: char
+    major: 5
+    minor: 1
+----
+
+kernel_version (default: auto detected):: The kernel version of the copied modules.
+modules_folder (default: None):: A folder in the host or container environment containing
+the kernel modules. This can be used to provide modules from a local kernel build.
+The string _$$RESULTS$$_ will be replaced with the path to the output folder, for all paths
+given in a _yaml_ config file. Example:
+
+```yaml
+modules_folder: $$RESULTS$$
+```
+
+== Environment variables
+
+The _initrd_generator_ makes use of the following environment variables:
+
+EBCL_REPO_URL:: Overwrites the apt repository URL used by _use_ebcl_apt_.
+EBCL_REPO_KEY:: Overwrites the apt repository armored public key used by _use_ebcl_apt_.
+EBCL_REPO_GPG:: Overwrites the apt repository de-armored key used by _use_ebcl_apt_.
+EBCL_VERSION:: Overwrites the EB corbos Linux version used by _use_ebcl_apt_.
+LOG_LEVEL:: Sets the log-level for all tools.
+RELEASE_VERSION:: Sets the EB corbos Linux SDK version used by some info texts.
+
+== Dependencies
+
+=== System packages
+
+The _initrd_generator_ has the following system tool dependencies:
+
+coreutils (commands _mkdir_, _cp_, _echo_, _rm_, _chown_, _mv_, _mknod_):: Common commandline tools.
+bash:: GNU Bourne Again SHell.
+rsync:: A file-copying tool, used for merging folders.
+tar:: GNU version of the tar archiving utility.
+cpio:: GNU cpio -- a program to manage archives of files.
+findutils:: Utilities for finding files--find, xargs.
+zstd:: Fast lossless compression algorithm.
+
+=== Python packages
+
+The _initrd_generator_ has the following Python package dependencies:
+
+requests:: Used in common code to download the apt configuration and
+  the apt repository keys.
+pyyaml:: Used in common code for parsing the _yaml_ configuration files.
+jsonpickle:: Used in the common code for storing the cache state.
+unix_ar::  Used in the common code for extracting the Debian packages.
+zstandard:: Used in the common code for extracting the Debian packages.
+jinja2:: Used to generate the _init.sh_.
+
+== Implementation details
+
+The core part of the _initrd_generator_ is implemented in _ebcl/tools/initrd/initrd.py_
+and the default _init.sh_ template is implemented in _ebcl/tools/initrd/init.sh_.
+The _main_ function takes care of parsing the command line parameters
+and then runs _create_initrd_ of the _InitrdGenerator_ class, and finally runs
+_finalize_ to cleanup temporary artifacts.
+
+The build process implemented in _create_initrd_ executes the following high level steps:
+
+- Install _busybox_.
+- Download and extract the additionally specified packages.
+- Create a minimal filesystem structure.
+- If _base_tarball_: Extract the base tarball over the prepared environment.
+- Add required kernel modules form a configured modules folder or from the given kernel package
+  and it's dependencies.
+- Add the specified device nodes.
+- Copy the _host_files_ over the prepared environment.
+- Execute the specified config scripts.
+- Generate the init script using the Jinja2 template.
+- Generate the _initrd.img_ using _cpio_.
+

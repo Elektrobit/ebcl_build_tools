@@ -13,6 +13,7 @@ build tools I don't want to support.
 === Added
 
 - _Antora_ documentation for build tools.
+- _build_tools_core_ for host dependency setup.
 
 === Changed
 

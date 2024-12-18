@@ -1,1 +1,15 @@
 = The helper tools
+
+The build tools provide also some helper tools, which are not directly 
+used in the image build process. These tools are support tools for
+developing images.
+
+build_tools_core:: The Core Tool allows to install the required host
+  dependency packages and apply the required host configuration using
+  one command. It is used in the _Image Development_ devcontainer feature
+  to setup the container.
+package_downloader:: The package downloader allows to easy download and
+  extract Debian packages form an apt repository. This may help during
+  image development.
+build_tools_proxy:: This will be an apt proxy and is not implemented at
+  the moment.

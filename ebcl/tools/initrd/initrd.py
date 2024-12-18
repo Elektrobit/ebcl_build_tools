@@ -11,6 +11,7 @@ import tempfile
 from pathlib import Path
 from typing import Optional
 
+from ebcl import __version__
 from ebcl.common import init_logging, promo, log_exception
 from ebcl.common.config import Config, InvalidConfiguration
 from ebcl.common.files import EnvironmentType
@@ -121,8 +122,6 @@ class InitrdGenerator:
         self.config.fake.run_sudo(f'mkdir -p {mods_dst}')
 
         orig_deps: dict[str, list[str]] = {}
-
-        # TODO: fix depends
 
         if os.path.isfile(mods_dep_src):
             with open(mods_dep_src, encoding='utf8') as f:
@@ -287,6 +286,9 @@ class InitrdGenerator:
         # Copy files and directories specified in the files
         self.config.fh.copy_files(self.config.host_files, self.target_dir)
 
+        # Run the config scripts
+        self.config.fh.run_scripts(self.config.scripts, self.config.target_dir)
+
         # Create init script
         init_script: Path = Path(self.target_dir) / 'init'
 
@@ -337,9 +339,9 @@ def main() -> None:
     """ Main entrypoint of EBcL initrd generator. """
     init_logging()
 
-    logging.info('\n====================\n'
-                 'EBcL Initrd Generator\n'
-                 '=====================\n')
+    logging.info('\n============================\n'
+                 'EBcL Initrd Generator %s\n'
+                 '============================\n', __version__)
 
     parser = argparse.ArgumentParser(
         description='Create an initrd image for Linux.')

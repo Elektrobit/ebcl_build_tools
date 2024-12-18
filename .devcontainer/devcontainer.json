@@ -55,7 +55,8 @@
 				"ms-python.vscode-pylance",
 				"streetsidesoftware.code-spell-checker",
 				"streetsidesoftware.code-spell-checker-german",
-				"ms-vscode.live-server"
+				"ms-vscode.live-server",
+				"ms-azuretools.vscode-docker"
 			]
 		}
 	}

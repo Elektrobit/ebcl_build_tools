@@ -16,7 +16,6 @@ from .files import Files, parse_files, parse_scripts, resolve_file, sub_output_p
 from .proxy import Proxy
 from .version import VersionDepends, parse_package_config, parse_package
 
-from .types.build_type import BuildType
 from .types.cpu_arch import CpuArch
 
 

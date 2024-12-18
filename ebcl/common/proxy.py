@@ -336,8 +336,6 @@ class Proxy:
         arch: CpuArch
     ) -> list[Apt]:
         """ Parse and add apt repositories. """
-        # TODO: test
-
         if not apt_repos:
             return []
 
@@ -356,7 +354,6 @@ class Proxy:
     def extract_package(self, vd: VersionDepends, arch: CpuArch,
                         target_dir: str) -> bool:
         """Get package and add it to the target dir. """
-        # TODO: test
         package = None
 
         package = self.find_package(vd)

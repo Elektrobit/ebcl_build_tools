@@ -134,11 +134,11 @@ class RootGenerator:
             self.config.fake.run_fake(
                 f'cp -R {self.result_dir}/* {self.config.output_path}')
         except Exception as e:
-            logging.error('Copying all artefacts failed! %s', e)
+            logging.error('Copying all artifacts failed! %s', e)
 
         if logging.root.level == logging.DEBUG:
             logging.debug(
-                'Log level set to debug, skipping cleanup of build artefacts.')
+                'Log level set to debug, skipping cleanup of build artifacts.')
             logging.debug('Target folder: %s', self.config.target_dir)
             logging.debug('Results folder: %s', self.result_dir)
             return
@@ -161,7 +161,7 @@ def main() -> None:
                  '=========================\n', __version__)
 
     parser = argparse.ArgumentParser(
-        description='Create the content of the root partiton as root.tar.')
+        description='Create the content of the root partition as root.tar.')
     parser.add_argument('config_file', type=str,
                         help='Path to the YAML configuration file')
     parser.add_argument('output', type=str,

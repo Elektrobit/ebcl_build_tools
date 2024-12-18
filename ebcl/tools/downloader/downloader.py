@@ -7,6 +7,7 @@ import tempfile
 
 from typing import Optional
 
+from ebcl import __version__
 from ebcl.common import init_logging, promo, log_exception
 from ebcl.common.config import Config
 from ebcl.common.version import VersionDepends
@@ -16,7 +17,6 @@ from ebcl.common.types.cpu_arch import CpuArch
 
 class PackageDownloader:
     """ Download and extract deb packages. """
-    # TODO: test
 
     @log_exception(call_exit=True)
     def __init__(self, config_file: str, output_path: str):
@@ -82,14 +82,14 @@ def main() -> None:
     """ Main entrypoint of EBcL boot generator. """
     init_logging()
 
-    logging.info('\n======================\n'
-                 'EBcL Package downloader\n'
-                 '=======================\n')
+    logging.info('\n=============================\n'
+                 'EBcL Package downloader %s\n'
+                 '=============================\n', __version__)
 
     parser = argparse.ArgumentParser(
         description='Download and extract the given packages.')
     parser.add_argument('config', type=str,
-                        help='Path to the YAML configuration file containing the apt repostory config.')
+                        help='Path to the YAML configuration file containing the apt repository config.')
     parser.add_argument('packages', type=str,
                         help='List of packages separated by space.')
     parser.add_argument('-o', '--output', type=str,

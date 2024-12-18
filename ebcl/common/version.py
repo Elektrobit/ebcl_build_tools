@@ -209,7 +209,7 @@ class VersionRelation(Enum):
 class PackageRelation(Enum):
     """ Debian package relation. """
     DEPENDS = 1
-    PRE_DEPENS = 2
+    PRE_DEPENDS = 2
     RECOMMENDS = 3
     SUGGESTS = 4
     ENHANCES = 5
@@ -344,7 +344,7 @@ def parse_depends(
 
 
 def parse_package_config(packages: list[str], arch: CpuArch) -> list[VersionDepends]:
-    """ Parse packages conifguration. """
+    """ Parse packages configuration. """
     vd_list: list[VersionDepends] = []
     for package in packages:
         vds = parse_depends(package, arch)

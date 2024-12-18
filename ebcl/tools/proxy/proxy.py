@@ -5,8 +5,6 @@ import logging
 
 from ebcl.common import init_logging
 
-# TODO: implmement
-
 
 def main() -> None:
     """ Main entrypoint of EBcL apt proxy. """

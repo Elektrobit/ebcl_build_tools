@@ -26,7 +26,7 @@ class Apt:
 
     @classmethod
     def from_config(cls, repo_config: dict[str, Any], arch: CpuArch):
-        """ Get an apt repositry for a config entry. """
+        """ Get an apt repository for a config entry. """
         if 'apt_repo' not in repo_config:
             return None
 
@@ -123,7 +123,7 @@ class Apt:
             uo = urlparse(self.url)
         except Exception as e:
             logging.error(
-                'Invalid apt url %s, cannot geneate id! %s', self.url, e)
+                'Invalid apt url %s, cannot generate id! %s', self.url, e)
             return None
 
         cmp_str = '_'.join(self.components)
@@ -188,7 +188,7 @@ class Apt:
             content_bytes = gzip.decompress(data)
         else:
             logging.error(
-                'Unkown compression of index %s (%s)! Cannot parse index.', url, self)
+                'Unknown compression of index %s (%s)! Cannot parse index.', url, self)
             return
 
         content: str = content_bytes.decode(
@@ -229,7 +229,7 @@ class Apt:
                 assert package is not None
                 deps = line[12:].strip()
                 package.pre_depends = self._process_relation(
-                    package.name, deps, PackageRelation.PRE_DEPENS)
+                    package.name, deps, PackageRelation.PRE_DEPENDS)
 
             elif line.startswith('Recommends:'):
                 assert package is not None
@@ -400,7 +400,6 @@ class Apt:
 
     def _get_data_for_url(self, url: str) -> Optional[Any]:
         """ Get cache data for url. """
-        # TODO: test for fast on second try
         cache_file_name = url[7:].replace('/', '_')
         cache_file_path = os.path.join(self.state_folder, cache_file_name)
 
@@ -438,7 +437,6 @@ class Apt:
 
     def get_key(self) -> Optional[str]:
         """ Get key for this repo. """
-        # TODO: test
         if not self.key_url:
             return None
 
@@ -477,7 +475,6 @@ class Apt:
             self, output_folder: Optional[str] = None
     ) -> Tuple[Optional[str], Optional[str]]:
         """ Get gpg key file for repo key. """
-        # TODO: test
         if not self.key_url:
             return (None, self.key_gpg)
 
@@ -508,7 +505,7 @@ class Apt:
                 fake.run_cmd(
                     f'cat {key_pub_file} | gpg --dearmor > {key_gpg_file}')
             except Exception as e:
-                logging.error('Dearmoring key %s of %s as %s failed! %s',
+                logging.error('Dearmor key %s of %s as %s failed! %s',
                               key_pub_file, self, key_gpg_file, e)
                 return (key_pub_file, None)
         else:
