@@ -76,17 +76,26 @@ class DebootstrapRootGenerator:
             for apt in self.config.apt_repos:
                 logging.info('Adding apt repo %s...', str(apt))
                 components = ' '.join(apt.components)
-                f.write(f'deb {apt.url} {apt.distro} {components}\n\n')
 
                 (key_pub_file, key_gpg_file) = apt.get_key_files()
+
                 if key_pub_file:
+                    # the armored key is not needed
                     os.remove(key_pub_file)
 
-                fake.run_sudo(
-                    f'cp {key_gpg_file} {apt_key_dir}',
-                    cwd=self.config.target_dir,
-                    check=True
-                )
+                if key_gpg_file:
+                    fake.run_sudo(
+                        f'cp {key_gpg_file} {apt_key_dir}',
+                        cwd=self.config.target_dir,
+                        check=True
+                    )
+                    f.write(
+                        f'deb [arch={apt.arch}] {apt.url} {apt.distro} {components}\n\n')
+                else:
+                    logging.warning(
+                        'No key for repository %s, will blindly trust the repo!', str(apt))
+                    f.write(
+                        f'deb [trusted=yes arch={apt.arch}] {apt.url} {apt.distro} {components}\n\n')
 
         fake.run_sudo(
             f'cp {apt_sources} {apt_sources_target}',
