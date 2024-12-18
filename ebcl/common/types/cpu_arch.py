@@ -45,33 +45,3 @@ class CpuArch(Enum):
             return "any"
         else:
             return "UNKNOWN"
-
-    def get_kiwi_arch(self) -> str:
-        """ Get the arch string for the kiwi image description. """
-        if self.value == 1:
-            return "x86_64"
-        elif self.value == 2:
-            return "aarch64"
-
-        raise UnsupportedCpuArchitecture(
-            f'Unsupported CPU architecture {str(self)} for kiwi-ng build!')
-
-    def get_berrymill_arch(self) -> str:
-        """ Get the arch string for the berrymill image description. """
-        if self.value == 1:
-            return "amd64"
-        elif self.value == 2:
-            return "arm64"
-
-        raise UnsupportedCpuArchitecture(
-            f'Unsupported CPU architecture {str(self)} for berrymill build!')
-
-    def get_box_arch(self) -> str:
-        """ Get the arch string for the kiwi box build. """
-        if self.value == 1:
-            return "--x86_64"
-        elif self.value == 2:
-            return "--aarch64"
-
-        raise UnsupportedCpuArchitecture(
-            f'Unsupported CPU architecture {str(self)} for berrymill build!')
