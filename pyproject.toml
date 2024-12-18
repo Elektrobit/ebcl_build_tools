@@ -44,7 +44,7 @@ root_generator = "ebcl.tools.root.root:main"
 root_configurator = "ebcl.tools.root.root_config:main"
 package_downloader = "ebcl.tools.downloader.downloader:main"
 hypervisor_config = "ebcl.tools.hypervisor.config_gen:main"
-
+build_tools_core = "ebcl.tools.core.core:main"
 
 [tool.pylint.format]
 max-line-length = 120
