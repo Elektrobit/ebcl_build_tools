@@ -1,2 +1,27 @@
 = Build tools
 
+The core build tools consist of:
+
+root_generator:: The _root_generator_ is the helper tool to build tarballs
+  of the used file systems. Under the hood, it makes use of _debootstrap_
+  and automates typical steps. It also applies the configuration
+  by copying image specific configuration files in the tarball, and by
+  executing configuration scripts in different environments.
+
+initrd_generator:: The _initrd_generator_ is the helper tool to build a image
+  specific _initrd.img_. The typical tools like _dracut_ don't match my needs
+  because I don't want to bloat my root filesystem with initrd build tooling,
+  and I want a real minimal _initrd.img_. Since I know my hardware and my
+  system in detail, there is no need for and dynamic behavior, and I want
+  my system to be up and usable as fast as possible.
+
+boot_generator:: I build my image form Debian or Ubuntu packages, because I
+  also have other hobbies and don't want to spend my weekends with the security
+  maintenance of my own Yocto image. This approach has the drawback that these
+  packages are built for servers, and expect the kernel to be installed in the
+  root filesystem. For my images, this is typically not the case, and therefore
+  I need to extract the kernel, and wrap it in the board specific format like
+  a fitimage.
+
+These tools share a lot of common code, which is contained in the _common_ module.
+

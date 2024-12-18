@@ -1,12 +1,22 @@
 {
     "cSpell.words": [
+        "adoc",
+        "configurator",
+        "coreutils",
+        "deboostrap",
         "debootstrap",
         "ebcl",
+        "elektrobit",
+        "embdgen",
         "fakeroot",
+        "greybeaglelinux",
+        "imagedev",
         "jsonpickle",
         "minbase",
         "mtab",
         "noninteractive",
+        "pylint",
+        "pyyaml",
         "resolv",
         "sysfs"
     ]

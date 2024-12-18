@@ -5,4 +5,44 @@ embedded Linux images from a given specification in a reproducible way,
 as far as the installation of the selected packages and the image specific
 configuration is reproducible.
 
+Embedded systems can use quite complex architectures, and the "server-like"
+images only using a bootloader which runs the kernel and mounts a single root
+filesystem are more an edge case. The following picture gives an overview
+about typical embedded system architectures.
 
+image::embedded-system.png[]
+
+The build tools want to support all of these architectures, and all kinds of
+hardware, which requires a very flexible approach, since many SoCs come with
+very special needs and maybe even vendor specific build and signing tools.
+The build tools tackle this challenge by using a modular approach.
+The kernel, the initrd.img, and the filesystems are considered separate
+artifacts, using a separate build, which are integrated into an overall
+image as a final build step.
+
+Each of these artifacts and steps uses it's own specification, which allows
+to work in different artifacts in parallel with different teams. These
+specifications are _yaml_ files, and to avoid redundancy the yaml files
+allow inheritance. The helper tools read these specifications and build
+the different artifacts according to the specification, in a reproducible
+way, as far is this is supported by the underlying tools and packages.
+To fully automate the build of an ready to use image, these helper tools
+can be chained together using https://taskfile.dev/[taskfile], a modern
+make replacement. The integration of the different binary artifacts can
+be done using https://github.com/Elektrobit/embdgen[embdgen], a `dd` on
+steroids able to build a binary image from a _yaml_ specification and
+given artifacts. Such a build flow for a QEMU image can look like:
+
+image::qemu_build_flow.png[]
+
+The _root_generator_, the _root_configurator_, the _initrd_generator_ and
+the _boot_generator_ are the helper tools provided in
+https://github.com/GreyBeagleLinux/build_tools[this repository].
+The image builder _embdgen_ is developer separately in
+https://github.com/Elektrobit/embdgen[this repository].
+The "green glue" is provided by https://taskfile.dev/[taskfile].
+For this build flow, the _root_generator_ is not applying the
+configuration. The configuration is applied in a second step
+using the _root_configurator_. This has the advantage that
+configuration changes doesn’t require to run _debootstrap_ again,
+which can be quite time consuming.

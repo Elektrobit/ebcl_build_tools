@@ -1,3 +1,31 @@
 = Changelog
 
+All notable changes to this project will be documented in this file.
+
+The format is based on https://keepachangelog.com/en/1.1.0/[Keep a Changelog]
+and this project adheres to https://semver.org/[Semantic Versioning].
+
+== [Unreleased] - yyyy-mm-dd
+
+This is the first release of my fork, and will cleanup legacy parts of the
+build tools I don't want to support.
+
+=== Added
+
+- _Antora_ documentation for build tools.
+
+=== Changed
+
+- Move documentation form _mdbook_ to _Antora_.
+
+=== Fixed
+
+
+== [1.3.5] - 2025-12-17
+
+Forking off from https://github.com/Elektrobit/ebcl_build_tools[EBcL build tools].
+The EBcL build tools are developed in lock step with
+https://www.elektrobit.com/products/ecu/eb-corbos/linux-built-on-ubuntu/[Elektrobit corbos Linux],
+and need to follow a strict development process. This fork is my "playground"
+to try out new ideas, and build images for my BeagleBone SBCs.
 
