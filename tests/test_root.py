@@ -41,59 +41,6 @@ class TestRoot:
     def test_read_config(self):
         """ Test yaml config loading. """
         assert self.generator.config.image is None
-        assert self.generator.config.type == BuildType.DEBOOTSTRAP
-
-    @pytest.mark.dev_container
-    def test_build_kiwi_image(self):
-        """ Test kiwi image build. """
-        # EBcL devcontainer required - root generator calls berrymill as subprocess
-        test_dir = os.path.dirname(os.path.abspath(__file__))
-        yaml = os.path.join(test_dir, 'data', 'root_kiwi.yaml')
-        generator = RootGenerator(yaml, self.temp_dir, False)
-
-        archive = generator.create_root()
-        assert archive
-        assert os.path.isfile(archive)
-
-    @pytest.mark.dev_container
-    def test_build_kiwi_no_berry(self):
-        """ Test kiwi image build without berrymill. """
-        # EBcL devcontainer required - root generator calls kiwi-ng as subprocess
-        test_dir = os.path.dirname(os.path.abspath(__file__))
-        yaml = os.path.join(test_dir, 'data', 'root_kiwi_berry.yaml')
-        generator = RootGenerator(yaml, self.temp_dir, False)
-
-        generator.apt_repos = [Apt.ebcl_apt(CpuArch.AMD64)]
-
-        archive = generator.create_root()
-        assert archive
-        assert os.path.isfile(archive)
-
-    @pytest.mark.dev_container
-    def test_build_kiwi_no_bootstrap(self):
-        """ Test kiwi image build without bootstrap package. """
-        # EBcL devcontainer required - root generator calls kiwi-ng as subprocess
-        test_dir = os.path.dirname(os.path.abspath(__file__))
-        yaml = os.path.join(test_dir, 'data', 'root_kiwi_debo.yaml')
-        generator = RootGenerator(yaml, self.temp_dir, False)
-
-        archive = generator.create_root()
-        assert archive
-        assert os.path.isfile(archive)
-
-    @pytest.mark.dev_container
-    def test_build_sysroot_kiwi(self):
-        """ Test kiwi image build. """
-        # EBcL devcontainer required - root generator calls kiwi-ng as subprocess
-        test_dir = os.path.dirname(os.path.abspath(__file__))
-        yaml = os.path.join(test_dir, 'data', 'sysroot_kiwi.yaml')
-        generator = RootGenerator(yaml, self.temp_dir, False)
-
-        generator.apt_repos = [Apt.ebcl_apt(CpuArch.AMD64)]
-
-        archive = generator.create_root()
-        assert archive
-        assert os.path.isfile(archive)
 
     @pytest.mark.requires_download
     def test_build_debootstrap(self):

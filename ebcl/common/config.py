@@ -36,10 +36,7 @@ class Config:
         'arch', 'use_fakeroot', 'apt_repos', 'use_ebcl_apt', 'ebcl_version', 'host_files',
         'files', 'scripts', 'template', 'name', 'download_deps', 'base_tarball', 'packages',
         'kernel', 'tar', 'busybox', 'modules', 'root_device', 'devices', 'kernel_version',
-        'modules_folder', 'result_pattern', 'image', 'berrymill_conf', 'use_berrymill',
-        'use_bootstrap_package', 'bootstrap_package', 'bootstrap', 'kiwi_root_overlays',
-        'use_kiwi_defaults', 'kiwi_scripts', 'kvm', 'image_version', 'type',
-        'root_password', 'hostname', 'domain', 'console', 'sysroot_packages',
+        'modules_folder', 'image', 'root_password', 'hostname', 'domain', 'sysroot_packages',
         'sysroot_defaults', 'primary_distro', 'base', 'debootstrap_flags'
     ]
 
@@ -64,12 +61,12 @@ class Config:
         # Use the EBcL apt repository?
         self.use_ebcl_apt: bool = True
         # EBcL version
-        self.ebcl_version: str = '1.2'
+        self.ebcl_version: str = '1.4'
         # Files to include from host env
         self.host_files: list[dict[str, Any]] = []
         # Files to extract from target environment
         self.files: list[str] = []
-        # Scripts for target configration
+        # Scripts for target configuration
         self.scripts: list[dict[str, Any]] = []
         # Name of the template file
         self.template: Optional[str] = None
@@ -77,7 +74,7 @@ class Config:
         self.name: Optional[str] = None
         # Download package dependencies
         self.download_deps: bool = True
-        # Base enviromnet as a tarball
+        # Base environment as a tarball
         self.base_tarball: Optional[str] = None
         # Packages to install or extract
         self.packages: list[VersionDepends] = []
@@ -85,7 +82,7 @@ class Config:
         self.kernel: Optional[VersionDepends] = None
         # Pack result as tar
         self.tar: bool = True
-        # Busybox package for minmal environment
+        # Busybox package for minimal environment
         self.busybox: Optional[VersionDepends] = None
         # Modules files to copy.
         self.modules: list[str] = []
@@ -97,32 +94,8 @@ class Config:
         self.kernel_version: Optional[str] = None
         # Modules folder in host environment
         self.modules_folder: Optional[str] = None
-        # Pattern to find the build result.
-        self.result_pattern: Optional[str] = None
         # Image description file
         self.image: Optional[str] = None
-        # Berrymill configuration file
-        self.berrymill_conf: Optional[str] = None
-        # Use Berrymill for Kiwi-ng builds.
-        self.use_berrymill: bool = True
-        # Use a bootstrap package for Kiwi-ng builds.
-        self.use_bootstrap_package: bool = True
-        # Name of the Kiwi-ng bootstrap package.
-        self.bootstrap_package: Optional[str] = None
-        # Additional bootstrap packages for debootstrap.
-        self.bootstrap: list[VersionDepends] = []
-        # List of overlay folders for Kiwi-ng builds.
-        self.kiwi_root_overlays: list[str] = []
-        # Add default names for Kiwi-ng artifacts.
-        self.use_kiwi_defaults: bool = True
-        # Additional scripts for the Kiwi-ng build.
-        self.kiwi_scripts: list[str] = []
-        # Use KVM acceleration for Kiwi-ng builds.
-        self.kvm: bool = True
-        # Kiwi-ng image version string
-        self.image_version: Optional[str] = None
-        # Root filesystem build type.
-        self.type: BuildType = BuildType.DEBOOTSTRAP
         # Primary repo for debootstrap
         self.primary_distro: Optional[str] = None
         # Additional debootstrap parameters
@@ -133,8 +106,6 @@ class Config:
         self.hostname: str = 'ebcl'
         # Domain for the root filesystem
         self.domain: str = 'elektrobit.com'
-        # Console
-        self.console: Optional[str] = None
         # Additional sysroot packages.
         self.sysroot_packages: list[VersionDepends] = []
         # Add default extensions for sysroot builds
@@ -160,14 +131,14 @@ class Config:
 
     def _parse_yaml(self, file: str):
         """ Load yaml configuration. """
-        conifg_file = os.path.abspath(file)
-        config_dir = os.path.dirname(conifg_file)
+        config_file = os.path.abspath(file)
+        config_dir = os.path.dirname(config_file)
 
-        config = self._load_yaml(conifg_file)
+        config = self._load_yaml(config_file)
 
         base = config.get('base', None)
         if base:
-            # Hanlde parent config files
+            # Handle parent config files
             if isinstance(base, str):
                 bases = [base]
             else:
@@ -224,7 +195,7 @@ class Config:
             matches = glob.glob(host_file_path)
             if not matches:
                 raise FileNotFound(f'The file {host_file} referenced form config file '
-                                   f'{conifg_file} was not found!')
+                                   f'{config_file} was not found!')
 
         self.host_files += host_files
 
@@ -238,7 +209,7 @@ class Config:
             matches = glob.glob(script_path)
             if not matches:
                 raise FileNotFound(f'The script {script_path} referenced form config file '
-                                   f'{conifg_file} was not found!')
+                                   f'{config_file} was not found!')
 
         self.scripts += scripts
 
@@ -315,10 +286,7 @@ class Config:
 
             if not os.path.isdir(self.modules_folder):
                 raise InvalidConfiguration(f'The module folder {self.modules_folder} '
-                                           f'of config file {conifg_file} does not exist!')
-
-        if 'result_pattern' in config:
-            self.result_pattern = config.get('result_pattern', None)
+                                           f'of config file {config_file} does not exist!')
 
         if 'image' in config:
             image = config.get('image', None)
@@ -327,76 +295,6 @@ class Config:
                 relative_base_dir=config_dir
             )
             self.image = sub_output_path(self.image, self.output_path)
-
-        if 'berrymill_conf' in config:
-            berrymill_conf = config.get('berrymill_conf', None)
-            self.berrymill_conf = resolve_file(
-                file=berrymill_conf,
-                relative_base_dir=config_dir
-            )
-            self.berrymill_conf = sub_output_path(
-                self.berrymill_conf, self.output_path)
-
-        if 'use_berrymill' in config:
-            self.use_berrymill = config.get('use_berrymill', True)
-
-        if 'use_bootstrap_package' in config:
-            self.use_bootstrap_package = config.get(
-                'use_bootstrap_package', True)
-
-        if 'bootstrap_package' in config:
-            self.bootstrap_package = config.get('bootstrap_package', None)
-
-        if 'bootstrap' in config:
-            if inherit_packages:
-                bootstrap = parse_package_config(
-                    config.get('bootstrap', []), self.arch)
-                self.bootstrap += bootstrap
-            else:
-                self.bootstrap = parse_package_config(
-                    config.get('bootstrap', []), self.arch)
-
-        if 'kiwi_root_overlays' in config:
-            kiwi_root_overlays = parse_files(
-                config.get('kiwi_root_overlays', None),
-                output_path=self.output_path,
-                relative_base_dir=config_dir)
-
-            kiwi_overlay_list = [r['source'] for r in kiwi_root_overlays]
-
-            for r in kiwi_overlay_list:
-                if not os.path.isdir(r):
-                    raise InvalidConfiguration(f'Kiwi-ng root overlay {r} from config file '
-                                               f'{conifg_file} does not exist!')
-
-            self.kiwi_root_overlays += kiwi_overlay_list
-
-        if 'use_kiwi_defaults' in config:
-            self.use_kiwi_defaults = config.get('use_kiwi_defaults', True)
-
-        if 'kiwi_scripts' in config:
-            kiwi_scripts = parse_files(
-                config.get('kiwi_scripts', None),
-                output_path=self.output_path,
-                relative_base_dir=config_dir)
-
-            kiwi_script_list = [s['source'] for s in kiwi_scripts]
-
-            for s in kiwi_script_list:
-                if not os.path.isfile(s):
-                    raise InvalidConfiguration(f'Kiwi-ng script {s} from config file '
-                                               f'{conifg_file} does not exist!')
-
-            self.kiwi_scripts += kiwi_script_list
-
-        if 'kvm' in config:
-            self.kvm = config.get('kvm', True)
-
-        if 'image_version' in config:
-            self.image_version = config.get('image_version', None)
-
-        if 'type' in config:
-            self.type = BuildType.from_str(config.get('type', None))
 
         if 'primary_distro' in config:
             self.primary_distro = config.get('primary_distro', None)
@@ -412,9 +310,6 @@ class Config:
 
         if 'domain' in config:
             self.domain = config.get('domain', 'elektrobit.com')
-
-        if 'console' in config:
-            self.console = config.get('console', None)
 
         if 'sysroot_packages' in config:
             if inherit_packages:
@@ -432,7 +327,7 @@ class Config:
             if key not in self.keywords:
                 logging.warning(
                     'Config file %s is using unknown keyword %s!',
-                    conifg_file, key)
+                    config_file, key)
 
     def extract_package(self, vd: VersionDepends) -> bool:
         """Get package and add it to the target dir. """

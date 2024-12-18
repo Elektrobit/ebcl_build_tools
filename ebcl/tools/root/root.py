@@ -11,11 +11,7 @@ from ebcl import __version__
 from ebcl.common import init_logging, promo, log_exception
 from ebcl.common.config import Config
 from ebcl.common.version import parse_package_config
-from ebcl.tools.root.kiwi import build_kiwi_image
 from ebcl.tools.root.debootstrap import DebootstrapRootGenerator
-
-from ebcl.common.types.cpu_arch import CpuArch
-from ebcl.common.types.build_type import BuildType
 
 from . import config_root
 
@@ -46,12 +42,6 @@ class RootGenerator:
         else:
             self.name = 'root'
 
-        if not self.config.console:
-            if self.config.arch == CpuArch.AMD64:
-                self.config.console = 'ttyS0,115200'
-            else:
-                self.config.console = 'ttyAMA0,115200'
-
         if not self.config.primary_distro:
             # Default primary distro
             self.config.primary_distro = 'jammy'
@@ -62,7 +52,6 @@ class RootGenerator:
         run_scripts: bool = True
     ) -> Optional[str]:
         """ Create the root image.  """
-
         if self.sysroot:
             logging.info('Running build in sysroot mode.')
 
@@ -89,15 +78,9 @@ class RootGenerator:
         logging.debug('Result directory: %s', self.result_dir)
 
         image_file = None
-        if self.config.type == BuildType.KIWI:
-            image_file = build_kiwi_image(
-                self.config,
-                self.name,
-                self.result_dir
-            )
-        elif self.config.type == BuildType.DEBOOTSTRAP:
-            generator = DebootstrapRootGenerator(self.config, self.result_dir)
-            image_file = generator.build_debootstrap_image(self.name)
+
+        generator = DebootstrapRootGenerator(self.config, self.result_dir)
+        image_file = generator.build_debootstrap_image(self.name)
 
         if not image_file:
             logging.critical('Image build failed!')
