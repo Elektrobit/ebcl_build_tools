@@ -6,6 +6,7 @@
 	"postCreateCommand": "${PWD}/.devcontainer/init.sh",
 	"remoteUser": "developer",
 	"features": {
+		// Install the build tools and embdgen and other dependencies.
 		"ghcr.io/greybeaglelinux/image-dev-features/imagedev:latest": {}
 	},
 	"customizations": {
