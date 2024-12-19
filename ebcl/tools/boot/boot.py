@@ -8,6 +8,7 @@ import tempfile
 
 from typing import Optional
 
+from ebcl import __version__
 from ebcl.common import init_logging, promo, log_exception
 from ebcl.common.config import Config
 from ebcl.common.files import resolve_file
@@ -150,12 +151,12 @@ def main() -> None:
     """ Main entrypoint of EBcL boot generator. """
     init_logging()
 
-    logging.info('\n===================\n'
-                 'EBcL Boot Generator\n'
-                 '===================\n')
+    logging.info('\n=========================\n'
+                 'EBcL Boot Generator %s\n'
+                 '=========================\n', __version__)
 
     parser = argparse.ArgumentParser(
-        description='Create the content of the boot partiton.')
+        description='Create the content of the boot partition.')
     parser.add_argument('config_file', type=str,
                         help='Path to the YAML configuration file')
     parser.add_argument('output', type=str,

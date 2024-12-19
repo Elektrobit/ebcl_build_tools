@@ -1,7 +1,8 @@
 """ Unit tests for the EBcL apt proxy. """
-from pathlib import Path
-
+import platform
 import pytest
+
+from pathlib import Path
 
 from ebcl.common.apt import Apt, parse_depends
 from ebcl.common.proxy import Proxy
@@ -136,7 +137,9 @@ class TestProxy:
         """ Extract data content of multiple debs. """
         self.proxy.add_apt(Apt())
 
-        vds = parse_depends('linux-image-generic', CpuArch.AMD64)
+        kernel_package = 'linux-image-generic'
+
+        vds = parse_depends(kernel_package, CpuArch.AMD64)
         assert vds
         (debs, content, missing) = self.proxy.download_deb_packages(vds)
 

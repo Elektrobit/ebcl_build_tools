@@ -6,6 +6,7 @@ import os
 
 from typing import Optional
 
+from ebcl import __version__
 from ebcl.common import init_logging, promo, log_exception
 from ebcl.common.config import Config
 
@@ -35,9 +36,9 @@ def main() -> None:
     """ Main entrypoint of EBcL root filesystem config helper. """
     init_logging()
 
-    logging.info('\n=====================\n'
-                 'EBcL Root Configurator\n'
-                 '======================\n')
+    logging.info('\n================================\n'
+                 'EBcL Root Configurator %s\n'
+                 '==================================\n', __version__)
 
     parser = argparse.ArgumentParser(
         description='Configure the given root tarball.')

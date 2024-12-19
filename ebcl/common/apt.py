@@ -26,7 +26,7 @@ class Apt:
 
     @classmethod
     def from_config(cls, repo_config: dict[str, Any], arch: CpuArch):
-        """ Get an apt repositry for a config entry. """
+        """ Get an apt repository for a config entry. """
         if 'apt_repo' not in repo_config:
             return None
 
@@ -35,7 +35,7 @@ class Apt:
 
         return cls(
             url=repo_config['apt_repo'],
-            distro=repo_config['distro'],
+            distro=repo_config.get('distro', None),
             components=repo_config.get('components', None),
             key_url=repo_config.get('key', None),
             key_gpg=repo_config.get('gpg', None),
@@ -82,8 +82,8 @@ class Apt:
 
     def __init__(
         self,
-        url: str = "http://archive.ubuntu.com/ubuntu",
-        distro: str = "jammy",
+        url: Optional[str] = None,
+        distro: Optional[str] = None,
         components: Optional[list[str]] = None,
         key_url: Optional[str] = None,
         key_gpg: Optional[str] = None,
@@ -91,13 +91,18 @@ class Apt:
         arch: CpuArch = CpuArch.AMD64,
         state_folder: Optional[str] = None
     ) -> None:
+        if url is None:
+            url = "http://archive.ubuntu.com/ubuntu"
+            if distro is None:
+                distro = 'jammy'
+
         if components is None:
             components = ['main']
 
         self.index_loaded: bool = False
 
         self.url: str = url
-        self.distro: str = distro
+        self.distro: Optional[str] = distro
         self.components: list[str] = components
         self.arch: CpuArch = arch
         self.packages: Optional[dict[str, list[Package]]] = None
@@ -110,7 +115,8 @@ class Apt:
         else:
             self.state_folder = get_cache_folder('apt')
 
-        if not key_gpg and 'ubuntu.com/ubuntu' in url:
+        if not key_gpg and 'ubuntu.com/ubuntu' in url \
+                and os.path.isfile('/etc/apt/trusted.gpg.d/ubuntu-keyring-2018-archive.gpg'):
             self.key_gpg = '/etc/apt/trusted.gpg.d/ubuntu-keyring-2018-archive.gpg'
             logging.info('Using default Ubuntu key %s for %s.',
                          self.key_gpg, self.url)
@@ -123,7 +129,7 @@ class Apt:
             uo = urlparse(self.url)
         except Exception as e:
             logging.error(
-                'Invalid apt url %s, cannot geneate id! %s', self.url, e)
+                'Invalid apt url %s, cannot generate id! %s', self.url, e)
             return None
 
         cmp_str = '_'.join(self.components)
@@ -175,7 +181,11 @@ class Apt:
         """ Parse component package index. """
         assert self.packages is not None
 
-        packages = f'{self.url}/dists/{self.distro}/{url}'
+        if self.distro:
+            packages = f'{self.url}/dists/{self.distro}/{url}'
+        else:
+            # Flat repo
+            packages = f'{self.url}/{url}'
 
         data = self._download_url(packages)
         if not data:
@@ -188,7 +198,7 @@ class Apt:
             content_bytes = gzip.decompress(data)
         else:
             logging.error(
-                'Unkown compression of index %s (%s)! Cannot parse index.', url, self)
+                'Unknown compression of index %s (%s)! Cannot parse index.', url, self)
             return
 
         content: str = content_bytes.decode(
@@ -229,7 +239,7 @@ class Apt:
                 assert package is not None
                 deps = line[12:].strip()
                 package.pre_depends = self._process_relation(
-                    package.name, deps, PackageRelation.PRE_DEPENS)
+                    package.name, deps, PackageRelation.PRE_DEPENDS)
 
             elif line.startswith('Recommends:'):
                 assert package is not None
@@ -267,7 +277,11 @@ class Apt:
 
     def _download_distro(self) -> Optional[dict[str, str]]:
         """ Download and parse distro release file. """
-        inrelease = f'{self.url}/dists/{self.distro}/InRelease'
+        if self.distro:
+            inrelease = f'{self.url}/dists/{self.distro}/InRelease'
+        else:
+            # Flat repo
+            inrelease = f'{self.url}/InRelease'
 
         data = self._download_url(inrelease)
         if not data:
@@ -278,13 +292,22 @@ class Apt:
         package_indexes: dict[str, str] = {}
 
         for line in content.split('\n'):
-            for component in self.components:
-                search = f'{component}/binary-{self.arch}/Packages.xz'
-                search2 = f'{component}/binary-{self.arch}/Packages.gz'
+            if self.distro is None:
+                logging.info('No distro given, not using components.')
+                search = 'Packages.xz'
+                search2 = 'Packages.gz'
                 if search in line or search2 in line:
                     line = line.strip()
                     parts = line.split(' ')
-                    package_indexes[component] = parts[-1]
+                    package_indexes['main'] = parts[-1]
+            else:
+                for component in self.components:
+                    search = f'{component}/binary-{self.arch}/Packages.xz'
+                    search2 = f'{component}/binary-{self.arch}/Packages.gz'
+                    if search in line or search2 in line:
+                        line = line.strip()
+                        parts = line.split(' ')
+                        package_indexes[component] = parts[-1]
 
         logging.debug('Package indexes: %s', package_indexes)
 
@@ -400,7 +423,6 @@ class Apt:
 
     def _get_data_for_url(self, url: str) -> Optional[Any]:
         """ Get cache data for url. """
-        # TODO: test for fast on second try
         cache_file_name = url[7:].replace('/', '_')
         cache_file_path = os.path.join(self.state_folder, cache_file_name)
 
@@ -438,7 +460,6 @@ class Apt:
 
     def get_key(self) -> Optional[str]:
         """ Get key for this repo. """
-        # TODO: test
         if not self.key_url:
             return None
 
@@ -477,7 +498,6 @@ class Apt:
             self, output_folder: Optional[str] = None
     ) -> Tuple[Optional[str], Optional[str]]:
         """ Get gpg key file for repo key. """
-        # TODO: test
         if not self.key_url:
             return (None, self.key_gpg)
 
@@ -508,7 +528,7 @@ class Apt:
                 fake.run_cmd(
                     f'cat {key_pub_file} | gpg --dearmor > {key_gpg_file}')
             except Exception as e:
-                logging.error('Dearmoring key %s of %s as %s failed! %s',
+                logging.error('Dearmor key %s of %s as %s failed! %s',
                               key_pub_file, self, key_gpg_file, e)
                 return (key_pub_file, None)
         else:

@@ -84,7 +84,6 @@ class Files:
         fix_ownership: bool = False
     ):
         """ Copy files. """
-        # TODO: test
         logging.debug('Files: %s', files)
 
         for entry in files:
@@ -235,7 +234,6 @@ class Files:
         cwd: str,
     ):
         """ Run scripts. """
-        # TODO: test
         logging.debug('Target dir: %s', self.target_dir)
         logging.debug('CWD: %s', cwd)
 
@@ -467,7 +465,7 @@ def parse_scripts(
                 'env': env
             })
         else:
-            logging.error('Unkown script entry type: %s', script)
+            logging.error('Unknown script entry type: %s', script)
 
     return result
 

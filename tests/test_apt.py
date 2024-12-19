@@ -1,6 +1,8 @@
 """ Tests for the apt functions. """
 import os
 
+import pytest
+
 from ebcl.common.apt import Apt, parse_depends
 from ebcl.common.proxy import Proxy
 from ebcl.common.version import Version, VersionRelation
@@ -186,3 +188,20 @@ class TestApt:
         assert vds[1].name == 'libpcre2-8-0'
         assert vds[1].version == Version('10.22')
         assert vds[1].version_relation == VersionRelation.EXACT
+
+    @pytest.mark.requires_download
+    def test_flat_repo(self):
+        """ Test for OBS flat apt repository parsing. """
+        repo_url = 'https://download.opensuse.org/repositories/home:/ivaradi:/alpha/Debian_12/'
+        repo_key_url = 'https://download.opensuse.org/repositories/home:/ivaradi:/alpha/Debian_12/Release.key'
+        package_name = 'dolphin-nextcloud'
+
+        apt = Apt(
+            url=repo_url,
+            key_url=repo_key_url
+        )
+
+        packages = apt.find_package(package_name)
+        assert packages
+        assert len(packages) == 1
+        assert packages[0].name == package_name

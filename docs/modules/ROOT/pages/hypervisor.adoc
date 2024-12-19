@@ -1,0 +1,28 @@
+= The Hypervisor Config File Generator
+
+NOTE: Many commands run by the _boot_generator_ are executed using _sudo_.
+  The environment is expected to allow running _sudo_ without password.
+  This is done to avoid access right issues, but a better solution may be possible.
+
+The _hypervisor_config_ is responsible for generating the VM configuration for the
+_EB corbos Hypervisor_. It supports the following options:
+
+[source,bash]
+----
+===========================================
+EBcL Hypervisor Config File Generator 1.3.5
+===========================================
+
+usage: hypervisor_config [-h] [-s SPECIALIZATION] config_file output
+
+Create the config files for the hypervisor
+
+positional arguments:
+  config_file           Path to the YAML configuration file
+  output                Path to the output directory
+
+options:
+  -h, --help            show this help message and exit
+  -s SPECIALIZATION, --specialization SPECIALIZATION
+                        Path to hypervisor specialization directory
+----

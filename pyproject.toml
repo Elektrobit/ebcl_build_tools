@@ -44,7 +44,7 @@ root_generator = "ebcl.tools.root.root:main"
 root_configurator = "ebcl.tools.root.root_config:main"
 package_downloader = "ebcl.tools.downloader.downloader:main"
 hypervisor_config = "ebcl.tools.hypervisor.config_gen:main"
-
+build_tools_core = "ebcl.tools.core.core:main"
 
 [tool.pylint.format]
 max-line-length = 120
@@ -61,7 +61,7 @@ minversion = "6.2.5"
 addopts = ""
 testpaths = [ "tests" ]
 markers = [
-    "dev_container: tests requiring tools only avaiable in the dev container, e.g. kiwi-ng.",
+    "dev_container: tests requiring tools only available in the devcontainer, e.g. kiwi-ng.",
     "requires_download: tests requiring downloads form public resources, which is not allowed for GH actions",
 ]
 

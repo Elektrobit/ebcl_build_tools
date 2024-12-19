@@ -106,7 +106,7 @@ class TestVersion:
 
         a = VersionDepends(
             name='hallo',
-            package_relation=PackageRelation.PRE_DEPENS,
+            package_relation=PackageRelation.PRE_DEPENDS,
             version_relation=VersionRelation.EXACT,
             version=Version('1.2.3'),
             arch=CpuArch.AMD64
@@ -190,7 +190,7 @@ class TestVersion:
 
         a = VersionDepends(
             name='hallo',
-            package_relation=PackageRelation.PRE_DEPENS,
+            package_relation=PackageRelation.PRE_DEPENDS,
             version_relation=VersionRelation.EXACT,
             version=None,
             arch=CpuArch.AMD64

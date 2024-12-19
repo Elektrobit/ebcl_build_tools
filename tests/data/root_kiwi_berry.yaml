@@ -1,5 +1,0 @@
-base: root_kiwi.yaml
-type: kiwi
-kvm: true
-result_pattern: '*.tar.xz'
-use_berrymill: false

@@ -1,14 +1,17 @@
-# EBcL build helpers
+# Build tools
 
-## How to develop?
+The build tools is a collection of Python scripts which allows to build
+embedded Linux images from a given specification in a reproducible way,
+as far as the installation of the selected packages and the image specific
+configuration is reproducible.
 
-Some commands are executed using sudo.
-This requires allowing sudo w/o password which is a bad idea on your dev host.
-To workaorund this, a dev container is used.
+## Documentation
 
-- Open the dev container.
+The documentation of the build tools makes use of
+[Antora](https://docs.antora.org/antora/latest/install-and-run-quickstart/).
+You can install the needed dependencies by running `docs/install_dependencies.sh`
+and build the documentation by running `docs/build_docs.sh`.
 
-If you don't use the dev container, consider to run:
+## Contributing
 
-- Setup Python venv and install required tools: `setup_workspace`
-- Install extensions: `install_extensions`
+[See docs](./docs/modules/ROOT/pages/contributing.adoc)

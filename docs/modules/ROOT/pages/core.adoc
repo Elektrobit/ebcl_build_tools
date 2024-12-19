@@ -1,0 +1,62 @@
+= The Core tools
+
+NOTE: Many commands run by the _build_tools_core_ are executed using _sudo_.
+  The environment is expected to allow running _sudo_ without password.
+
+The _build_tools_core_ is a helper tool to setup the host environment for using
+the build tools. It supports the following options:
+
+[source,bash]
+----
+======================
+Core Tool 1.3.5
+=======================
+
+usage: build_tools_core [-h] [-d] [-c]
+
+The core tool provides helper functions.
+
+options:
+  -h, --help         show this help message and exit
+  -d, --depends      Install required system packages.
+  -c, --config-host  Apply required host configuration.
+----
+
+== Parameters
+
+The _build_tools_core_ doesn’t support any parameters.
+
+== Environment variables
+
+The _build_tools_core_ makes use of the following environment variables:
+
+LOG_LEVEL:: Sets the log-level for all tools.
+RELEASE_VERSION:: Sets the EB corbos Linux SDK version used by some info texts.
+
+== Dependencies
+
+=== System packages
+
+The _build_tools_core_ has the following system tool dependencies:
+
+coreutils (commands _mkdir_, _cp_, _echo_, _rm_, _chown_, _mv_, _mknod_):: Common commandline tools.
+bash:: GNU Bourne Again SHell.
+apt:: Tool for installing Debian packages.
+gnupg:: GNU Privacy Guard for processing apt keys.
+wget:: Retrieves files from the web.
+
+=== Python packages
+
+The _build_tools_core_ doesn’t have Python dependencies.
+
+== Implementation details
+
+The _build_tools_core_ is implemented in _ebcl/tools/core/core.py_.
+The _main_ function takes care of parsing the command line parameters
+and then runs the selected functions.
+
+The _install_dependencies_ function installs the required Debian packages,
+using _sudo_ and _apt_.
+
+The _system_configuration_ function installs the Elektrobit apt repository
+key in the location expected by the _use_ebcl_apt_ parameter Implementation.

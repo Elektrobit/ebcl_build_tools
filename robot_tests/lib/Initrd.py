@@ -102,7 +102,7 @@ class Initrd:
         assert f'root={device}' in self.init
         assert f'mount $root {mountpoint}' in self.init
 
-    def should_have_mode(self, path: str, mode: str):
+    def should_have_mode(self, path: str, mode: str, alternative_mode: Optional[str] = None):
         """ Check that a file exists. """
         assert self.target is not None
         if path.startswith('/'):
@@ -111,7 +111,8 @@ class Initrd:
 
         self.fake.abs_should_have_mode(
             path=path,
-            mode=int(mode))
+            mode=int(mode),
+            alternative_mode=alternative_mode)
 
     def should_be_owned_by(self, path: str, uid: str, gid: str):
         """ Check that a file exists. """

@@ -1,0 +1,257 @@
+= The Root Generator
+
+CAUTION: The _root_generator_ requires the Docker container to run with
+  _root privileges_, to allow bind-mounting of the special filesystems
+  before entering the _chroot_ environment.
+
+NOTE: Many commands run by the _root_generator_ are executed using _sudo_.
+  The environment is expected to allow running _sudo_ without password.
+  This is necessary for some commands, like _debootstrap_, and required
+  for the follow-up configuration to avoid access right issues.
+
+The _root_generator_ is responsible for generating and configuring a tarball
+of the root filesystem. The _root_generator_ supports the following options:
+
+[source,bash]
+----
+=========================
+EBcL Root Generator 1.3.5
+=========================
+
+usage: root_generator [-h] [-n] [-s] config_file output
+
+Create the content of the root partition as root.tar.
+
+positional arguments:
+  config_file      Path to the YAML configuration file
+  output           Path to the output directory
+
+options:
+  -h, --help       show this help message and exit
+  -n, --no-config  Skip the config script execution.
+  -s, --sysroot    Skip the config script execution.
+----
+
+== Parameters
+
+The _root_generator_ supports the following configuration parameters:
+
+base:: Parent configuration file. If specified, the values from the parent
+  file will be used if not otherwise specified in the current file.
+arch (default: arm64):: The CPU architecture of the target hardware.
+  The supported values are arm64, amd64 and armhf.
+use_fakeroot (default: False):: Use fakeroot in the generator tools where possible,
+  instead of sudo and chroot. This may cause issues for edge-cases.
+apt_repos (default: None):: A list of apt repositories to download the required Debian packages.
+  In addition, an armored public key file or URL can be given as _key_, and a unarmored gpg file
+  can be given as _gpg_, to authenticate the package sources. If no key is given, the repositories
+  are trusted without verifying the signature. If not distro is given, a flat repository is
+  assumed, which allows using OBS generated repositories. Example:
+
+[source,yaml]
+----
+apt_repos:
+  - apt_repo: http://archive.ubuntu.com/ubuntu
+    distro: jammy
+    components:
+      - main
+      - universe
+  - apt_repo: http://archive.ubuntu.com/ubuntu
+    distro: jammy-security
+    components:
+      - main
+      - universe
+----
+
+use_ebcl_apt (default: No):: If yes, the public apt repository of _EB corbos Linux_ will be added.
+  By default, the latest release will be used if the _ebcl_version_ parameter is not given.
+  This is a convenience feature, but be aware that this public apt repository doesn’t provide
+  customer specific or proprietary packages.
+
+ebcl_version (default: latest release):: EB corbos Linux release version,
+  for the automatically generated apt repository.
+host_files (default: None):: Files to include from the host or container environment.
+  The destination is the path in the target root filesystem or chroot environment.
+  In addition, the parameters _mode_, to specify the mode of the file,
+  _uid_, to specify the owner of the file, and _gid_, to specify the owning group
+  of the file, can be used. Example:
+
+[source,yaml]
+----
+host_files:
+  - source: bootargs-overlay.dts
+    destination: boot
+  - source: bootargs.its
+    destination: boot
+----
+
+scripts (default: None):: The scripts which shall be executed.
+  The supported environments are _chroot_, to run the script in a chroot environment,
+  _fake_, to run the script in a fakeroot environment,
+  _sudo_ to run the script with root privileges,
+  or _shell_ to run the script in a plain shell environment.
+  For _chroot_ the script will be placed at _/_ and executed from this folder.
+  For all other environments, the current work directory will be the folder
+  containing the target environment. In addition, parameters which are forwarded
+  to the script can be provided as _params_.
+
+[source,yaml]
+----
+scripts:
+  - name: config_root.sh
+    env: chroot
+----
+
+name (default: root):: A name which is used in the filenames of the generated artifacts.
+packages (default: None):: A list of packages. These packages are installed in the base
+  debootstrap environment. 
+primary_distro (default: jammy):: The name of the distribution used for debootstrap.
+root_password (default: linux):: The root password of the generated root filesystem.
+hostname (default: ebcl):: The hostname of the generated root filesystem.
+domain (default: elektrobit.com):: The domain name of the generated root filesystem.
+sysroot_packages (default: None):: List of additional packages which shall be installed
+  for sysroot builds. This can be used to add additional development headers.
+sysroot_defaults (default: True):: Flag if the default additional packages for sysroot builds
+  shall be added. If yes, in addition to the specified packages the packages “build-essential”
+  and “g++” will be added.
+debootstrap_flags (default: None):: Additional flags forwarded to debootstrap. This may be used
+  to add _ca-certificates_ required by some apt repositories by setting the flags to
+  `--include=ca-certificates`.
+
+== Environment variables
+
+The _root_generator_ makes use of the following environment variables:
+
+EBCL_REPO_URL:: Overwrites the apt repository URL used by _use_ebcl_apt_.
+EBCL_REPO_KEY:: Overwrites the apt repository armored public key used by _use_ebcl_apt_.
+EBCL_REPO_GPG:: Overwrites the apt repository de-armored key used by _use_ebcl_apt_.
+EBCL_VERSION:: Overwrites the EB corbos Linux version used by _use_ebcl_apt_.
+LOG_LEVEL:: Sets the log-level for all tools.
+RELEASE_VERSION:: Sets the EB corbos Linux SDK version used by some info texts.
+
+== Dependencies
+
+=== System packages
+
+The _root_generator_ has the following system tool dependencies:
+
+debootstrap:: Tool to generate Debian root filesystems for apt repositories.
+apt:: Tool for installing Debian packages.
+coreutils (commands _mkdir_, _cp_, _echo_, _rm_, _chown_, _mv_):: Common commandline tools.
+mount (commands _mount_, _unmount_):: Tool for mounting filesystems.
+bash:: GNU Bourne Again SHell.
+rsync:: A file-copying tool, used for merging folders.
+tar:: GNU version of the tar archiving utility.
+gnupg:: GNU Privacy Guard for processing apt keys.
+wget:: Retrieves files from the web.
+
+=== Python packages
+
+The _root_generator has the following Python package dependencies:
+
+requests:: Used in common code to download the apt configuration and
+  the apt repository keys.
+pyyaml:: Used in common code for parsing the _yaml_ configuration files.
+jsonpickle:: Used in the common code for storing the cache state.
+
+== Implementation details
+
+The core part of the _root_generator_ is implemented in _ebcl/tools/root/root.py_.
+The _main_ function takes care of parsing the command line parameters
+and then runs _create_root_ of the _RootGenerator_ class, and finally runs
+_finalize_ to cleanup temporary artifacts.
+
+The build process implemented in _create_root_ executes the following high level steps:
+
+- If sysroot build: Add additional packages to the list of selected packages.
+- Create the root tarball using _debootstrap_.
+- If applying configuration: Copy the overlays and run the config scripts.
+- Move the resulting tarball to the output folder.
+
+=== Root tarball generation
+
+The generation of the root tarball is done using _debootstrap_ and implemented in
+_ebcl/tools/root/debootstrap.py_. The primary function _build_debootstrap_image_
+executes the following high-level steps:
+
+- Run debootstrap.
+- Chroot to the folder and run `apt update` and `apt upgrade`.
+- Chroot to the folder and use apt to install the selected packages.
+- Apply some very basic system configuration.
+
+Before each _chroot_ step, the _dev_, _dev/pts_, _sys_ and _proc_ folders are bind-mounted, 
+to avoid issues with tools and package installation scripts relying on these folders.
+Before each step involving _apt_, a _apt_ repository configuration is generated using the
+given _apt_ repositories in the specification files. This is implemented in
+__generate_apt_config_, and the resulting _/etc/apt/sources.list_ and the keys added to the
+_/etc/apt/trusted.gpg.d/_ folder stay in the resulting tarball. If this is not wanted,
+they need to be deleted using an image configuration script.
+
+The basic system configuration step adds the _/etc/resolv.conf_ form the host to the
+root filesystem. This is necessary to enable name resolution in the _chroot_ environment.
+It also sets the _root_ password to the given value, adds the hostname, and runs
+another `apt update` and `apt upgrade`. This last update is needed because the
+Implementation makes heavy use of caching, to minimize the build times, and if a cached
+tarball with the right repositories and packages is available, only the config step is
+executed.
+
+[#root-configuration]
+=== Root configuration
+
+The root filesystem configuration is shared code between the _root_generator_ and the _root configurator_
+and is implemented in _ebcl/tools/root/__init__.py_. For configuring the root tarball the following steps
+are executed:
+
+- Extract the tarball to a temporary folder.
+- Copy the host files to this folder, overwriting existing files if necessary.
+- Execute the configuration scripts in the given environment.
+- Pack the result as tarball.
+
+Copying of the files and running the scripts is common code for all tools and implemented in the
+_Files_ class contained in _ebcl/common/files.py_.
+
+==== Copy the host files
+
+The host files which shall overlay to the root filesystem are defined in the configuration file
+using the _host_files_ parameters. These configuration is parsed using _parse_files_ of
+_ebcl/common/files.py_. For each file or folder a _source_ value is required.
+This source value is interpreted as relative path to the config file.
+Optionally a _destination_, a _mode_, a _uid_ and a _gid_ can be given.
+These additional parameters are evaluated by _copy_files_.
+If _uid_ and _gid_ is not given, the user id 0, and the group id 0 is used,
+which means _root_ user and group.
+If no _mode_ is given the _mode_ is not modified, i.e. the value is kept for the file.
+
+==== Run the configuration scripts
+
+For execution of the config scripts the common function _run_scripts_ of the _files_ class
+implemented in _ebcl/common/files.py_ is used. This function copies all files matching the
+pattern given as script name and executes them, one by one, in the configured environment.
+If no environment is specified, _fakeroot_ is used to run the script.
+
+== Root configurator
+
+The _root configurator_, which is implemented in _ebcl/tools/root/root_config.py_,
+is a stripped down version of the _root_generator_,
+which only applies the customer specific configuration on top of an existing tarball.
+For more details see xref:#root-configuration[root configuration].
+
+[code,bash]
+----
+================================
+EBcL Root Configurator 1.3.5
+==================================
+
+usage: root_configurator [-h] config_file archive_in archive_out
+
+Configure the given root tarball.
+
+positional arguments:
+  config_file  Path to the YAML configuration file
+  archive_in   Root tarball.
+  archive_out  New tarball.
+
+options:
+  -h, --help   show this help message and exit
+----
+

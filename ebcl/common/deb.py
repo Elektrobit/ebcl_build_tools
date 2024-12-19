@@ -1,4 +1,4 @@
-""" Deb helper funktions. """
+""" Deb helper functions. """
 import logging
 import os
 import tempfile
@@ -179,7 +179,6 @@ class Package:
 
 def filter_packages(p: Package, v: Version, r: Optional[VersionRelation]) -> bool:
     """ Filter for matching packages. """
-    # TODO: test
     if not p.version:
         return False
 

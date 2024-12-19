@@ -1,3 +1,4 @@
+""" EBcL Hypervisor Config File Generator """
 import argparse
 import logging
 import os
@@ -6,6 +7,7 @@ from pathlib import Path
 import jinja2
 import yaml
 
+from ebcl import __version__
 from ebcl.common import init_logging, log_exception
 from ebcl.common.files import resolve_file
 
@@ -64,7 +66,8 @@ class HvFileGenerator:
 
     def _render_template(self, outpath: Path, template: FileReadProtocol) -> None:
         """Render a template to target"""
-        template_obj = jinja2.Template(template.read_text("utf-8"), trim_blocks=True)
+        template_obj = jinja2.Template(
+            template.read_text("utf-8"), trim_blocks=True)
 
         with outpath.open("w", encoding="utf-8") as f:
             f.write(template_obj.render(config=self.config))
@@ -93,9 +96,9 @@ def main() -> None:
     """ Main entrypoint of EBcL hypervisor generator. """
     init_logging()
 
-    logging.info('\n===================\n'
-                 'EBcL Hypervisor Config File Generator\n'
-                 '===================\n')
+    logging.info('\n===========================================\n'
+                 'EBcL Hypervisor Config File Generator %s\n'
+                 '===========================================\n', __version__)
 
     parser = argparse.ArgumentParser(
         description='Create the config files for the hypervisor')
@@ -107,7 +110,8 @@ def main() -> None:
                         help='Path to the output directory')
     args = parser.parse_args()
 
-    generator = HvFileGenerator(args.config_file, args.output, args.specialization)
+    generator = HvFileGenerator(
+        args.config_file, args.output, args.specialization)
     generator.create_files()
 
 
