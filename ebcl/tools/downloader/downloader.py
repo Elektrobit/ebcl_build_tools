@@ -19,7 +19,7 @@ class PackageDownloader:
     # TODO: test
 
     @log_exception(call_exit=True)
-    def __init__(self, config_file: str, output_path: str):
+    def __init__(self, config_file: str, output_path: str) -> None:
         """ Parse the yaml config file.
 
         Args:
@@ -42,6 +42,7 @@ class PackageDownloader:
 
         if arch:
             cpu_arch = CpuArch.from_str(arch)
+            assert cpu_arch
         else:
             cpu_arch = self.config.arch
 

@@ -17,7 +17,7 @@ class CommandFailed(Exception):
 class Fake:
     """ Fakeroot and subprocess helper. """
 
-    def __init__(self, state: Optional[str] = None):
+    def __init__(self, state: Optional[str] = None) -> None:
         """ Set state directory. """
         if state is None:
             self.state: Path = Path(tempfile.mktemp())
@@ -25,7 +25,7 @@ class Fake:
         else:
             self.state = Path(state)
 
-    def __del__(self):
+    def __del__(self) -> None:
         """ Remove state directory. """
         if self.state:
             if os.path.isfile(self.state):

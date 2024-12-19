@@ -22,7 +22,7 @@ class InitrdGenerator:
     """ EBcL initrd generator. """
 
     @log_exception(call_exit=True)
-    def __init__(self, config_file: str, output_path: str):
+    def __init__(self, config_file: str, output_path: str) -> None:
         """ Parse the yaml config file.
 
         Args:
@@ -82,7 +82,7 @@ class InitrdGenerator:
 
         return os.path.basename(versions[-1])
 
-    def copy_modules(self, mods_dir: str):
+    def copy_modules(self, mods_dir: str) -> None:
         """ Copy the required modules.
 
         Args:
@@ -180,7 +180,7 @@ class InitrdGenerator:
             self.config.fake.run_sudo(
                 f'echo {module}: {deps} >> {mods_dep_dst}')
 
-    def add_devices(self):
+    def add_devices(self) -> None:
         """ Create device files. """
         self.config.fake.run_sudo(f'mkdir -p {self.target_dir}/dev')
 
@@ -209,7 +209,7 @@ class InitrdGenerator:
             self.config.fake.run_sudo(
                 f'chown {uid}:{gid} {dev_folder}/{device["name"]}')
 
-    def download_deb_packages(self, allow_missing=False):
+    def download_deb_packages(self, allow_missing=False) -> None:
         """ Download all needed deb packages. """
         (debs, _contents, missing) = self.proxy.download_deb_packages(
             packages=self.config.packages,
@@ -325,7 +325,7 @@ class InitrdGenerator:
         return image_path
 
     @log_exception()
-    def finalize(self):
+    def finalize(self) -> None:
         """ Finalize output and cleanup. """
 
         # delete temporary folder

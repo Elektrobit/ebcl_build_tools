@@ -17,7 +17,7 @@ class BootGenerator:
     """ EBcL boot generator. """
 
     @log_exception(call_exit=True)
-    def __init__(self, config_file: str, output_path: str):
+    def __init__(self, config_file: str, output_path: str) -> None:
         """ Parse the yaml config file.
 
         Args:
@@ -39,7 +39,7 @@ class BootGenerator:
 
         logging.debug('Using apt repos: %s', self.proxy.apts)
 
-    def download_deb_packages(self, package_dir: str):
+    def download_deb_packages(self, package_dir: str) -> None:
         """ Download all needed deb packages. """
         (debs, _contents, missing) = self.proxy.download_deb_packages(
             packages=self.config.packages,

@@ -28,7 +28,7 @@ class RootGenerator:
     """ EBcL root filesystem generator. """
 
     @log_exception(call_exit=True)
-    def __init__(self, config_file: str, output_path: str, sysroot_build: bool):
+    def __init__(self, config_file: str, output_path: str, sysroot_build: bool) -> None:
         """ Parse the yaml config file.
 
         Args:
@@ -135,7 +135,7 @@ class RootGenerator:
         return out_image
 
     @log_exception()
-    def finalize(self):
+    def finalize(self) -> None:
         """ Finalize output and cleanup. """
 
         logging.info('Finalizing image build...')
