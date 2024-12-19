@@ -82,7 +82,7 @@ class Files:
         files: list[dict[str, Any]],
         target_dir: Optional[str] = None,
         fix_ownership: bool = False
-    ):
+    ) -> None:
         """ Copy files. """
         # TODO: test
         logging.debug('Files: %s', files)
@@ -233,7 +233,7 @@ class Files:
         self,
         scripts: list[dict[str, str]],
         cwd: str,
-    ):
+    ) -> None:
         """ Run scripts. """
         # TODO: test
         logging.debug('Target dir: %s', self.target_dir)
@@ -263,7 +263,7 @@ class Files:
         environment: Optional[EnvironmentType] = None,
         cwd: Optional[str] = None,
         check: bool = True,
-        capture_output=True
+        capture_output: bool = True
     ) -> Optional[Tuple[Optional[str], Optional[str], int]]:
         """ Run scripts. """
         if not params:

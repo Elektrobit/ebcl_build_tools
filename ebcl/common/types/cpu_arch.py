@@ -1,4 +1,6 @@
 """ CPU architecture type. """
+from __future__ import annotations
+
 from enum import Enum
 from typing import Optional
 
@@ -15,7 +17,7 @@ class CpuArch(Enum):
     ANY = 4
 
     @classmethod
-    def from_str(cls, arch: Optional[str]):
+    def from_str(cls, arch: Optional[str]) -> CpuArch | None:
         """ Get ImageType from str. """
         if not arch:
             return cls.ARM64

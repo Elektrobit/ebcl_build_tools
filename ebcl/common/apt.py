@@ -12,6 +12,7 @@ from typing import Optional, Any, Tuple
 from urllib.parse import urlparse
 
 import requests
+from typing_extensions import Self
 
 from . import get_cache_folder
 from .deb import Package
@@ -25,7 +26,7 @@ class Apt:
     """ Get packages from apt repositories. """
 
     @classmethod
-    def from_config(cls, repo_config: dict[str, Any], arch: CpuArch):
+    def from_config(cls, repo_config: dict[str, Any], arch: CpuArch) -> None | Self:
         """ Get an apt repositry for a config entry. """
         if 'apt_repo' not in repo_config:
             return None
@@ -43,7 +44,7 @@ class Apt:
         )
 
     @classmethod
-    def ebcl_apt(cls, arch: CpuArch, release: str = '1.4'):
+    def ebcl_apt(cls, arch: CpuArch, release: str = '1.4') -> Self:
         """ Get the EBcL apt repo. """
         url = os.environ.get(
             'EBCL_REPO_URL', 'http://linux.elektrobit.com/eb-corbos-linux')
@@ -62,7 +63,7 @@ class Apt:
         )
 
     @classmethod
-    def ebcl_primary_repo(cls, arch: CpuArch, release: str = '1.4'):
+    def ebcl_primary_repo(cls, arch: CpuArch, release: str = '1.4') -> Self:
         """ Get the EBcL apt repo. """
         url = os.environ.get(
             'EBCL_REPO_URL', 'http://linux.elektrobit.com/eb-corbos-linux')
@@ -145,7 +146,7 @@ class Apt:
             value.url == self.url and \
             value.arch == self.arch
 
-    def _load_index(self):
+    def _load_index(self) -> None:
         """ Download repo metadata and parse package indices. """
         package_indexes = self._download_distro()
         if not package_indexes:
@@ -171,7 +172,7 @@ class Apt:
         logging.info('Repo %s provides %s packages.',
                      self, len(self.packages))
 
-    def _parse_component(self, url: str):
+    def _parse_component(self, url: str) -> None:
         """ Parse component package index. """
         assert self.packages is not None
 
@@ -384,7 +385,7 @@ class Apt:
 
         return file_bytes
 
-    def _cache_url(self, url: str, data: Any):
+    def _cache_url(self, url: str, data: Any) -> None:
         """ Cache the data of an url. """
         cache_file_name = url[7:].replace('/', '_')
         cache_file_path = os.path.join(self.state_folder, cache_file_name)

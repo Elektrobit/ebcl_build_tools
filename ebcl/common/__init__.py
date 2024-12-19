@@ -3,6 +3,7 @@ import logging
 import os
 
 from pathlib import Path
+from typing import Callable, Literal, TypeVar, overload
 
 import ebcl
 
@@ -11,7 +12,7 @@ class ImplementationError(Exception):
     """ Raised if a assumption is not met. """
 
 
-def init_logging(level: str = 'INFO'):
+def init_logging(level: str = 'INFO') -> None:
     """ Initialize the logging for the EBcL build tools. """
     log_format = '[{asctime}] {levelname:<6s} {filename:s}:{lineno:d} - {message:s}'
     log_date_format = '%m/%d/%Y %I:%M:%S %p'
@@ -32,7 +33,7 @@ def init_logging(level: str = 'INFO'):
                  used_level, level, env_level)
 
 
-def bug(bug_url: str = 'https://github.com/Elektrobit/ebcl_build_tools/issues'):
+def bug(bug_url: str = 'https://github.com/Elektrobit/ebcl_build_tools/issues') -> None:
     """ Print bug hint. """
     text = "Seems you hit a bug!\n"
     text += f"Please provide a bug ticket at {bug_url}."
@@ -42,7 +43,7 @@ def bug(bug_url: str = 'https://github.com/Elektrobit/ebcl_build_tools/issues'):
     print(text)
 
 
-def promo():
+def promo() -> None:
     """ Print promo hint. """
     release_version = os.getenv('RELEASE_VERSION', None)
 
@@ -60,10 +61,25 @@ def promo():
         print(text)
 
 
-def log_exception(call_exit: bool = False, code: int = 1):
+RT = TypeVar('RT')
+
+
+@overload
+def log_exception(call_exit: Literal[True] = True, code: int = 1) -> Callable[[Callable[..., RT]], Callable[..., RT]]:
+    ...
+
+
+@overload
+def log_exception(
+    call_exit: Literal[False] = False, code: int = 1
+) -> Callable[[Callable[..., RT]], Callable[..., RT | None]]:
+    ...
+
+
+def log_exception(call_exit: bool = False, code: int = 1) -> Callable[[Callable[..., RT]], Callable[..., RT | None]]:
     """ Catch and log exceptions. """
-    def _log_exception(func):
-        def inner_function(*args, **kwargs):
+    def _log_exception(func: Callable[..., RT]) -> Callable[..., RT | None]:
+        def inner_function(*args, **kwargs) -> RT | None:
             result = None
 
             try:
@@ -81,7 +97,7 @@ def log_exception(call_exit: bool = False, code: int = 1):
     return _log_exception
 
 
-def get_cache_folder(folder: str):
+def get_cache_folder(folder: str) -> str:
     """ Get the shared cache folder.  """
     if os.path.isdir('/workspace/state'):
         cache = f'/workspace/state/{folder}'
