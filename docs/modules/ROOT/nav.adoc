@@ -4,6 +4,7 @@
 *** xref:root.adoc[]
 *** xref:initrd.adoc[]
 *** xref:boot.adoc[]
+*** xref:hypervisor.adoc[]
 ** xref:common.adoc[]
 ** xref:helper_tools.adoc[]
 *** xref:core.adoc[]
