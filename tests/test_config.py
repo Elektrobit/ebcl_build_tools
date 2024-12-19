@@ -6,7 +6,6 @@ import tempfile
 from ebcl.common.config import Config
 from ebcl.common.files import EnvironmentType
 
-from ebcl.common.types.build_type import BuildType
 from ebcl.common.types.cpu_arch import CpuArch
 
 
@@ -108,32 +107,3 @@ class TestConfig:
         assert config.scripts[0]['env'] == EnvironmentType.SUDO
         assert config.scripts[1]['env'] == EnvironmentType.FAKEROOT
         assert config.scripts[2]['env'] == EnvironmentType.CHROOT
-
-    def test_root_kiwi_berry_yaml(self):
-        """ Try to parse boot.yaml. """
-        yaml_file = os.path.join(
-            os.path.dirname(__file__), 'data', 'root_kiwi_berry.yaml')
-
-        config = Config(yaml_file, self.temp_dir)
-
-        assert config.name == 'ubuntu'
-
-        assert config.arch == CpuArch.AMD64
-
-        assert len(config.packages) == 3
-        assert config.packages[0].name == 'systemd'
-        assert config.packages[1].name == 'udev'
-        assert config.packages[2].name == 'util-linux'
-
-        assert len(config.scripts) == 3
-        assert config.scripts[0]['env'] == EnvironmentType.SUDO
-        assert config.scripts[1]['env'] == EnvironmentType.FAKEROOT
-        assert config.scripts[2]['env'] == EnvironmentType.CHROOT
-
-        assert config.type == BuildType.KIWI
-
-        assert config.kvm is True
-
-        assert config.result_pattern == '*.tar.xz'
-
-        assert config.use_berrymill is False

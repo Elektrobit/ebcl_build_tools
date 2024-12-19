@@ -102,7 +102,12 @@ class Fakeroot:
         (out, _) = self.run(cmd=f'stat -c \'%u %g\' {path}')
         assert out.strip() == f'{uid} {gid}'
 
-    def abs_should_have_mode(self, path: str, mode: int):
+    def abs_should_have_mode(self, path: str, mode: int, alternative_mode: Optional[str] = None):
         """ Check ownership of file or dir. """
         (out, _) = self.run(cmd=f'stat -c \'%a\' {path}')
-        assert out.strip() == f'{mode}'
+        # Mode partially depends on shell defaults
+        if alternative_mode:
+            assert out.strip() == f'{mode}' or out.strip(
+            ) == f'{alternative_mode}'
+        else:
+            assert out.strip() == f'{mode}'

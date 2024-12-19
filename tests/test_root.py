@@ -8,7 +8,6 @@ import pytest
 from ebcl.common.apt import Apt
 from ebcl.tools.root.root import RootGenerator
 
-from ebcl.common.types.build_type import BuildType
 from ebcl.common.types.cpu_arch import CpuArch
 
 
