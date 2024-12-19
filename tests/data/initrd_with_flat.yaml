@@ -1,0 +1,9 @@
+apt_repos:
+  - apt_repo: http://ports.ubuntu.com/ubuntu-ports
+    distro: jammy
+    components:
+      - main
+      - universe
+      - nxp_public
+  - apt_repo: http://example.com/
+    directory: flat_repo

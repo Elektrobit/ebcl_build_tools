@@ -22,22 +22,26 @@ def _generate_kiwi_repo_config(config: Config) -> Optional[str]:
 
     cnt = 0
     for apt in config.apt_repos:
+        repo = apt.deb_repo
+        if not repo:
+            logging.error('Kiwi can only handle noraml debian repositories, not flat repos. Skipping repo!')
+            continue
 
         if apt.key_url or apt.key_gpg:
             logging.warning(
                 'Apt repository key checks are not supported for kiwi-only build!')
 
-        for component in apt.components:
+        for component in repo.components:
             bootstrap = 'false'
             if cnt == 0:
                 bootstrap = 'true'
 
-            cmp_id = f'{cnt}_{apt.distro}_{component}'
+            cmp_id = f'{cnt}_{repo.dist}_{component}'
             repos += f'<repository alias="{cmp_id}" type="apt-deb" ' \
-                f'distribution="{apt.distro}" components="{component}" ' \
+                f'distribution="{repo.dist}" components="{component}" ' \
                 f'use_for_bootstrap="{bootstrap}" ' \
                 'repository_gpgcheck="false" >\n'
-            repos += f'    <source path = "{apt.url}" />\n'
+            repos += f'    <source path = "{repo.url}" />\n'
             repos += '</repository>\n\n'
 
             cnt += 1
@@ -136,6 +140,11 @@ def _generate_berrymill_config(
 
     cnt = 1
     for apt in config.apt_repos:
+        repo = apt.deb_repo
+        if not repo:
+            logging.error('Kiwi can only handle noraml debian repositories, not flat repos. Skipping repo!')
+            continue
+
         apt_repo_key = None
         (pub, apt_repo_key) = apt.get_key_files(result_dir)
         if pub:
@@ -145,20 +154,20 @@ def _generate_berrymill_config(
             logging.error('No key found for %s, skipping repo!', apt)
             continue
 
-        arch = str(apt.arch)
+        arch = str(repo.arch)
 
         if arch not in berrymill_conf['repos']['release']:
             berrymill_conf['repos']['release'][arch] = {}
 
-        for component in apt.components:
-            cmp_id = f'{cnt}_{apt.distro}_{component}'
+        for component in repo.components:
+            cmp_id = f'{cnt}_{repo.dist}_{component}'
             cnt += 1
 
             berrymill_conf['repos']['release'][arch][cmp_id] = {
-                'url': apt.url,
+                'url': repo.url,
                 'type': 'apt-deb',
                 'key': f'file://{apt_repo_key}',
-                'name': apt.distro,
+                'name': repo.dist,
                 'components': component
             }
 

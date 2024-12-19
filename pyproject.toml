@@ -31,7 +31,8 @@ dependencies = [
     "jsonpickle",
     "unix_ar",
     "zstandard",
-    "jinja2"
+    "jinja2",
+    "typing_extensions"
 ]
 
 [project.urls]
@@ -64,6 +65,7 @@ markers = [
     "dev_container: tests requiring tools only avaiable in the dev container, e.g. kiwi-ng.",
     "requires_download: tests requiring downloads form public resources, which is not allowed for GH actions",
 ]
+log_level = "debug"
 
 [tool.coverage.paths]
 source = [

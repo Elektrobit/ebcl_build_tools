@@ -4,11 +4,11 @@ import tempfile
 
 from pathlib import Path
 
-from ebcl.common.apt import Apt, parse_depends
+from ebcl.common.apt import Apt, AptDebRepo
 from ebcl.common.deb import Package
 from ebcl.common.fake import Fake
 from ebcl.common.proxy import Proxy
-from ebcl.common.version import Version
+from ebcl.common.version import Version, parse_depends
 
 from ebcl.common.types.cpu_arch import CpuArch
 
@@ -22,7 +22,14 @@ class TestDeb:
     @classmethod
     def setup_class(cls):
         """ Prepare apt repo object. """
-        cls.apt = Apt()
+        cls.apt = Apt(
+            AptDebRepo(
+                url='http://archive.ubuntu.com/ubuntu',
+                dist='jammy',
+                components=['main'],
+                arch=CpuArch.AMD64
+            )
+        )
         cls.proxy = Proxy()
         cls.proxy.add_apt(cls.apt)
 
@@ -59,16 +66,20 @@ class TestDeb:
         proxy = Proxy()
         proxy.add_apt(Apt.ebcl_apt(CpuArch.ARM64))
         proxy.add_apt(Apt(
-            url='http://ports.ubuntu.com/ubuntu-ports',
-            distro='jammy',
-            components=['main', 'universe'],
-            arch=CpuArch.ARM64
+            AptDebRepo(
+                url='http://ports.ubuntu.com/ubuntu-ports',
+                dist='jammy',
+                components=['main', 'universe'],
+                arch=CpuArch.ARM64
+            )
         ))
         proxy.add_apt(Apt(
-            url='http://ports.ubuntu.com/ubuntu-ports',
-            distro='jammy-security',
-            components=['main', 'universe'],
-            arch=CpuArch.ARM64
+            AptDebRepo(
+                url='http://ports.ubuntu.com/ubuntu-ports',
+                dist='jammy-security',
+                components=['main', 'universe'],
+                arch=CpuArch.ARM64
+            )
         ))
 
         packages = parse_depends('busybox', CpuArch.ARM64)

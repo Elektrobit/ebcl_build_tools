@@ -10,7 +10,7 @@ import unix_ar
 
 from .fake import Fake
 from .files import Files
-from .version import Version, VersionDepends, VersionRelation
+from .version import PackageRelation, Version, VersionDepends, VersionRelation
 
 from .types.cpu_arch import CpuArch
 
@@ -62,6 +62,22 @@ class Package:
         self.recommends: list[list[VersionDepends]] = []
         self.suggests: list[list[VersionDepends]] = []
         self.enhances: list[list[VersionDepends]] = []
+
+    def set_relation(self, relation: PackageRelation, value: list[list[VersionDepends]]) -> None:
+        if relation == PackageRelation.PRE_DEPENS:
+            self.pre_depends = value
+        elif relation == PackageRelation.DEPENDS:
+            self.depends = value
+        elif relation == PackageRelation.BREAKS:
+            self.breaks = value
+        elif relation == PackageRelation.CONFLICTS:
+            self.conflicts = value
+        elif relation == PackageRelation.RECOMMENDS:
+            self.recommends = value
+        elif relation == PackageRelation.SUGGESTS:
+            self.suggests = value
+        elif relation == PackageRelation.ENHANCES:
+            self.enhances = value
 
     def get_depends(self) -> list[list[VersionDepends]]:
         """ Get dependencies. """

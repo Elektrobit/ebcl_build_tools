@@ -6,7 +6,7 @@ import hashlib
 from typing import Optional
 
 from ebcl.common import get_cache_folder
-from ebcl.common.apt import Apt
+from ebcl.common.apt import Apt, AptDebRepo
 from ebcl.common.config import Config
 
 
@@ -30,8 +30,7 @@ class DebootstrapRootGenerator:
         """ Generate a hash for the apt configuration """
         apt_config = f'{debootstrap_hash} '
         for apt in self.config.apt_repos:
-            components = ' '.join(apt.components)
-            apt_config += f'{apt.url} {apt.distro} {components} '
+            apt_config += f'{apt.id} '
 
         return hashlib.md5(apt_config.encode('utf-8')).digest().hex()
 
@@ -75,8 +74,7 @@ class DebootstrapRootGenerator:
         with open(apt_sources, mode='w', encoding='utf-8') as f:
             for apt in self.config.apt_repos:
                 logging.info('Adding apt repo %s...', str(apt))
-                components = ' '.join(apt.components)
-                f.write(f'deb {apt.url} {apt.distro} {components}\n\n')
+                f.write(f'{apt.repo.sources_entry}\n\n')
 
                 (key_pub_file, key_gpg_file) = apt.get_key_files()
                 if key_pub_file:
@@ -146,25 +144,26 @@ class DebootstrapRootGenerator:
             check=False
         )
 
-    def _find_deboostrap_repo(self) -> Optional[Apt]:
+    def _find_deboostrap_repo(self) -> tuple[Apt, AptDebRepo] | tuple[None, None]:
         """ Find apt repository for debootstrap. """
         for apt in self.config.apt_repos:
-            if apt.distro == self.config.primary_distro:
-                if 'main' in apt.components:
-                    return apt
-        return None
+            repo: AptDebRepo | None = apt.deb_repo
+            if repo and repo.dist == self.config.primary_distro:
+                if 'main' in repo.components:
+                    return (apt, repo)
+        return (None, None)
 
     def _run_debootstrap(self) -> bool:
         """ Run debootstrap and store result in cache. """
         fake = self.config.fake
 
-        repo = self._find_deboostrap_repo()
-        if repo is None:
+        apt, repo = self._find_deboostrap_repo()
+        if apt is None or repo is None:
             logging.critical('No apt repo for deboostrap found!')
             return False
 
         keyring = ''
-        (pub, gpg) = repo.get_key_files()
+        (pub, gpg) = apt.get_key_files()
         if pub:
             os.remove(pub)
 
@@ -177,7 +176,7 @@ class DebootstrapRootGenerator:
 
         fake.run_sudo(
             f'debootstrap --arch={self.config.arch} {keyring} {user_flags} --variant={self.debootstrap_variant} '
-            f'{repo.distro} {self.config.target_dir} '
+            f'{repo.dist} {self.config.target_dir} '
             f'{repo.url}',
             cwd=self.config.target_dir,
             check=True
