@@ -5,15 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on https://keepachangelog.com/en/1.1.0/[Keep a Changelog]
 and this project adheres to https://semver.org/[Semantic Versioning].
 
-== [Unreleased] - yyyy-mm-dd
+== [unreleased] - yyyy-mm-dd
+
+=== Added
+
+=== Changed
+
+=== Fixed
+
+
+== [2.0.0] - 2024-12-19
 
 This is the first release of my fork, and will cleanup legacy parts of the
-build tools I don't want to support.
+build tools I don't want to support. In addition, I finally added the support
+for flat repositories.
 
 === Added
 
 - _Antora_ documentation for build tools.
 - _build_tools_core_ for host dependency setup.
+- Support for OBS flat apt repositories.
 
 === Changed
 
