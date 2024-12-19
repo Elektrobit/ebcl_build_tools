@@ -43,8 +43,10 @@ arch (default: arm64):: The CPU architecture of the target hardware.
 use_fakeroot (default: False):: Use fakeroot in the generator tools where possible,
   instead of sudo and chroot. This may cause issues for edge-cases.
 apt_repos (default: None):: A list of apt repositories to download the required Debian packages.
-  In addition, an armored public key file or URL can be given as “key”, and a unarmored gpg file
-  can be given as “gpg”, to authenticate the package sources. Example:
+  In addition, an armored public key file or URL can be given as _key_, and a unarmored gpg file
+  can be given as _gpg_, to authenticate the package sources. If no key is given, the repositories
+  are trusted without verifying the signature. If not distro is given, a flat repository is
+  assumed, which allows using OBS generated repositories. Example:
 
 [source,yaml]
 ----
@@ -112,6 +114,9 @@ sysroot_packages (default: None):: List of additional packages which shall be in
 sysroot_defaults (default: True):: Flag if the default additional packages for sysroot builds
   shall be added. If yes, in addition to the specified packages the packages “build-essential”
   and “g++” will be added.
+debootstrap_flags (default: None):: Additional flags forwarded to debootstrap. This may be used
+  to add _ca-certificates_ required by some apt repositories by setting the flags to
+  `--include=ca-certificates`.
 
 == Environment variables
 

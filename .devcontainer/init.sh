@@ -2,6 +2,7 @@
 
 # Link the venv, so that the WolfiesHorizon.python-auto-venv
 # VS Code plugin will use it by default.
+rm -f .venv
 ln -sf /build/venv .venv
 
 UID=$(id -u)
@@ -21,4 +22,11 @@ source /build/venv/bin/activate && pip install -r dev-requirements.txt
 
 # Link the build folder to the workspace, so that the tools
 # can be inspected using the VS Code file browser.
+rm -f build
 ln -sf /build build
+
+# Link the cache folder to the workspace
+mkdir -p ~/.ebcl_build_cache
+rm -f state
+ln -sf ~/.ebcl_build_cache state
+

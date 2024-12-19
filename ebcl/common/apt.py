@@ -35,7 +35,7 @@ class Apt:
 
         return cls(
             url=repo_config['apt_repo'],
-            distro=repo_config['distro'],
+            distro=repo_config.get('distro', None),
             components=repo_config.get('components', None),
             key_url=repo_config.get('key', None),
             key_gpg=repo_config.get('gpg', None),
@@ -82,8 +82,8 @@ class Apt:
 
     def __init__(
         self,
-        url: str = "http://archive.ubuntu.com/ubuntu",
-        distro: str = "jammy",
+        url: Optional[str] = None,
+        distro: Optional[str] = None,
         components: Optional[list[str]] = None,
         key_url: Optional[str] = None,
         key_gpg: Optional[str] = None,
@@ -91,13 +91,18 @@ class Apt:
         arch: CpuArch = CpuArch.AMD64,
         state_folder: Optional[str] = None
     ) -> None:
+        if url is None:
+            url = "http://archive.ubuntu.com/ubuntu"
+            if distro is None:
+                distro = 'jammy'
+
         if components is None:
             components = ['main']
 
         self.index_loaded: bool = False
 
         self.url: str = url
-        self.distro: str = distro
+        self.distro: Optional[str] = distro
         self.components: list[str] = components
         self.arch: CpuArch = arch
         self.packages: Optional[dict[str, list[Package]]] = None
@@ -110,7 +115,8 @@ class Apt:
         else:
             self.state_folder = get_cache_folder('apt')
 
-        if not key_gpg and 'ubuntu.com/ubuntu' in url:
+        if not key_gpg and 'ubuntu.com/ubuntu' in url \
+                and os.path.isfile('/etc/apt/trusted.gpg.d/ubuntu-keyring-2018-archive.gpg'):
             self.key_gpg = '/etc/apt/trusted.gpg.d/ubuntu-keyring-2018-archive.gpg'
             logging.info('Using default Ubuntu key %s for %s.',
                          self.key_gpg, self.url)
@@ -175,7 +181,11 @@ class Apt:
         """ Parse component package index. """
         assert self.packages is not None
 
-        packages = f'{self.url}/dists/{self.distro}/{url}'
+        if self.distro:
+            packages = f'{self.url}/dists/{self.distro}/{url}'
+        else:
+            # Flat repo
+            packages = f'{self.url}/{url}'
 
         data = self._download_url(packages)
         if not data:
@@ -267,7 +277,11 @@ class Apt:
 
     def _download_distro(self) -> Optional[dict[str, str]]:
         """ Download and parse distro release file. """
-        inrelease = f'{self.url}/dists/{self.distro}/InRelease'
+        if self.distro:
+            inrelease = f'{self.url}/dists/{self.distro}/InRelease'
+        else:
+            # Flat repo
+            inrelease = f'{self.url}/InRelease'
 
         data = self._download_url(inrelease)
         if not data:
@@ -278,13 +292,22 @@ class Apt:
         package_indexes: dict[str, str] = {}
 
         for line in content.split('\n'):
-            for component in self.components:
-                search = f'{component}/binary-{self.arch}/Packages.xz'
-                search2 = f'{component}/binary-{self.arch}/Packages.gz'
+            if self.distro is None:
+                logging.info('No distro given, not using components.')
+                search = 'Packages.xz'
+                search2 = 'Packages.gz'
                 if search in line or search2 in line:
                     line = line.strip()
                     parts = line.split(' ')
-                    package_indexes[component] = parts[-1]
+                    package_indexes['main'] = parts[-1]
+            else:
+                for component in self.components:
+                    search = f'{component}/binary-{self.arch}/Packages.xz'
+                    search2 = f'{component}/binary-{self.arch}/Packages.gz'
+                    if search in line or search2 in line:
+                        line = line.strip()
+                        parts = line.split(' ')
+                        package_indexes[component] = parts[-1]
 
         logging.debug('Package indexes: %s', package_indexes)
 

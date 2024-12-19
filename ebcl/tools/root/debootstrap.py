@@ -83,6 +83,11 @@ class DebootstrapRootGenerator:
                     # the armored key is not needed
                     os.remove(key_pub_file)
 
+                distro = apt.distro
+                if distro is not None:
+                    # Flat repo
+                    distro = './'
+
                 if key_gpg_file:
                     fake.run_sudo(
                         f'cp {key_gpg_file} {apt_key_dir}',
@@ -90,12 +95,12 @@ class DebootstrapRootGenerator:
                         check=True
                     )
                     f.write(
-                        f'deb [arch={apt.arch}] {apt.url} {apt.distro} {components}\n\n')
+                        f'deb [arch={apt.arch}] {apt.url} {distro} {components}\n\n')
                 else:
                     logging.warning(
                         'No key for repository %s, will blindly trust the repo!', str(apt))
                     f.write(
-                        f'deb [trusted=yes arch={apt.arch}] {apt.url} {apt.distro} {components}\n\n')
+                        f'deb [trusted=yes arch={apt.arch}] {apt.url} {distro} {components}\n\n')
 
         fake.run_sudo(
             f'cp {apt_sources} {apt_sources_target}',

@@ -45,6 +45,7 @@
         "newc",
         "noninteractive",
         "NOPASSWD",
+        "outpath",
         "pylance",
         "pylint",
         "pytest",

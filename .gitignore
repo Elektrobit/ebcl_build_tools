@@ -1,8 +1,9 @@
 
 /tmp
 
-.venv
+/.venv
 /build
+/state
 
 log.html
 output.xml
