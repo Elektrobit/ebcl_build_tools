@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Optional
 
 import unix_ar  # type: ignore
+from typing_extensions import Self
 
 from .fake import Fake
 from .files import Files
@@ -19,7 +20,7 @@ class Package:
     """ APT package information. """
 
     @classmethod
-    def from_deb(cls, deb: str, depends: list[list[VersionDepends]]):
+    def from_deb(cls, deb: str, depends: list[list[VersionDepends]]) -> None | Self:
         """ Create a package form a deb file. """
         if not deb.endswith('.deb'):
             return None
@@ -33,6 +34,9 @@ class Package:
         name = parts[0].strip()
         version = parts[1].strip()
         arch = CpuArch.from_str(parts[2].strip())
+        if not arch:
+            logging.error('Unknown arch in %s, Skipping!', filename)
+            return None
 
         p = cls(name, arch, 'local_deb')
 
@@ -44,7 +48,7 @@ class Package:
 
         return p
 
-    def __init__(self, name: str, arch: CpuArch, repo: str):
+    def __init__(self, name: str, arch: CpuArch, repo: str) -> None:
         self.name: str = name
         self.arch: CpuArch = arch
         self.repo: str = repo

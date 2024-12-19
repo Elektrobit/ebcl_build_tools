@@ -25,9 +25,7 @@ def vds_to_packages(
     return packages
 
 
-def _contains_package(
-        packages: list[Package], vd: VersionDepends
-) -> bool:
+def _contains_package(packages: list[Package], vd: VersionDepends) -> bool:
     """ Tests if the given package is contained. """
     return True
 
@@ -45,7 +43,7 @@ def check_package_set(package_set: list[Package]) -> bool:
 class WordGenerator:
     """ Generates all words for the given letters. """
 
-    def __init__(self, letters: list[list[Any]]):
+    def __init__(self, letters: list[list[Any]]) -> None:
         """ Set letters to use. """
         self.letters: list[list[Any]] = letters
         self.word_len: int = len(letters)

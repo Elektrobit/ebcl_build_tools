@@ -1,4 +1,6 @@
 """ Debian version helpers. """
+from __future__ import annotations
+
 import logging
 import re
 
@@ -12,7 +14,7 @@ from .types.cpu_arch import CpuArch
 class Version:
     """ Debian package version. """
 
-    def __init__(self, package_version: str):
+    def __init__(self, package_version: str) -> None:
         # Epoch of package - small unsigned int
         self.epoch: int
         # Upstream package version - X.Y.Z
@@ -173,7 +175,7 @@ class VersionRelation(Enum):
     STRICT_LARGER = 5
 
     @classmethod
-    def from_str(cls, relation: str):
+    def from_str(cls, relation: str) -> VersionRelation | None:
         """ Get ImageType from str. """
         if relation == '<<':
             return cls.STRICT_SMALLER
@@ -317,7 +319,11 @@ def parse_depends(
         if ':' in name:
             np = name.split(':')
             name = np[0]
-            arch = CpuArch.from_str(np[1])
+            parsed_arch = CpuArch.from_str(np[1])
+            if not parsed_arch:
+                logging.error('Unknown architecture %s in dependency %s', np[1], name)
+            else:
+                arch = parsed_arch
 
         version = None
         version_relation = None

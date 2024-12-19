@@ -1,4 +1,6 @@
 """ Build type for the root filesystem build. """
+from __future__ import annotations
+
 from enum import Enum
 from typing import Optional
 
@@ -9,7 +11,7 @@ class BuildType(Enum):
     DEBOOTSTRAP = 3
 
     @classmethod
-    def from_str(cls, build_type: Optional[str]):
+    def from_str(cls, build_type: Optional[str]) -> BuildType | None:
         """ Get ImageType from str. """
         if not build_type:
             return cls.DEBOOTSTRAP

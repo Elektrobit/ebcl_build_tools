@@ -18,7 +18,7 @@ class DebootstrapRootGenerator:
         config: Config,
         result_dir: str,
         debootstrap_variant: str = 'minbase'
-    ):
+    ) -> None:
         """ Create new DebootstrapRootGenerator. """
         self.config = config
         self.result_dir = result_dir
@@ -50,7 +50,7 @@ class DebootstrapRootGenerator:
 
         return hashlib.md5(packages.encode('utf-8')).digest().hex()
 
-    def _generate_apt_config(self):
+    def _generate_apt_config(self) -> None:
         """ Generate a apt sources.list. """
         apt_conf = os.path.join(self.config.target_dir, 'etc', 'apt')
         apt_key_dir = os.path.join(apt_conf, 'trusted.gpg.d', )
@@ -92,7 +92,7 @@ class DebootstrapRootGenerator:
             check=True
         )
 
-    def _mount_special_folders(self):
+    def _mount_special_folders(self) -> None:
         """ Mount special file systems to chroot folder. """
         fake = self.config.fake
 
@@ -118,7 +118,7 @@ class DebootstrapRootGenerator:
             check=True
         )
 
-    def _unmount_special_folders(self):
+    def _unmount_special_folders(self) -> None:
         """ Unmount special file systems from chroot folder. """
         fake = self.config.fake
 
