@@ -26,12 +26,13 @@ classifiers = [
 ]
 requires-python = ">=3.10"
 dependencies = [
-    "requests",
-    "pyyaml",
+    "jinja2",
     "jsonpickle",
+    "pyyaml",
+    "requests",
+    "typing_extensions",
     "unix_ar",
-    "zstandard",
-    "jinja2"
+    "zstandard"
 ]
 
 [project.urls]

@@ -25,7 +25,7 @@ class AddOp(Enum):
 class Cache:
     """" EBcL deb package cache. """
 
-    def __init__(self, folder: Optional[str] = None):
+    def __init__(self, folder: Optional[str] = None) -> None:
         """ Setup the cache store. """
         if folder:
             self.folder = folder
@@ -55,7 +55,7 @@ class Cache:
 
         return p in self.index
 
-    def save(self):
+    def save(self) -> None:
         """ Save the cached packages as json. """
         with open(self.index_file, 'w', encoding='utf8') as f:
             data = jsonpickle.encode(self.index)

@@ -1,4 +1,6 @@
 """ Enum for supported environment types. """
+from __future__ import annotations
+
 from enum import Enum
 from typing import Optional
 
@@ -11,7 +13,7 @@ class EnvironmentType(Enum):
     SHELL = 5
 
     @classmethod
-    def from_str(cls, script_type: Optional[str]):
+    def from_str(cls, script_type: Optional[str]) -> EnvironmentType | None:
         """ Get ImageType from str. """
         if not script_type:
             return cls.FAKEROOT
