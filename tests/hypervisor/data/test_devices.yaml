@@ -1,0 +1,22 @@
+vbus:
+  - name: empty_vbus
+  - name: a_vbus
+    devices:
+      - name: emtpy_device
+      - name: a_device
+        compatible: i am compatible
+        mmios:
+         - address: 0x123
+           size: 456
+         - address: 0x456
+           size: 789
+           cached: true
+        irqs:
+          - irq: 1
+            trigger: level_high
+          - irq: 2
+            type: PPI
+            trigger: rising_edge
+          - irq: 3
+            type: SGI
+            trigger: level_high

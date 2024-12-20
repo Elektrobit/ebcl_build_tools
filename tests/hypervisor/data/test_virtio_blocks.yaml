@@ -1,0 +1,29 @@
+vms:
+  - name: vm_1
+    kernel: kernel
+    dtb: dtb
+    ram: 1
+    cpus: 1
+    virtio_block:
+      servers:
+       - blk_1
+       - blk_2
+  - name: vm_2
+    kernel: kernel
+    dtb: dtb
+    ram: 1
+    cpus: 1
+    virtio_block:
+      servers:
+        - blk_3
+      clients:
+        - blk_1
+        - blk_2
+  - name: vm_3
+    kernel: kernel
+    dtb: dtb
+    ram: 1
+    cpus: 1
+    virtio_block:
+      clients:
+       - blk_3
