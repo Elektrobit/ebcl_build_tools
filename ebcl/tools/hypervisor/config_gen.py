@@ -35,7 +35,10 @@ class BaseResolver:
 
     def _load_file(self, filename: str) -> dict:
         with open(filename, "r", encoding="utf-8") as f:
-            return yaml.load(f, yaml.Loader)
+            data = yaml.load(f, yaml.Loader)
+            if not data:
+                data = {}
+            return data
 
 
 class HvFileGenerator:
