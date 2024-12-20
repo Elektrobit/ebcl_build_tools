@@ -84,6 +84,8 @@ classes:
     devices:
       type: Device
       aggregate: list
+      optional: true
+      default: []
 
   Device:
     name:
