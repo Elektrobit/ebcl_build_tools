@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 from typing import Literal
 
 from .model_gen import BaseModel, ConfigError
@@ -248,7 +247,12 @@ class VM(BaseModel):
             self.vbus = registry.get_vbus(vbus_name)
             if not self.vbus:
                 raise ConfigError(f"VM {self.name}: VBus {vbus_name} is not defined")
-        self.shms = registry.get_shms(self.shms)  # type: ignore
+        self.shms, missing_shms = registry.get_shms(self.shms)  # type: ignore
+        if missing_shms:
+            value = ', '.join(sorted(missing_shms))
+            raise ConfigError(
+                f"VM {self.name}: The following shared memory segments are not defined: {value}"
+            )
         self.vnets = list(
             map(lambda x: registry.register_vnet(x, self), self.vnets)  # type: ignore
         )
@@ -333,15 +337,12 @@ class HVConfig(BaseModel):
                 return vbus
         return None
 
-    def get_shms(self, names: list[str]) -> list[SHM]:
+    def get_shms(self, names: list[str]) -> tuple[list[SHM], set[str]]:
         """
         Returns all registered shared memories matched by names
         """
         out = list(filter(lambda x: x.name in names, self.shms))
-        if len(out) != len(names):
-            missing = set(names) - set([out.name for out in out])
-            logging.error("Not all used shms are defined: %s", ", ".join(missing))
-        return out
+        return out, set(names) - set([out.name for out in out])
 
     def register_module(self, name: str) -> None:
         """
