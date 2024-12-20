@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Literal
 
 from .model_gen import BaseModel
 
@@ -119,9 +120,9 @@ class IRQ(BaseModel):
     """The interrupt number"""
     is_edge: bool
     """If true, the interrupt is rising edge triggered, otherwise it is level high triggered."""
-    type: str
+    type: Literal["SGI"] | Literal["PPI"] | Literal["SPI"]
     """SGI, PPI or SPI"""
-    trigger: str
+    trigger: Literal["rising_edge"] | Literal["level_high"]
     """Trigger type enum"""
 
     def __init__(self, config: dict) -> None:
@@ -134,9 +135,8 @@ class IRQ(BaseModel):
             return 0
         elif self.type == "PPI":
             return 16
-        elif self.type == "SPI":
+        else:  # "SPI"
             return 32
-        return 0
 
 
 class Device(BaseModel):
