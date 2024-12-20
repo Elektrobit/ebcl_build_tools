@@ -1,0 +1,17 @@
+vms:
+  - name: vm_1
+    kernel: kernel
+    dtb: dtb
+    ram: 1
+    cpus: 1
+    virtio_block:
+      clients:
+       - blk_1
+  - name: vm_2
+    kernel: kernel
+    dtb: dtb
+    ram: 1
+    cpus: 1
+    virtio_block:
+      clients:
+        - blk_1
