@@ -1,0 +1,17 @@
+shms:
+  - name: shm_1
+    size: 1
+  - name: shm_2
+    size: 2
+
+vms:
+  - name: vm_1
+    kernel: kernel_1
+    dtb: dtb_1
+    ram: 10
+    cpus: 1
+    shms:
+      - shm_1
+      - shm_3
+      - shm_2
+      - shm_4
