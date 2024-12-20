@@ -40,10 +40,6 @@ classes:
     vbus:
       type: string
       optional: true
-    vmnets:
-      type: string
-      aggregate: list
-      default: []
     shms:
       type: string
       aggregate: list
