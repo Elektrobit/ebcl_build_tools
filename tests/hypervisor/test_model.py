@@ -244,3 +244,11 @@ def test_undefined_vbus(tmp_path: Path) -> None:
         match="^" + re.escape("VM vm_1: VBus non_existing is not defined") + "$"
     ):
         HvFileGenerator(str(test_data / "test_undefined_vbus.yaml"), str(tmp_path))
+
+
+def test_missing_shms(tmp_path: Path) -> None:
+    with pytest.raises(
+        ConfigError,
+        match="^" + re.escape("VM vm_1: The following shared memory segments are not defined: shm_3, shm_4") + "$"
+    ):
+        HvFileGenerator(str(test_data / "test_missing_shms.yaml"), str(tmp_path))
