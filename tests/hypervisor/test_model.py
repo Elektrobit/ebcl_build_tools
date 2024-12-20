@@ -212,3 +212,11 @@ def test_virtio_blocks(tmp_path: Path) -> None:
     assert len(vios) == 1
     assert vios[0].vio == gen.config.vio_block[2]
     assert vios[0].is_server is False
+
+
+def test_vnet_too_many_users(tmp_path: Path) -> None:
+    with pytest.raises(
+        ConfigError,
+        match="^" + re.escape("VM vm_3: VNet vnet_1 is already used by two vms (vm_1 and vm_2)") + "$"
+    ):
+        HvFileGenerator(str(test_data / "test_vnet_too_many_users.yaml"), str(tmp_path))
