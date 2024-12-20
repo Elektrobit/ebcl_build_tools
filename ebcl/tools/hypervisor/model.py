@@ -231,10 +231,10 @@ class VM(BaseModel):
     vbus: str | VBus | None
     """The virtual bus to connect to this vm"""
     vnets: list[str] | list[VNetRef]
-    """List of virual network pairs used by this vm"""
+    """List of virtual network pairs used by this vm"""
     shms: list[str] | list[SHM]
     """List of shared memory regions available to this vm"""
-    virtio_block = list[VirtioBlockNode] | list[VirtioBlockRef]
+    virtio_block: list[VirtioBlockNode] | list[VirtioBlockRef]
 
     def finalize(self, registry: HVConfig) -> None:
         registry.register_module(self.kernel)
@@ -256,7 +256,7 @@ class VM(BaseModel):
             clients = map(
                 lambda x: registry.register_virtio_block(x, self, False), self.virtio_block.clients  # type: ignore
             )
-            self.virtio_block: list[VirtioBlockRef] = list(server) + list(clients)  # type: ignore
+            self.virtio_block = list(server) + list(clients)  # type: ignore
         else:
             self.virtio_block = []
 
