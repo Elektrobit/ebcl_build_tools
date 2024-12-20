@@ -220,3 +220,19 @@ def test_vnet_too_many_users(tmp_path: Path) -> None:
         match="^" + re.escape("VM vm_3: VNet vnet_1 is already used by two vms (vm_1 and vm_2)") + "$"
     ):
         HvFileGenerator(str(test_data / "test_vnet_too_many_users.yaml"), str(tmp_path))
+
+
+def test_virtio_block_multiple_servers(tmp_path: Path) -> None:
+    with pytest.raises(
+        ConfigError,
+        match="^" + re.escape("VM vm_2: Server for Virtio Block blk_1 already set to vm_1") + "$"
+    ):
+        HvFileGenerator(str(test_data / "test_virtio_block_multiple_servers.yaml"), str(tmp_path))
+
+
+def test_virtio_block_multiple_clients(tmp_path: Path) -> None:
+    with pytest.raises(
+        ConfigError,
+        match="^" + re.escape("VM vm_2: Client for Virtio Block blk_1 already set to vm_1") + "$"
+    ):
+        HvFileGenerator(str(test_data / "test_virtio_block_multiple_clients.yaml"), str(tmp_path))

@@ -313,14 +313,12 @@ class HVConfig(BaseModel):
             self.vio_block.append(vio)
         if is_server:
             if vio.server:
-                logging.error("Server for Virtio Block %s already set", vio.name)
-            else:
-                vio.server = user
+                raise ConfigError(f"VM {user.name}: Server for Virtio Block {name} already set to {vio.server.name}")
+            vio.server = user
         else:
             if vio.client:
-                logging.error("Client for Virtio Block %s already set", vio.name)
-            else:
-                vio.client = user
+                raise ConfigError(f"VM {user.name}: Client for Virtio Block {name} already set to {vio.client.name}")
+            vio.client = user
         return VirtioBlockRef(vio, is_server)
 
     def get_vbus(self, name: str | None) -> VBus | None:
