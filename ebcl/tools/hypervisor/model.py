@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import Literal
 
-from .model_gen import BaseModel
+from .model_gen import BaseModel, ConfigError
 
 
 class VNet:
@@ -26,7 +26,8 @@ class VNet:
         Since this is a pair, only two users are allowed
         """
         if len(self.users) == 2:
-            logging.error("VNet %s is already used by two vms", self.name)
+            names = ' and '.join(map(lambda x: x.name, self.users))
+            raise ConfigError(f"VM {vm.name}: VNet {self.name} is already used by two vms ({names})")
         self.users.append(vm)
 
     def __repr__(self) -> str:
