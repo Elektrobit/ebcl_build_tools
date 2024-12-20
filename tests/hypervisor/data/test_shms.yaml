@@ -1,0 +1,11 @@
+shms:
+  - name: shm_1
+    size: 123
+  - name: shm_2
+    size: 124
+  - name: shm_3
+    size: 0x1000
+    address: 0x2000
+  - name: shm_4
+    size: 0x1000
+    address: 0x0

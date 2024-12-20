@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-import logging
+from typing import Literal
 
-from .model_gen import BaseModel
+from .model_gen import BaseModel, ConfigError
 
 
 class VNet:
@@ -25,7 +25,8 @@ class VNet:
         Since this is a pair, only two users are allowed
         """
         if len(self.users) == 2:
-            logging.error("VMNet %s is already used by two vms", self.name)
+            names = ' and '.join(map(lambda x: x.name, self.users))
+            raise ConfigError(f"VM {vm.name}: VNet {self.name} is already used by two vms ({names})")
         self.users.append(vm)
 
     def __repr__(self) -> str:
@@ -38,7 +39,7 @@ class VNetRef:
     """
 
     vnet: VNet
-    """Link to the vmnet"""
+    """Link to the vnet"""
     site_a: bool
     """True for one of the two sides"""
 
@@ -106,11 +107,6 @@ class MMIO(BaseModel):
     cached: bool
     """If cached is true, the memory is mapped as normal memory instead of device memory"""
 
-#    def __init__(self, config: dict) -> None:
-#        self.address = config["address"]
-#        self.size = config["size"]
-#        self.cached = config["cached"]
-
     def __repr__(self) -> str:
         return f"MMIO(0x{self.address:x}, 0x{self.size:x})"
 
@@ -124,9 +120,9 @@ class IRQ(BaseModel):
     """The interrupt number"""
     is_edge: bool
     """If true, the interrupt is rising edge triggered, otherwise it is level high triggered."""
-    type: str
+    type: Literal["SGI"] | Literal["PPI"] | Literal["SPI"]
     """SGI, PPI or SPI"""
-    trigger: str
+    trigger: Literal["rising_edge"] | Literal["level_high"]
     """Trigger type enum"""
 
     def __init__(self, config: dict) -> None:
@@ -139,9 +135,8 @@ class IRQ(BaseModel):
             return 0
         elif self.type == "PPI":
             return 16
-        elif self.type == "SPI":
+        else:  # "SPI"
             return 32
-        return 0
 
 
 class Device(BaseModel):
@@ -171,13 +166,6 @@ class VBus(BaseModel):
     """Name of the virtual bus used to identify it in the configuration"""
     devices: list[Device]
     """List of devices that are part of the bus"""
-
-#    def __init__(self, name: str, config: dict) -> None:
-#        self.name = name
-#
-#        self.devices = []
-#        for devname, devconfig in config.items():
-#            self.devices.append(Device(devname, devconfig))
 
     def __repr__(self) -> str:
         return f"VBus({self.name}, {', '.join(map(repr, self.devices))})"
@@ -243,10 +231,10 @@ class VM(BaseModel):
     vbus: str | VBus | None
     """The virtual bus to connect to this vm"""
     vnets: list[str] | list[VNetRef]
-    """List of virual network pairs used by this vm"""
+    """List of virtual network pairs used by this vm"""
     shms: list[str] | list[SHM]
     """List of shared memory regions available to this vm"""
-    virtio_block = list[VirtioBlockNode] | list[VirtioBlockRef]
+    virtio_block: list[VirtioBlockNode] | list[VirtioBlockRef]
 
     def finalize(self, registry: HVConfig) -> None:
         registry.register_module(self.kernel)
@@ -254,9 +242,17 @@ class VM(BaseModel):
         if self.initrd:
             registry.register_module(self.initrd)
 
-        if not isinstance(self.vbus, VBus):
-            self.vbus = registry.get_vbus(self.vbus)
-        self.shms = registry.get_shms(self.shms)  # type: ignore
+        if isinstance(self.vbus, str):
+            vbus_name = self.vbus
+            self.vbus = registry.get_vbus(vbus_name)
+            if not self.vbus:
+                raise ConfigError(f"VM {self.name}: VBus {vbus_name} is not defined")
+        self.shms, missing_shms = registry.get_shms(self.shms)  # type: ignore
+        if missing_shms:
+            value = ', '.join(sorted(missing_shms))
+            raise ConfigError(
+                f"VM {self.name}: The following shared memory segments are not defined: {value}"
+            )
         self.vnets = list(
             map(lambda x: registry.register_vnet(x, self), self.vnets)  # type: ignore
         )
@@ -268,7 +264,7 @@ class VM(BaseModel):
             clients = map(
                 lambda x: registry.register_virtio_block(x, self, False), self.virtio_block.clients  # type: ignore
             )
-            self.virtio_block: list[VirtioBlockRef] = list(server) + list(clients)  # type: ignore
+            self.virtio_block = list(server) + list(clients)  # type: ignore
         else:
             self.virtio_block = []
 
@@ -324,37 +320,29 @@ class HVConfig(BaseModel):
             self.vio_block.append(vio)
         if is_server:
             if vio.server:
-                logging.error("Server for Virtio Block %s already set", vio.name)
-            else:
-                vio.server = user
+                raise ConfigError(f"VM {user.name}: Server for Virtio Block {name} already set to {vio.server.name}")
+            vio.server = user
         else:
             if vio.client:
-                logging.error("Client for Virtio Block %s already set", vio.name)
-            else:
-                vio.client = user
+                raise ConfigError(f"VM {user.name}: Client for Virtio Block {name} already set to {vio.client.name}")
+            vio.client = user
         return VirtioBlockRef(vio, is_server)
 
-    def get_vbus(self, name: str | None) -> VBus | None:
+    def get_vbus(self, name: str) -> VBus | None:
         """
         Returns an existing virtual bus with the given name
         """
-        if not name:
-            return None
         for vbus in self.vbus:
             if vbus.name == name:
                 return vbus
-        logging.error("Vbus %s not defined", name)
         return None
 
-    def get_shms(self, names: list[str]) -> list[SHM]:
+    def get_shms(self, names: list[str]) -> tuple[list[SHM], set[str]]:
         """
         Returns all registered shared memories matched by names
         """
         out = list(filter(lambda x: x.name in names, self.shms))
-        if len(out) != len(names):
-            missing = set(names) - set([out.name for out in out])
-            logging.error("Not all used shms are defined: %s", ", ".join(missing))
-        return out
+        return out, set(names) - set([out.name for out in out])
 
     def register_module(self, name: str) -> None:
         """

@@ -1,0 +1,8 @@
+
+vms:
+  - name: vm_1
+    kernel: kernel_1
+    dtb: dtb_1
+    ram: 10
+    cpus: 1
+    vbus: non_existing

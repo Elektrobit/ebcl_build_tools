@@ -1,0 +1,27 @@
+vbus:
+  - name: a_bus
+
+shms:
+  - name: shm_1
+    size: 1
+  - name: shm_2
+    size: 2
+
+vms:
+  - name: vm_1
+    kernel: kernel_1
+    dtb: dtb_1
+    ram: 10
+    cpus: 1
+
+  - name: vm_2
+    kernel: kernel_2
+    dtb: dtb_2
+    ram: 20
+    cpus: 2
+    cmdline: a wonderful kernel cmdline
+    initrd: this is an initrd
+    vbus: a_bus
+    shms:
+      - shm_1
+      - shm_2
