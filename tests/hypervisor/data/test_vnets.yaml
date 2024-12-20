@@ -1,0 +1,19 @@
+vms:
+  - name: vm_1
+    kernel: kernel
+    dtb: dtb
+    ram: 1
+    cpus: 1
+    vnets:
+      - vnet_1
+      - vnet_2
+      - vnet_3
+  - name: vm_2
+    kernel: kernel
+    dtb: dtb
+    ram: 1
+    cpus: 1
+    vnets:
+      - vnet_1
+      - vnet_3
+      - vnet_4
