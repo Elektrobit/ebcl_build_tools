@@ -236,3 +236,11 @@ def test_virtio_block_multiple_clients(tmp_path: Path) -> None:
         match="^" + re.escape("VM vm_2: Client for Virtio Block blk_1 already set to vm_1") + "$"
     ):
         HvFileGenerator(str(test_data / "test_virtio_block_multiple_clients.yaml"), str(tmp_path))
+
+
+def test_undefined_vbus(tmp_path: Path) -> None:
+    with pytest.raises(
+        ConfigError,
+        match="^" + re.escape("VM vm_1: VBus non_existing is not defined") + "$"
+    ):
+        HvFileGenerator(str(test_data / "test_undefined_vbus.yaml"), str(tmp_path))

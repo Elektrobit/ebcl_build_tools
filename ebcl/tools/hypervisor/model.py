@@ -243,8 +243,11 @@ class VM(BaseModel):
         if self.initrd:
             registry.register_module(self.initrd)
 
-        if not isinstance(self.vbus, VBus):
-            self.vbus = registry.get_vbus(self.vbus)
+        if isinstance(self.vbus, str):
+            vbus_name = self.vbus
+            self.vbus = registry.get_vbus(vbus_name)
+            if not self.vbus:
+                raise ConfigError(f"VM {self.name}: VBus {vbus_name} is not defined")
         self.shms = registry.get_shms(self.shms)  # type: ignore
         self.vnets = list(
             map(lambda x: registry.register_vnet(x, self), self.vnets)  # type: ignore
@@ -321,16 +324,13 @@ class HVConfig(BaseModel):
             vio.client = user
         return VirtioBlockRef(vio, is_server)
 
-    def get_vbus(self, name: str | None) -> VBus | None:
+    def get_vbus(self, name: str) -> VBus | None:
         """
         Returns an existing virtual bus with the given name
         """
-        if not name:
-            return None
         for vbus in self.vbus:
             if vbus.name == name:
                 return vbus
-        logging.error("Vbus %s not defined", name)
         return None
 
     def get_shms(self, names: list[str]) -> list[SHM]:
