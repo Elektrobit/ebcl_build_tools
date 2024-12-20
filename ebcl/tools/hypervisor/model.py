@@ -25,7 +25,7 @@ class VNet:
         Since this is a pair, only two users are allowed
         """
         if len(self.users) == 2:
-            logging.error("VMNet %s is already used by two vms", self.name)
+            logging.error("VNet %s is already used by two vms", self.name)
         self.users.append(vm)
 
     def __repr__(self) -> str:
@@ -38,7 +38,7 @@ class VNetRef:
     """
 
     vnet: VNet
-    """Link to the vmnet"""
+    """Link to the vnet"""
     site_a: bool
     """True for one of the two sides"""
 
