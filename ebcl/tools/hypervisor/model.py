@@ -106,11 +106,6 @@ class MMIO(BaseModel):
     cached: bool
     """If cached is true, the memory is mapped as normal memory instead of device memory"""
 
-#    def __init__(self, config: dict) -> None:
-#        self.address = config["address"]
-#        self.size = config["size"]
-#        self.cached = config["cached"]
-
     def __repr__(self) -> str:
         return f"MMIO(0x{self.address:x}, 0x{self.size:x})"
 
@@ -171,13 +166,6 @@ class VBus(BaseModel):
     """Name of the virtual bus used to identify it in the configuration"""
     devices: list[Device]
     """List of devices that are part of the bus"""
-
-#    def __init__(self, name: str, config: dict) -> None:
-#        self.name = name
-#
-#        self.devices = []
-#        for devname, devconfig in config.items():
-#            self.devices.append(Device(devname, devconfig))
 
     def __repr__(self) -> str:
         return f"VBus({self.name}, {', '.join(map(repr, self.devices))})"
