@@ -99,10 +99,12 @@ classes:
       type: MMIO
       aggregate: list
       optional: true
+      default: []
     irqs:
       type: IRQ
       aggregate: list
       optional: true
+      default: []
   MMIO:
     address:
       type: integer
