@@ -53,6 +53,14 @@ class AptCache:
             ts = float(ts_str)
             age = time.time() - ts
 
+        if not key_gpg and 'local' in distro:
+            local_gpg = '/etc/apt/trusted.gpg.d/local.gpg'
+            if os.path.exists(local_gpg):
+                self.key_gpg = local_gpg
+                logging.info('Using generated gpg: %s', local_gpg)
+
+        if not os.path.exists(self.state_folder):
+            os.makedirs(self.state_folder, exist_ok=True)
             if age > 24 * 60 * 60:
                 # older than one day
                 logging.debug('Removing outdated cache file %s', cache_file)
