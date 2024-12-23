@@ -26,12 +26,13 @@ classifiers = [
 ]
 requires-python = ">=3.10"
 dependencies = [
-    "requests",
-    "pyyaml",
+    "jinja2",
     "jsonpickle",
+    "pyyaml",
+    "requests",
+    "typing_extensions",
     "unix_ar",
-    "zstandard",
-    "jinja2"
+    "zstandard"
 ]
 
 [project.urls]
@@ -64,6 +65,7 @@ markers = [
     "dev_container: tests requiring tools only avaiable in the dev container, e.g. kiwi-ng.",
     "requires_download: tests requiring downloads form public resources, which is not allowed for GH actions",
 ]
+log_level = "debug"
 
 [tool.coverage.paths]
 source = [
@@ -88,7 +90,7 @@ show_contexts = true
 
 
 [tool.mypy]
-mypy_path = "$MYPY_CONFIG_FILE_DIR/ebcl"
+mypy_path = "$MYPY_CONFIG_FILE_DIR"
 explicit_package_bases = true
 
 [tool.flake8]

@@ -16,7 +16,7 @@ class RootConfig:
     """ EBcL root filesystem config helper. """
 
     @log_exception(call_exit=True)
-    def __init__(self, config_file: str, output_path: str):
+    def __init__(self, config_file: str, output_path: str) -> None:
         """ Parse the yaml config file.
 
         Args:

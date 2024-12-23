@@ -2,9 +2,10 @@
 import os
 import tempfile
 
-from ebcl.common.apt import Apt
+from ebcl.common.apt import Apt, AptDebRepo
 from ebcl.common.fake import Fake
 from ebcl.common.proxy import Proxy
+from ebcl.common.types.cpu_arch import CpuArch
 
 
 class TestFake:
@@ -18,7 +19,14 @@ class TestFake:
     def setup_class(cls):
         """ Prepare apt repo object. """
         cls.fake = Fake()
-        cls.apt = Apt()
+        cls.apt = Apt(
+            AptDebRepo(
+                url='http://archive.ubuntu.com/ubuntu',
+                dist='jammy',
+                components=['main'],
+                arch=CpuArch.AMD64
+            )
+        )
         cls.proxy = Proxy()
         cls.proxy.add_apt(cls.apt)
 

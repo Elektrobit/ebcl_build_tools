@@ -1,11 +1,15 @@
 """ Tests for the apt functions. """
 import os
 
-from ebcl.common.apt import Apt, parse_depends
+from pathlib import Path
+from ebcl.common.apt import Apt, AptDebRepo, AptFlatRepo
 from ebcl.common.proxy import Proxy
-from ebcl.common.version import Version, VersionRelation
+from ebcl.common.version import Version, VersionRelation, parse_depends
 
 from ebcl.common.types.cpu_arch import CpuArch
+
+
+test_data = Path(__file__).parent / "data"
 
 
 class TestApt:
@@ -17,7 +21,14 @@ class TestApt:
     @classmethod
     def setup_class(cls):
         """ Prepare apt repo object. """
-        cls.apt = Apt()
+        cls.apt = Apt(
+            AptDebRepo(
+                url='http://archive.ubuntu.com/ubuntu',
+                dist='jammy',
+                components=['main'],
+                arch=CpuArch.AMD64
+            )
+        )
         cls.proxy = Proxy()
         cls.proxy.add_apt(cls.apt)
 
@@ -42,16 +53,55 @@ class TestApt:
     def test_ebcl_apt(self):
         """ Test that EBcL apt repo works and provides busybox-static. """
         apt = Apt(
-            url='https://linux.elektrobit.com/eb-corbos-linux/1.2',
-            distro='ebcl',
-            components=['prod', 'dev'],
-            arch=CpuArch.ARM64
+            AptDebRepo(
+                url='https://linux.elektrobit.com/eb-corbos-linux/1.2',
+                dist='ebcl',
+                components=['prod', 'dev'],
+                arch=CpuArch.ARM64
+            )
         )
 
         p = apt.find_package('busybox-static')
         assert p
         assert p[0].name == 'busybox-static'
         assert p[0].file_url is not None
+
+    def test_flat_apt(self):
+        apt = Apt(
+            AptFlatRepo(
+                url='file://' + (test_data / "flat_repo").as_posix(),
+                directory=".",
+                arch=CpuArch.AMD64
+            )
+        )
+        p = apt.find_package('busybox-static')
+        assert p
+        assert p[0].name == 'busybox-static'
+        assert p[0].file_url is not None
+
+        pkg = self.proxy.download_package(self.apt.arch, p[0])
+        assert pkg
+        assert pkg.local_file
+        assert os.path.isfile(pkg.local_file)
+
+    def test_local_file_download(self, tmp_path: Path):
+        apt = Apt(
+            AptFlatRepo(
+                url='file://' + (test_data / "flat_repo").as_posix(),
+                directory=".",
+                arch=CpuArch.AMD64
+            )
+        )
+        p = apt.find_package('busybox-static')
+        assert p
+        assert p[0].name == 'busybox-static'
+        assert p[0].file_url is not None
+
+        pkg = self.proxy.download_package(self.apt.arch, p[0], location=tmp_path.as_posix())
+        assert pkg
+        assert pkg.local_file
+        assert os.path.isfile(pkg.local_file)
+        assert (tmp_path / Path(pkg.local_file).name).exists()
 
     def test_find_linux_image_generic(self):
         """ Search busybox package in default apt repository. """
@@ -67,57 +117,71 @@ class TestApt:
     def test_equal(self):
         """ Test the equal check. """
         a = Apt(
-            url='http://archive.ubuntu.com/ubuntu',
-            distro='jammy',
-            arch=CpuArch.AMD64,
-            components=['main', 'universe']
+            AptDebRepo(
+                url='http://archive.ubuntu.com/ubuntu',
+                dist='jammy',
+                arch=CpuArch.AMD64,
+                components=['main', 'universe']
+            )
         )
 
         b = Apt(
-            url='http://archive.ubuntu.com/ubuntu',
-            distro='jammy',
-            arch=CpuArch.AMD64,
-            components=['main', 'universe']
+            AptDebRepo(
+                url='http://archive.ubuntu.com/ubuntu',
+                dist='jammy',
+                arch=CpuArch.AMD64,
+                components=['main', 'universe']
+            )
         )
         assert a == b
 
         b = Apt(
-            url='http://ports.ubuntu.com/ubuntu-ports',
-            distro='jammy',
-            arch=CpuArch.AMD64,
-            components=['main', 'universe']
+            AptDebRepo(
+                url='http://ports.ubuntu.com/ubuntu-ports',
+                dist='jammy',
+                arch=CpuArch.AMD64,
+                components=['main', 'universe']
+            )
         )
         assert a != b
 
         b = Apt(
-            url='http://archive.ubuntu.com/ubuntu',
-            distro='jammy',
-            arch=CpuArch.AMD64,
-            components=['main']
+            AptDebRepo(
+                url='http://archive.ubuntu.com/ubuntu',
+                dist='jammy',
+                arch=CpuArch.AMD64,
+                components=['main']
+            )
         )
         assert a != b
 
         b = Apt(
-            url='http://archive.ubuntu.com/ubuntu',
-            distro='jammy',
-            arch=CpuArch.AMD64,
-            components=['main', 'other']
+            AptDebRepo(
+                url='http://archive.ubuntu.com/ubuntu',
+                dist='jammy',
+                arch=CpuArch.AMD64,
+                components=['main', 'other']
+            )
         )
         assert a != b
 
         b = Apt(
-            url='http://archive.ubuntu.com/ubuntu',
-            distro='noble',
-            arch=CpuArch.AMD64,
-            components=['main', 'universe']
+            AptDebRepo(
+                url='http://archive.ubuntu.com/ubuntu',
+                dist='noble',
+                arch=CpuArch.AMD64,
+                components=['main', 'universe']
+            )
         )
         assert a != b
 
         b = Apt(
-            url='http://archive.ubuntu.com/ubuntu',
-            distro='jammy',
-            arch=CpuArch.ARM64,
-            components=['main', 'universe']
+            AptDebRepo(
+                url='http://archive.ubuntu.com/ubuntu',
+                dist='jammy',
+                arch=CpuArch.ARM64,
+                components=['main', 'universe']
+            )
         )
         assert a != b
 

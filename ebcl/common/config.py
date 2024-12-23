@@ -43,7 +43,7 @@ class Config:
         'sysroot_defaults', 'primary_distro', 'base', 'debootstrap_flags'
     ]
 
-    def __init__(self, config_file: str, output_path: str):
+    def __init__(self, config_file: str, output_path: str) -> None:
         self.config_file = config_file
         self.proxy = Proxy()
         self.fake = Fake()
@@ -122,7 +122,7 @@ class Config:
         # Kiwi-ng image version string
         self.image_version: Optional[str] = None
         # Root filesystem build type.
-        self.type: BuildType = BuildType.DEBOOTSTRAP
+        self.type: BuildType | None = BuildType.DEBOOTSTRAP
         # Primary repo for debootstrap
         self.primary_distro: Optional[str] = None
         # Additional debootstrap parameters
@@ -143,7 +143,7 @@ class Config:
         self.parse()
 
     @log_exception()
-    def __del__(self):
+    def __del__(self) -> None:
         """ Cleanup. """
         if self.use_fakeroot:
             self.fake.run_cmd(f'rm -rf {self.target_dir}')
@@ -154,11 +154,11 @@ class Config:
         with open(file, 'r', encoding='utf-8') as f:
             return yaml.safe_load(f)
 
-    def parse(self):
+    def parse(self) -> None:
         """ Load yaml configuration. """
         self._parse_yaml(self.config_file)
 
-    def _parse_yaml(self, file: str):
+    def _parse_yaml(self, file: str) -> None:
         """ Load yaml configuration. """
         conifg_file = os.path.abspath(file)
         config_dir = os.path.dirname(conifg_file)
@@ -185,7 +185,10 @@ class Config:
                 self._parse_yaml(b)
 
         if 'arch' in config:
-            self.arch = CpuArch.from_str(config.get('arch', None))
+            arch = CpuArch.from_str(config.get('arch', None))
+            if not arch:
+                raise InvalidConfiguration(f'Unknown arch: {config.get("arch")}')
+            self.arch = arch
 
         if 'use_fakeroot' in config:
             self.use_fakeroot = config.get('use_fakeroot', False)

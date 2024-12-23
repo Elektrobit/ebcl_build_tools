@@ -3,16 +3,26 @@ from pathlib import Path
 
 import pytest
 
-from ebcl.common.apt import Apt, parse_depends
+from ebcl.common.apt import Apt, AptDebRepo
 from ebcl.common.proxy import Proxy
 
 from ebcl.common.types.cpu_arch import CpuArch
+from ebcl.common.version import parse_depends
 
 
 class TestProxy:
     """ Unit tests for the EBcL apt proxy. """
 
     proxy: Proxy
+
+    @property
+    def ubuntu_jammy_repo(self):
+        return AptDebRepo(
+            url='http://archive.ubuntu.com/ubuntu',
+            dist='jammy',
+            components=['main'],
+            arch=CpuArch.AMD64
+        )
 
     @classmethod
     def setup_class(cls):
@@ -27,25 +37,29 @@ class TestProxy:
     def test_apt_repos(self):
         """ Test apt repo handling. """
         a = Apt(
-            url='ports.ubuntu.com/ubuntu-ports',
-            distro='jammy',
-            arch=CpuArch.ARM64,
-            components=['main', 'universe']
+            AptDebRepo(
+                url='ports.ubuntu.com/ubuntu-ports',
+                dist='jammy',
+                arch=CpuArch.ARM64,
+                components=['main', 'universe']
+            )
         )
         b = Apt(
-            url='https://linux.elektrobit.com/eb-corbos-linux/1.2',
-            distro='ebcl',
-            arch=CpuArch.ARM64,
-            components=['prod', 'dev']
+            AptDebRepo(
+                url='https://linux.elektrobit.com/eb-corbos-linux/1.2',
+                dist='ebcl',
+                arch=CpuArch.ARM64,
+                components=['prod', 'dev']
+            )
         )
 
         assert len(self.proxy.apts) == 0
 
-        res = self.proxy.add_apt(Apt())
+        res = self.proxy.add_apt(Apt(self.ubuntu_jammy_repo))
         assert res
         assert len(self.proxy.apts) == 1
 
-        res = self.proxy.add_apt(Apt())
+        res = self.proxy.add_apt(Apt(self.ubuntu_jammy_repo))
         assert not res
         assert len(self.proxy.apts) == 1
 
@@ -67,7 +81,7 @@ class TestProxy:
 
     def test_find_package_busybox(self):
         """ Test that busybox-static package is found. """
-        self.proxy.add_apt(Apt())
+        self.proxy.add_apt(Apt(self.ubuntu_jammy_repo))
 
         vds = parse_depends('busybox-static', CpuArch.AMD64)
         assert vds
@@ -77,10 +91,12 @@ class TestProxy:
         assert p.arch == CpuArch.AMD64
 
         a = Apt(
-            url='http://ports.ubuntu.com/ubuntu-ports',
-            distro='jammy',
-            arch=CpuArch.ARM64,
-            components=['main', 'universe']
+            AptDebRepo(
+                url='http://ports.ubuntu.com/ubuntu-ports',
+                dist='jammy',
+                arch=CpuArch.ARM64,
+                components=['main', 'universe']
+            )
         )
 
         self.proxy.add_apt(a)
@@ -94,7 +110,7 @@ class TestProxy:
 
     def test_find_linux_image_generic(self):
         """ Test that busybox-static package is found. """
-        self.proxy.add_apt(Apt())
+        self.proxy.add_apt(Apt(self.ubuntu_jammy_repo))
 
         vds = parse_depends('linux-image-generic', CpuArch.AMD64)
         assert vds
@@ -134,7 +150,7 @@ class TestProxy:
     @pytest.mark.requires_download
     def test_download_and_extract_linux_image(self):
         """ Extract data content of multiple debs. """
-        self.proxy.add_apt(Apt())
+        self.proxy.add_apt(Apt(self.ubuntu_jammy_repo))
 
         vds = parse_depends('linux-image-generic', CpuArch.AMD64)
         assert vds
