@@ -387,7 +387,7 @@ class Apt:
     @classmethod
     def ebcl(cls, arch: CpuArch, dist: str, release: str, components: list[str]) -> Self:
         """Get an EBcL apt repo."""
-        url = os.environ.get('EBCL_REPO_URL', 'http://linux.elektrobit.com/eb-corbos-linux')
+        url = os.environ.get('EBCL_REPO_URL', 'https://linux.elektrobit.com/eb-corbos-linux')
         release = os.environ.get('EBCL_VERSION', release)
         key = os.environ.get('EBCL_REPO_KEY', 'file:///build/keys/elektrobit.pub')
         gpg = os.environ.get('EBCL_REPO_GPG', '/etc/apt/trusted.gpg.d/elektrobit.gpg')
