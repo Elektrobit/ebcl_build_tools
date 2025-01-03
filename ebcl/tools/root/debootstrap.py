@@ -285,8 +285,11 @@ class DebootstrapRootGenerator:
             # Install additional packages
             packages = ' '.join(
                 list(map(lambda vd: vd.name, self.config.packages)))
+            no_recommends = ""
+            if not self.config.install_recommends:
+                no_recommends = "--no-install-recommends "
             fake.run_chroot(
-                f'bash -c "{self.apt_env} apt install -y {packages}"',
+                f'bash -c "{self.apt_env} apt install -y {no_recommends}{packages}"',
                 chroot=self.config.target_dir,
                 check=True
             )

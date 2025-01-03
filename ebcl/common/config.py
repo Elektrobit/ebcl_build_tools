@@ -40,7 +40,7 @@ class Config:
         'use_bootstrap_package', 'bootstrap_package', 'bootstrap', 'kiwi_root_overlays',
         'use_kiwi_defaults', 'kiwi_scripts', 'kvm', 'image_version', 'type',
         'root_password', 'hostname', 'domain', 'console', 'sysroot_packages',
-        'sysroot_defaults', 'primary_distro', 'base', 'debootstrap_flags'
+        'sysroot_defaults', 'primary_distro', 'base', 'debootstrap_flags', 'install_recommends'
     ]
 
     def __init__(self, config_file: str, output_path: str) -> None:
@@ -139,6 +139,8 @@ class Config:
         self.sysroot_packages: list[VersionDepends] = []
         # Add default extensions for sysroot builds
         self.sysroot_defaults: bool = True
+        # Install recommends (defaults to true, to keep behavior)
+        self.install_recommends: bool = True
 
         self.parse()
 
@@ -430,6 +432,9 @@ class Config:
 
         if 'sysroot_defaults' in config:
             self.sysroot_defaults = config.get('sysroot_defaults', True)
+
+        if 'install_recommends' in config:
+            self.install_recommends = config.get('install_recommends', True)
 
         for key in config.keys():
             if key not in self.keywords:
