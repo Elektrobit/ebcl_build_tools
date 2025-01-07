@@ -67,8 +67,7 @@ class TestConfig:
         assert isinstance(config.apt_repos[1].repo, AptDebRepo)
         assert config.apt_repos[1].repo.dist == 'ebcl_nxp_public'
 
-        assert len(config.modules) == 1
-        assert config.modules[0] == 'kernel/pfeng/pfeng.ko'
+        assert config.modules == ['kernel/drivers/net/virtio_net.ko', 'bridge', 'stp', 'virtio']
 
         assert len(config.packages) == 0
         assert config.kernel is not None and config.kernel.name == 'linux-image-generic'

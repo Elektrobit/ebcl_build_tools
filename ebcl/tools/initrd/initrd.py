@@ -1,21 +1,110 @@
 #!/usr/bin/env python
 """ EBcL initrd generator. """
+
+from __future__ import annotations
+
 import argparse
 import glob
 import logging
 import os
-import queue
 import shutil
 import tempfile
 
 from pathlib import Path
-from typing import Optional
+from typing import Any, Callable, Optional
 
 from ebcl.common import init_logging, promo, log_exception
 from ebcl.common.config import Config, InvalidConfiguration
 from ebcl.common.files import EnvironmentType
 from ebcl.common.templates import render_template
 from ebcl.common.version import parse_package
+
+
+class Module:
+    path: Path
+    """Relative path of the module"""
+    dependencies: list[Module]
+    """List of all recursive dependencies of the module"""
+    is_builtin: bool
+    """Module is built into the kernel"""
+
+    def __init__(self, path: Path) -> None:
+        self.path = path
+        self.dependencies = []
+        self.is_builtin = False
+
+    @property
+    def name(self) -> str:
+        """The name of the module (e.g. 'foo' for 'foo.ko')"""
+        return self.path.stem
+
+    @property
+    def dependency_string(self) -> str:
+        return f"{self.path}: {' '.join(map(lambda x: str(x.path), self.dependencies))}"
+
+
+class Modules:
+    """Kernel Module registry"""
+    _modules: dict[str, Module]
+
+    def __init__(self, base: Path, create_depmod: Callable[[], Any]) -> None:
+        self._modules = {}
+
+        depmod_file = base / "modules.dep"
+        if not depmod_file.exists():
+            create_depmod()
+        if not depmod_file.exists():
+            logging.error("Unable to create depmod file!")
+            self._modules = {}
+        else:
+            self._parse_depmod(depmod_file)
+
+        builtinmod_file = base / "modules.builtin"
+        if builtinmod_file.exists():
+            self._parse_builtinmod(builtinmod_file)
+
+    def find(self, name: str) -> Module | None:
+        """Find a module from a filename or module name"""
+        if name.endswith(".ko"):
+            mod_name = Path(name).stem
+            logging.warning(
+                "Using deprecated filename format for modules (%s). Please use only the module name: %s",
+                name,
+                mod_name
+            )
+            name = mod_name
+        return self._modules.get(name, None)
+
+    def __get_or_create(self, mod: str,) -> Module:
+        modpath = Path(mod)
+        module = self._modules.get(modpath.stem, None)
+        if not module:
+            module = Module(modpath)
+            self._modules[module.name] = module
+        return module
+
+    def _parse_depmod(self, depmod: Path) -> None:
+        with depmod.open("r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith("#"):
+                    continue  # Skip comments
+                try:
+                    (mod, depends) = line.split(':', 1)
+                except ValueError:
+                    continue  # If there is no colon, the line is malformed
+                module = self.__get_or_create(mod)
+                for dependency in depends.split():
+                    module.dependencies.append(self.__get_or_create(dependency))
+
+    def _parse_builtinmod(self, builtinmod: Path) -> None:
+        with builtinmod.open("r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith("#"):
+                    continue  # Skip comments
+                module = self.__get_or_create(line)
+                module.is_builtin = True
 
 
 class InitrdGenerator:
@@ -82,103 +171,76 @@ class InitrdGenerator:
 
         return os.path.basename(versions[-1])
 
-    def copy_modules(self, mods_dir: str) -> None:
+    def copy_modules(self, mods_dir: str) -> list[Module]:
         """ Copy the required modules.
 
         Args:
             mods_dir (str): Folder containing the modules.
+
+        @return The modules that are requested and available
         """
         if not self.config.modules:
             logging.info('No modules defined.')
-            return
+            return []
 
         logging.debug('Modules tmp folder: %s.', mods_dir)
         logging.debug('Target tmp folder: %s.', self.target_dir)
 
         kversion = self.find_kernel_version(mods_dir)
         if not kversion:
-            logging.error(
-                'Kernel version not found, extracting modules failed!')
-            raise InvalidConfiguration(
-                'Kernel version not found, extracting modules failed!')
+            logging.error('Kernel version not found, extracting modules failed!')
+            raise InvalidConfiguration('Kernel version not found, extracting modules failed!')
 
         logging.info('Using kernel version %s.', kversion)
 
-        mods_src = os.path.abspath(os.path.join(
-            mods_dir, 'lib', 'modules', kversion))
+        mods_src_base = Path(mods_dir).absolute()
+        mods_src = mods_src_base / 'lib' / 'modules' / kversion
+        mods_dst = Path(self.target_dir).absolute() / 'lib' / 'modules' / kversion
+        mods_dep_dst = mods_dst / 'modules.dep'
 
-        mods_dep_src = os.path.join(mods_src, 'modules.dep')
-
-        mods_dst = os.path.abspath(os.path.join(
-            self.target_dir, 'lib', 'modules', kversion))
-
-        mods_dep_dst = os.path.join(mods_dst, 'modules.dep')
+        modules = Modules(
+            mods_src,
+            lambda: self.config.fake.run_sudo(f'depmod -b {mods_src_base} -C /dev/null {kversion}')
+        )
 
         logging.debug('Mods src: %s', mods_src)
         logging.debug('Mods dst: %s', mods_dst)
 
-        logging.debug('Create modules target...')
         self.config.fake.run_sudo(f'mkdir -p {mods_dst}')
 
-        orig_deps: dict[str, list[str]] = {}
+        requested_modules: list[Module] = []
+        all_modules: set[Module] = set()
+        for module_name in self.config.modules:
+            mod = modules.find(module_name)
+            if not mod:
+                raise InvalidConfiguration(f'Module {module_name} not found!')
 
-        # TODO: fix depends
+            if mod.is_builtin:
+                logging.info("Module %s is built into the kernel.", mod.name)
+            else:
+                all_modules.add(mod)
+                all_modules.update(mod.dependencies)
+                requested_modules.append(mod)
 
-        if os.path.isfile(mods_dep_src):
-            with open(mods_dep_src, encoding='utf8') as f:
-                lines = f.readlines()
-                for line in lines:
-                    parts = line.split(':', maxsplit=1)
-                    key = parts[0].strip()
-                    values = []
-                    if len(parts) > 1:
-                        vs = parts[1].strip()
-                        if vs:
-                            values = [dep.strip()
-                                      for dep in vs.split(' ') if dep != '']
-                    orig_deps[key] = values
+        for module in all_modules:
+            logging.info('Processing module %s...', module.name)
 
-        mq: queue.Queue[str] = queue.Queue(maxsize=-1)
-
-        for module in self.config.modules:
-            mq.put_nowait(module)
-
-        while not mq.empty():
-            module = mq.get_nowait()
-
-            logging.info('Processing module %s...', module)
-
-            src = os.path.join(mods_src, module)
-            dst = os.path.join(mods_dst, module)
-            dst_dir = os.path.dirname(dst)
-
-            logging.debug('Copying module %s to folder %s.', src, dst)
-
-            if not os.path.isfile(src):
-                logging.error('Module %s not found.', module)
-                continue
-
-            self.config.fake.run_sudo(f'mkdir -p {dst_dir}')
+            src = mods_src / module.path
+            dst = mods_dst / module.path
 
             self.config.fh.copy_file(
-                src=src,
-                dst=dst,
+                src=str(src),
+                dst=str(dst),
                 environment=EnvironmentType.SUDO,
                 uid=0,
                 gid=0,
                 mode='644'
             )
 
-            # Find module dependencies.
-            deps = ''
-            if module in orig_deps:
-                mdeps = orig_deps[module]
-                deps = ' '.join(mdeps)
-                for mdep in mdeps:
-                    mq.put_nowait(mdep)
+            # Create entry in modules.dep file
+            self.config.fake.run_sudo(f'echo {module.dependency_string} >> {mods_dep_dst}')
 
-            self.config.fake.run_sudo(
-                f'echo {module}: {deps} >> {mods_dep_dst}')
+        return requested_modules
 
     def add_devices(self) -> None:
         """ Create device files. """
@@ -273,9 +335,10 @@ class InitrdGenerator:
 
         if self.config.modules and mods_dir:
             logging.info('Adding modules %s...', self.config.modules)
-            self.copy_modules(mods_dir)
+            requested_modules = self.copy_modules(mods_dir)
         else:
             logging.info('No modules defined.')
+            requested_modules = []
 
         if mods_dir and not self.config.modules_folder:
             # Remove mods temporary folder
@@ -298,7 +361,7 @@ class InitrdGenerator:
 
         params = {
             'root': self.config.root_device,
-            'mods': [m.split("/")[-1] for m in self.config.modules]
+            'mods': [m.name for m in requested_modules]
         }
 
         (_init_file, init_script_content) = render_template(

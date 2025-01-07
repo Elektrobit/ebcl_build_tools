@@ -9,7 +9,10 @@ apt_repos:
     components:
       - nxp_public
 modules:
-  - kernel/pfeng/pfeng.ko
+  - kernel/drivers/net/virtio_net.ko # Test that old style modules still work
+  - bridge # This should also pull stp and llc
+  - stp # Test installing a module, that is also a dependency
+  - virtio # A builtin module, that shouldn't cause problems
 kernel: linux-image-generic
 arch: "arm64"
 root_device: /dev/mmcblk0p2
