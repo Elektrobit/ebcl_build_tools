@@ -124,3 +124,11 @@ class Initrd:
             path=path,
             uid=int(uid),
             gid=int(gid))
+
+    def get_file(self, path: str) -> str:
+        assert self.target is not None
+        if path.startswith('/'):
+            path = path[1:]
+        path = os.path.join(self.target, path)
+
+        return self.fake.abs_get_file(path)

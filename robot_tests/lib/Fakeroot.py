@@ -106,3 +106,7 @@ class Fakeroot:
         """ Check ownership of file or dir. """
         (out, _) = self.run(cmd=f'stat -c \'%a\' {path}')
         assert out.strip() == f'{mode}'
+
+    def abs_get_file(self, path: str) -> str:
+        (out, _) = self.run(cmd=f'cat {path}')
+        return out
