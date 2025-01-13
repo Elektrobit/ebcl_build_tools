@@ -76,21 +76,20 @@ class DebPackagesInfo:
         ("breaks", PackageRelation.BREAKS),
         ("conflicts", PackageRelation.CONFLICTS)
     ]
-    _arch: CpuArch
     packages: list[Package]
 
-    def __init__(self, content: str, arch: CpuArch) -> None:
+    def __init__(self, content: str) -> None:
         """
         Parses content into a list Packages.
-
-        Package.arch is set to arch.
         Note that Package.repo is set to "filled-later" and it is the responsibility
         of the caller, to set it to am appropriate value.
         """
-        self._arch = arch
         meta = DebMetadata(content)
         self.packages = []
         for stanza in meta.stanzas:
+            arch = CpuArch.from_str(stanza.get("architecture"))
+            if arch is None:
+                arch = CpuArch.UNDEFINED
             pkg = Package(stanza.get("package", ""), arch, "filled-later")
             pkg.file_url = stanza.get("filename")
             pkg.version = Version(stanza.get("version", ""))
@@ -101,18 +100,18 @@ class DebPackagesInfo:
                     continue
                 pkg.set_relation(
                     rel,
-                    self._parse_relation(pkg.name, value, rel)
+                    self._parse_relation(pkg.name, value, rel, arch)
                 )
             self.packages.append(pkg)
 
     def _parse_relation(
-        self, name: str, relation: str, package_relation: PackageRelation
+        self, name: str, relation: str, package_relation: PackageRelation, arch: CpuArch
     ) -> list[list[VersionDepends]]:
         """Parse relation string from stanza."""
         deps: list[list[VersionDepends]] = []
 
         for rel in relation.split(','):
-            dep = parse_depends(rel.strip(), self._arch, package_relation)
+            dep = parse_depends(rel.strip(), arch, package_relation)
             if dep:
                 deps.append(dep)
             else:

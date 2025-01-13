@@ -61,7 +61,7 @@ class Proxy:
         packages: list[Package] = []
 
         for apt in self.apts:
-            if vd.arch == 'any' or vd.arch == 'all' or vd.arch == apt.arch:
+            if vd.arch == CpuArch.ANY or vd.arch == CpuArch.ALL or vd.arch == apt.arch:
                 ps = apt.find_package(vd.name)
                 if ps:
                     packages += ps
