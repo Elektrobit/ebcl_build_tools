@@ -11,10 +11,12 @@ class UnsupportedCpuArchitecture(Exception):
 
 class CpuArch(Enum):
     """ Enum for supported CPU architectures. """
+    UNDEFINED = 0
     AMD64 = 1
     ARM64 = 2
     ARMHF = 3
     ANY = 4
+    ALL = 5
 
     @classmethod
     def from_str(cls, arch: Optional[str]) -> CpuArch | None:
@@ -33,26 +35,30 @@ class CpuArch(Enum):
             return cls.ARMHF
         elif arch == 'any':
             return cls.ANY
+        elif arch == 'all':
+            return cls.ALL
         else:
             return None
 
     def __str__(self) -> str:
-        if self.value == 1:
+        if self == self.AMD64:
             return "amd64"
-        elif self.value == 2:
+        elif self == self.ARM64:
             return "arm64"
-        elif self.value == 3:
+        elif self == self.ARMHF:
             return "armhf"
-        elif self.value == 4:
+        elif self == self.ANY:
             return "any"
+        elif self == self.ALL:
+            return "all"
         else:
             return "UNKNOWN"
 
     def get_kiwi_arch(self) -> str:
         """ Get the arch string for the kiwi image description. """
-        if self.value == 1:
+        if self == self.AMD64:
             return "x86_64"
-        elif self.value == 2:
+        elif self == self.ARM64:
             return "aarch64"
 
         raise UnsupportedCpuArchitecture(
@@ -60,9 +66,9 @@ class CpuArch(Enum):
 
     def get_berrymill_arch(self) -> str:
         """ Get the arch string for the berrymill image description. """
-        if self.value == 1:
+        if self == self.AMD64:
             return "amd64"
-        elif self.value == 2:
+        elif self == self.ARM64:
             return "arm64"
 
         raise UnsupportedCpuArchitecture(
@@ -70,9 +76,9 @@ class CpuArch(Enum):
 
     def get_box_arch(self) -> str:
         """ Get the arch string for the kiwi box build. """
-        if self.value == 1:
+        if self == self.AMD64:
             return "--x86_64"
-        elif self.value == 2:
+        elif self == self.ARM64:
             return "--aarch64"
 
         raise UnsupportedCpuArchitecture(
