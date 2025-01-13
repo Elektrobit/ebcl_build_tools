@@ -222,7 +222,7 @@ class AptRepo(ABC):
             logging.error('Unknown compression of index %s (%s)! Cannot parse index.', path, self)
             return
         content = data.decode(encoding="utf-8", errors="ignore")
-        packages_info = DebPackagesInfo(content, self._arch)
+        packages_info = DebPackagesInfo(content)
         for package in packages_info.packages:
             package.repo = self.id
             package.file_url = f"{self._url}/{package.file_url}"
