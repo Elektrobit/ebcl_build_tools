@@ -54,14 +54,21 @@ class InitrdGenerator:
         if not success:
             return False
 
-        if not os.path.isfile(os.path.join(self.target_dir, 'bin', 'busybox')):
+        busybox_paths = [
+            os.path.join(self.target_dir, 'bin', 'busybox'),
+            os.path.join(self.target_dir, 'usr', 'bin', 'busybox')
+        ]
+
+        busybox_path = next((path for path in busybox_paths if os.path.isfile(path)), None)
+
+        if not busybox_path:
             logging.critical(
                 'Busybox binary is missing! target: %s package: %s',
                 self.target_dir, package)
             return False
 
         self.config.fake.run_chroot(
-            '/bin/busybox --install -s /bin', self.target_dir)
+            f'{busybox_path} --install -s /bin', self.target_dir)
 
         return True
 
