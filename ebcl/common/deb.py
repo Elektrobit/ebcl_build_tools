@@ -1,14 +1,15 @@
-""" Deb helper funktions. """
+import itertools
 import logging
 import os
+import subprocess
 import tempfile
 
 from pathlib import Path
-from typing import Optional
+from typing import Iterable
 
 import unix_ar  # type: ignore
-from typing_extensions import Self
 
+from .deb_metadata import DebPackagesInfo
 from .fake import Fake
 from .files import Files
 from .version import PackageRelation, Version, VersionDepends, VersionRelation
@@ -16,56 +17,96 @@ from .version import PackageRelation, Version, VersionDepends, VersionRelation
 from .types.cpu_arch import CpuArch
 
 
+class InvalidFile(Exception):
+    """Invalid debian package"""
+
+
 class Package:
     """ APT package information. """
 
-    @classmethod
-    def from_deb(cls, deb: str, depends: list[list[VersionDepends]]) -> None | Self:
-        """ Create a package form a deb file. """
-        if not deb.endswith('.deb'):
-            return None
+    name: str
+    arch: CpuArch
+    repo: str
+    version: Version | None
+    file_url: str | None
+    local_file: str | None
 
-        filename = os.path.basename(deb)[:-4]
-        parts = filename.split('_')
+    pre_depends: list[list[VersionDepends]]
+    depends: list[list[VersionDepends]]
+    breaks: list[list[VersionDepends]]
+    conflicts: list[list[VersionDepends]]
+    recommends: list[list[VersionDepends]]
+    suggests: list[list[VersionDepends]]
+    enhances: list[list[VersionDepends]]
 
-        if len(parts) != 3:
-            return None
+    @property
+    def relations(self) -> Iterable[list[VersionDepends]]:
+        return itertools.chain(
+            self.pre_depends,
+            self.depends,
+            self.breaks,
+            self.conflicts,
+            self.recommends,
+            self.suggests,
+            self.enhances
+        )
 
-        name = parts[0].strip()
-        version = parts[1].strip()
-        arch = CpuArch.from_str(parts[2].strip())
-        if not arch:
-            logging.error('Unknown arch in %s, Skipping!', filename)
-            return None
+    @relations.setter
+    def relations(self, relations: Iterable[list[VersionDepends]]):
+        self.pre_depends = []
+        self.depends = []
+        self.breaks = []
+        self.conflicts = []
+        self.recommends = []
+        self.suggests = []
+        self.enhances = []
 
-        p = cls(name, arch, 'local_deb')
+        for entry in relations:
+            if not entry:
+                continue
 
-        p.version = Version(version)
-        p.depends = depends
+            relation = entry[0].package_relation
+            if relation == PackageRelation.PRE_DEPENS:
+                self.pre_depends.append(entry)
+            elif relation == PackageRelation.DEPENDS:
+                self.depends.append(entry)
+            elif relation == PackageRelation.BREAKS:
+                self.breaks.append(entry)
+            elif relation == PackageRelation.CONFLICTS:
+                self.conflicts.append(entry)
+            elif relation == PackageRelation.RECOMMENDS:
+                self.recommends.append(entry)
+            elif relation == PackageRelation.SUGGESTS:
+                self.suggests.append(entry)
+            elif relation == PackageRelation.ENHANCES:
+                self.enhances.append(entry)
 
-        if os.path.isfile(deb):
-            p.local_file = deb
-
-        return p
-
-    def __init__(self, name: str, arch: CpuArch, repo: str) -> None:
+    def __init__(
+        self,
+        name: str,
+        arch: CpuArch,
+        repo: str,
+        version: Version | None = None,
+        file_url: str | None = None,
+        local_file: str | None = None
+    ) -> None:
         self.name: str = name
         self.arch: CpuArch = arch
         self.repo: str = repo
 
-        self.version: Optional[Version] = None
-        self.file_url: Optional[str] = None
-        self.local_file: Optional[str] = None
+        self.version = version
+        self.file_url = file_url
+        self.local_file = local_file
 
-        self.pre_depends: list[list[VersionDepends]] = []
-        self.depends: list[list[VersionDepends]] = []
+        self.pre_depends = []
+        self.depends = []
 
-        self.breaks: list[list[VersionDepends]] = []
-        self.conflicts: list[list[VersionDepends]] = []
+        self.breaks = []
+        self.conflicts = []
 
-        self.recommends: list[list[VersionDepends]] = []
-        self.suggests: list[list[VersionDepends]] = []
-        self.enhances: list[list[VersionDepends]] = []
+        self.recommends = []
+        self.suggests = []
+        self.enhances = []
 
     def set_relation(self, relation: PackageRelation, value: list[list[VersionDepends]]) -> None:
         if relation == PackageRelation.PRE_DEPENS:
@@ -87,9 +128,12 @@ class Package:
         """ Get dependencies. """
         return self.depends + self.pre_depends
 
-    def extract(self, location: Optional[str] = None,
-                files: Optional[Files] = None,
-                use_sudo: bool = True) -> Optional[str]:
+    def extract(
+        self,
+        location: str | None = None,
+        files: Files | None = None,
+        use_sudo: bool = True
+    ) -> str | None:
         """ Extract a deb archive. """
         if not self.local_file:
             return None
@@ -197,7 +241,50 @@ class Package:
         return self < o
 
 
-def filter_packages(p: Package, v: Version, r: Optional[VersionRelation]) -> bool:
+class DebFile:
+    """ Binary package file handling utilities """
+    _file: Path
+    _package: Package | None
+
+    def __init__(self, fileOrPackage: Path | Package) -> None:
+        """
+        Instantiate the class with either a path to a debian package
+        or a Package instance with a local_file path
+        """
+        if isinstance(fileOrPackage, Package):
+            self._package = fileOrPackage
+            if not fileOrPackage.local_file:
+                raise InvalidFile("Cannot create a DebFile from a Package without a local_file")
+            self._file = Path(fileOrPackage.local_file)
+        else:
+            self._file = fileOrPackage
+            self._package = None
+
+    def to_package(self) -> Package:
+        """ Get a package instance for the binary file"""
+        if self._package:
+            return self._package
+        res = subprocess.run(
+            [
+                "dpkg-deb",
+                "--info",
+                str(self._file),
+                "control"
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            encoding="utf-8"
+        )
+        package = next(iter(DebPackagesInfo(res.stdout).packages), None)
+        if res.returncode != 0 or not package:
+            raise InvalidFile("%s is not a valid debian file", self._file)
+        package.local_file = str(self._file)
+        self._package = package
+        return package
+
+
+def filter_packages(p: Package, v: Version, r: VersionRelation | None) -> bool:
     """ Filter for matching packages. """
     # TODO: test
     if not p.version:

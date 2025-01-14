@@ -12,7 +12,7 @@ from urllib.parse import urlparse
 import requests
 
 from .apt import Apt
-from .cache import Cache, AddOp
+from .cache import Cache
 from .deb import Package, filter_packages
 from .version import VersionDepends, VersionRelation
 
@@ -100,7 +100,7 @@ class Proxy:
     ) -> Optional[Package]:
         """ Copy package form cache. """
         if location is None:
-            location = self.cache.folder
+            location = str(self.cache.folder)
 
         package = self.cache.get(
             arch=vd.arch,
@@ -150,7 +150,7 @@ class Proxy:
             version_relation = VersionRelation.EXACT
 
         if location is None:
-            location = self.cache.folder
+            location = str(self.cache.folder)
 
         p = self._download_from_cache(
             VersionDepends(
@@ -227,10 +227,10 @@ class Proxy:
             if location == self.cache.folder:
                 # Add package to cache
                 logging.debug('Adding package %s to cache.', package)
-                package.local_file = self.cache.add(package, AddOp.MOVE)
+                package.local_file = self.cache.add(package, True)
             else:
                 logging.info('Download folder is not cache folder. Copying %s to cache.', package)
-                package.local_file = self.cache.add(package, AddOp.COPY)
+                package.local_file = self.cache.add(package)
 
         return package
 

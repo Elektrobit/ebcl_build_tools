@@ -785,7 +785,7 @@ class TestParsers:
             os.path.join(os.path.dirname(__file__), 'test_files.py'))
         assert scripts[2]['env'] == EnvironmentType.FAKEROOT
 
-    def test_parse_files(self):
+    def test_parse_files(self) -> None:
         """ Test the scripts parsing. """
 
         data_dir = os.path.join(os.path.dirname(__file__), 'data')

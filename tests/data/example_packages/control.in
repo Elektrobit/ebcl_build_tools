@@ -1,0 +1,6 @@
+Package: @@NAME@@
+Architecture: @@ARCH@@
+Maintainer: nobody
+Version: @@VERSION@@
+Description:
+ Example package
