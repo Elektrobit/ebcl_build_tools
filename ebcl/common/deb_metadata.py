@@ -1,11 +1,12 @@
 """
 Classes for parsing debian metadata files
 """
+from __future__ import annotations
 
 from collections import defaultdict
 import logging
 
-from .deb import Package
+from . import deb
 from .types.cpu_arch import CpuArch
 from .version import PackageRelation, Version, VersionDepends, parse_depends
 
@@ -76,7 +77,7 @@ class DebPackagesInfo:
         ("breaks", PackageRelation.BREAKS),
         ("conflicts", PackageRelation.CONFLICTS)
     ]
-    packages: list[Package]
+    packages: list[deb.Package]
 
     def __init__(self, content: str) -> None:
         """
@@ -84,13 +85,14 @@ class DebPackagesInfo:
         Note that Package.repo is set to "filled-later" and it is the responsibility
         of the caller, to set it to am appropriate value.
         """
+
         meta = DebMetadata(content)
         self.packages = []
         for stanza in meta.stanzas:
             arch = CpuArch.from_str(stanza.get("architecture"))
             if arch is None:
                 arch = CpuArch.UNDEFINED
-            pkg = Package(stanza.get("package", ""), arch, "filled-later")
+            pkg = deb.Package(stanza.get("package", ""), arch, "filled-later")
             pkg.file_url = stanza.get("filename")
             pkg.version = Version(stanza.get("version", ""))
 

@@ -210,6 +210,7 @@ class VersionRelation(Enum):
 
 class PackageRelation(Enum):
     """ Debian package relation. """
+    UNDEFINED = 0
     DEPENDS = 1
     PRE_DEPENS = 2
     RECOMMENDS = 3

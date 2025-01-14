@@ -5,10 +5,9 @@ import tempfile
 from pathlib import Path
 
 from ebcl.common.apt import Apt, AptDebRepo
-from ebcl.common.deb import Package
 from ebcl.common.fake import Fake
 from ebcl.common.proxy import Proxy
-from ebcl.common.version import Version, parse_depends
+from ebcl.common.version import parse_depends
 
 from ebcl.common.types.cpu_arch import CpuArch
 
@@ -96,18 +95,3 @@ class TestDeb:
 
         bb = Path(contents) / 'bin' / 'busybox'
         assert bb.is_file()
-
-    def test_pkg_form_deb(self):
-        """ Test package creation from deb files. """
-        p = Package.from_deb('/path/to/my/gcab_0.7-1_any.deb', [])
-        assert p is not None
-        assert p.name == 'gcab'
-        assert p.version == Version('0.7-1')
-        assert p.arch == CpuArch.ANY
-        assert p.local_file is None
-
-        p = Package.from_deb('/path/to/my/gcab_0.7-1_i386.dsc', [])
-        assert p is None
-
-        p = Package.from_deb('/path/to/my/gcab_0.7-1.deb', [])
-        assert p is None

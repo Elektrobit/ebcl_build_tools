@@ -27,7 +27,6 @@ classifiers = [
 requires-python = ">=3.10"
 dependencies = [
     "jinja2",
-    "jsonpickle",
     "pyyaml",
     "requests",
     "typing_extensions",
