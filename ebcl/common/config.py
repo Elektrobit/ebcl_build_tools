@@ -40,7 +40,8 @@ class Config:
         'use_bootstrap_package', 'bootstrap_package', 'bootstrap', 'kiwi_root_overlays',
         'use_kiwi_defaults', 'kiwi_scripts', 'kvm', 'image_version', 'type',
         'root_password', 'hostname', 'domain', 'console', 'sysroot_packages',
-        'sysroot_defaults', 'primary_distro', 'base', 'debootstrap_flags', 'install_recommends'
+        'sysroot_defaults', 'primary_distro', 'base', 'debootstrap_flags', 'install_recommends',
+        'allow_apt_downgrade'
     ]
 
     def __init__(self, config_file: str, output_path: str) -> None:
@@ -141,7 +142,8 @@ class Config:
         self.sysroot_defaults: bool = True
         # Install recommends (defaults to true, to keep behavior)
         self.install_recommends: bool = True
-
+        # Allow apt downgrade to install specfic version of package
+        self.allow_apt_downgrade: bool = False
         self.parse()
 
     @log_exception()
@@ -218,6 +220,8 @@ class Config:
                 ebcl_main = Apt.ebcl_primary_repo(self.arch)
                 self.proxy.add_apt(ebcl_main)
                 self.apt_repos.append(ebcl_main)
+        if 'allow_apt_downgrade' in config:
+            self.allow_apt_downgrade = config.get('allow_apt_downgrade', False)
 
         host_files = parse_files(
             config.get('host_files', None),

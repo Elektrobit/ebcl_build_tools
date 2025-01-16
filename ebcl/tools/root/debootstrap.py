@@ -276,23 +276,31 @@ class DebootstrapRootGenerator:
                 check=True
             )
 
-            fake.run_chroot(
-                f'bash -c "{self.apt_env} apt upgrade -y"',
-                chroot=self.config.target_dir,
-                check=True
-            )
-
             # Install additional packages
             packages = ' '.join(
                 list(map(lambda vd: vd.name, self.config.packages)))
             no_recommends = ""
             if not self.config.install_recommends:
                 no_recommends = "--no-install-recommends "
-            fake.run_chroot(
-                f'bash -c "{self.apt_env} apt install -y {no_recommends}{packages}"',
-                chroot=self.config.target_dir,
-                check=True
-            )
+
+            if self.config.allow_apt_downgrade:
+                fake.run_chroot(
+                    f'bash -c "{self.apt_env} apt install -y {no_recommends}{packages} --allow-downgrades"',
+                    chroot=self.config.target_dir,
+                    check=True
+                )
+            else:
+                fake.run_chroot(
+                    f'bash -c "{self.apt_env} apt upgrade -y "',
+                    chroot=self.config.target_dir,
+                    check=True
+                )
+
+                fake.run_chroot(
+                    f'bash -c "{self.apt_env} apt install -y {no_recommends}{packages}"',
+                    chroot=self.config.target_dir,
+                    check=True
+                )
 
         except Exception as e:
             logging.critical('Error while generating root! %s', str(e))
@@ -376,11 +384,12 @@ class DebootstrapRootGenerator:
                 check=True
             )
 
-            fake.run_chroot(
-                f'bash -c "{self.apt_env} apt upgrade -y"',
-                chroot=config.target_dir,
-                check=True
-            )
+            if not self.config.allow_apt_downgrade:
+                fake.run_chroot(
+                    f'bash -c "{self.apt_env} apt upgrade -y"',
+                    chroot=config.target_dir,
+                    check=True
+                )
 
         except Exception as e:
             logging.critical('Error while generating root! %s', str(e))
