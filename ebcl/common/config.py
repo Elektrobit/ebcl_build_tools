@@ -3,6 +3,7 @@ import glob
 import logging
 import os
 import tempfile
+import shutil
 
 from typing import Any, Optional
 
@@ -141,20 +142,47 @@ class Config:
         self.sysroot_defaults: bool = True
         # Install recommends (defaults to true, to keep behavior)
         self.install_recommends: bool = True
+        # where credentials are kept
+        self.cred_dir = '/workspace/tools/user_config/auth.d/'
 
         self.parse()
+
+        """ adding credentials """
+        self._create_netrc_file()
 
     @log_exception()
     def __del__(self) -> None:
         """ Cleanup. """
         if self.use_fakeroot:
-            self.fake.run_cmd(f'rm -rf {self.target_dir}')
+            self.fake.run_cmd(f'rm -rf {self.target_dir}; [[ -f $HOME/.netrc ]] && rm $HOME/.netrc || true')
         else:
-            self.fake.run_sudo(f'rm -rf {self.target_dir}')
+            self.fake.run_sudo(f'rm -rf {self.target_dir}; [[ -f $HOME/.netrc ]] && rm $HOME/.netrc || true')
 
     def _load_yaml(self, file: str) -> dict[str, Any]:
         with open(file, 'r', encoding='utf-8') as f:
             return yaml.safe_load(f)
+
+    def _create_netrc_file(self) -> None:
+        """ combine credential files and create .netrc """
+        if not os.path.isdir(self.cred_dir):
+            return
+
+        dest = os.path.join(self.cred_dir, '../.netrc')
+        # Ensure .netrc file is empty when starting
+        with open(dest, 'w') as outfile:
+            outfile.write('')
+
+        with open(dest, 'a') as outfile:
+            for f in os.listdir(self.cred_dir):
+                if f.endswith('.conf'):
+                    with open(os.path.join(self.cred_dir, f), 'r') as infile:
+                        shutil.copyfileobj(infile, outfile)
+                        outfile.write('\n')
+
+        if self.use_fakeroot:
+            self.fake.run_cmd(f'install -m 600 {dest} $HOME/.netrc')
+        else:
+            self.fake.run_sudo(f'install -m 600 {dest} $HOME/.netrc')
 
     def parse(self) -> None:
         """ Load yaml configuration. """
