@@ -2,8 +2,11 @@
 import glob
 import logging
 import os
+import shutil
 import tempfile
 
+from functools import partial
+from pathlib import Path
 from typing import Any, Optional
 
 import yaml
@@ -141,12 +144,19 @@ class Config:
         self.sysroot_defaults: bool = True
         # Install recommends (defaults to true, to keep behavior)
         self.install_recommends: bool = True
+        # where credentials are kept
+        self.cred_dir = Path('/workspace/tools/user_config/auth.d/')
 
         self.parse()
+
+        self._create_netrc_file()
 
     @log_exception()
     def __del__(self) -> None:
         """ Cleanup. """
+        (Path.home() / ".netrc").unlink(missing_ok=True)
+        self.fake.run_sudo('rm -f ~/.netrc')
+
         if self.use_fakeroot:
             self.fake.run_cmd(f'rm -rf {self.target_dir}')
         else:
@@ -155,6 +165,18 @@ class Config:
     def _load_yaml(self, file: str) -> dict[str, Any]:
         with open(file, 'r', encoding='utf-8') as f:
             return yaml.safe_load(f)
+
+    def _create_netrc_file(self) -> None:
+        """ combine credential files and create .netrc """
+
+        netrc_path = Path.home() / ".netrc"
+        with open(netrc_path, "w", opener=partial(os.open, mode=0o600)) as outfile:
+            for f in sorted(self.cred_dir.glob("*.conf")):
+                with f.open("r") as infile:
+                    shutil.copyfileobj(infile, outfile)
+                    outfile.write('\n')
+        # Install it also for the root user. Required for debootstrap
+        self.fake.run_sudo(f"install -m 0600 {netrc_path} ~/.netrc")
 
     def parse(self) -> None:
         """ Load yaml configuration. """

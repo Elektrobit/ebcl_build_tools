@@ -1,7 +1,10 @@
 """ Tests for config helpers. """
 import os
 import shutil
+import stat
 import tempfile
+
+from pathlib import Path
 
 from ebcl.common.apt import AptDebRepo, AptFlatRepo
 from ebcl.common.config import Config
@@ -155,3 +158,35 @@ class TestConfig:
         assert config.result_pattern == '*.tar.xz'
 
         assert config.use_berrymill is False
+
+    def test_credentials(self, tmp_path: Path) -> None:
+        netrc_path = Path.home() / ".netrc"
+        config_file = (tmp_path / "test.yaml")
+        cred_dir = tmp_path / 'cred'
+        cred_dir.mkdir()
+
+        config_file.write_text("base: []")
+        config = Config(str(config_file), str(tmp_path))
+        config.cred_dir = cred_dir
+
+        netrc_path.unlink(missing_ok=True)
+
+        config._create_netrc_file()
+        assert netrc_path.exists(), "File is created, if it does not exist"
+        assert stat.S_IMODE(netrc_path.stat().st_mode) == 0o600, "File mode is 600"
+        assert netrc_path.read_text() == ""
+
+        (cred_dir / "05_test.conf").write_text("file 05_test.conf")
+        (cred_dir / "01_test.conf").write_text("file 01_test.conf")
+        (cred_dir / "03_test.conf").write_text("file 03_test.conf")
+        (cred_dir / "00_test.cnf").write_text("file 01_test.cnf")
+        config._create_netrc_file()
+        assert netrc_path.read_text() == "file 01_test.conf\nfile 03_test.conf\nfile 05_test.conf\n"
+
+        for f in cred_dir.glob("*.conf"):
+            f.unlink()
+        config._create_netrc_file()
+        assert netrc_path.read_text() == ""
+
+        del config
+        assert not netrc_path.exists()
