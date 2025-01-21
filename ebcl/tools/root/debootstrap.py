@@ -25,6 +25,7 @@ class DebootstrapRootGenerator:
         self.cache_folder = get_cache_folder('debootstrap')
         self.debootstrap_variant = debootstrap_variant
         self.apt_env = 'DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC'
+        self.cred_dir = self.config.cred_dir
 
     def _get_apt_hash(self, debootstrap_hash: str) -> str:
         """ Generate a hash for the apt configuration """
@@ -144,6 +145,29 @@ class DebootstrapRootGenerator:
             check=False
         )
 
+    def _copy_credentials(self):
+        """ copy the user credential for apt repo """
+        # check dir exist
+        if not os.path.isdir(self.cred_dir) or not [f for f in os.listdir(self.cred_dir) if f.endswith('.conf')]:
+            return
+
+        self.config.fake.run_sudo(
+            f'install -m 600 /workspace/tools/user_config/auth.d/*.conf {self.config.target_dir}/etc/apt/auth.conf.d/',
+            cwd=self.config.target_dir,
+            check=True
+        )
+
+    def _remove_credentials(self):
+        """ cleanup user credentials """
+        if not os.path.isdir(self.cred_dir) or not [f for f in os.listdir(self.cred_dir) if f.endswith('.conf')]:
+            return
+
+        self.config.fake.run_sudo(
+            f'rm {self.config.target_dir}/etc/apt/auth.conf.d/*',
+            cwd=self.config.target_dir,
+            check=True
+        )
+
     def _find_deboostrap_repo(self) -> tuple[Apt, AptDebRepo] | tuple[None, None]:
         """ Find apt repository for debootstrap. """
         for apt in self.config.apt_repos:
@@ -208,6 +232,7 @@ class DebootstrapRootGenerator:
 
         try:
             self._mount_special_folders()
+            self._copy_credentials()
 
             fake.run_sudo(
                 f'cp /proc/mounts {self.config.target_dir}/etc/mtab',
@@ -239,6 +264,7 @@ class DebootstrapRootGenerator:
             logging.critical('Error while generating root! %s', str(e))
             return False
         finally:
+            self._remove_credentials()
             self._unmount_special_folders()
 
         if debootstrap_hash is not None:
@@ -268,6 +294,7 @@ class DebootstrapRootGenerator:
 
         try:
             self._mount_special_folders()
+            self._copy_credentials()
 
             # Update root
             fake.run_chroot(
@@ -298,6 +325,7 @@ class DebootstrapRootGenerator:
             logging.critical('Error while generating root! %s', str(e))
             return False
         finally:
+            self._remove_credentials()
             self._unmount_special_folders()
 
         if apt_hash is not None:
@@ -342,6 +370,7 @@ class DebootstrapRootGenerator:
 
         try:
             self._mount_special_folders()
+            self._copy_credentials()
 
             # Copy resolv.conf to enable name resolution.
             fake.run_sudo(
@@ -384,9 +413,11 @@ class DebootstrapRootGenerator:
 
         except Exception as e:
             logging.critical('Error while generating root! %s', str(e))
+            self._remove_credentials()
             self._unmount_special_folders()
             return None
         finally:
+            self._remove_credentials()
             self._unmount_special_folders()
 
             # Cleanup
