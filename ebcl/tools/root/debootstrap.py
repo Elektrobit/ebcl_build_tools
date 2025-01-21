@@ -195,6 +195,26 @@ class DebootstrapRootGenerator:
             check=False
         )
 
+    def _copy_credentials(self):
+        """ copy the user credential for apt repo """
+        if not next(self.config.cred_dir.glob("*.conf"), None):
+            return
+
+        self.config.fake.run_sudo(
+            f'install -m 600 {self.config.cred_dir}/*.conf {self.config.target_dir}/etc/apt/auth.conf.d/',
+            check=True
+        )
+
+    def _remove_credentials(self):
+        """ cleanup user credentials """
+        if not next(self.config.cred_dir.glob("*.conf"), None):
+            return
+
+        self.config.fake.run_sudo(
+            f'rm {self.config.target_dir}/etc/apt/auth.conf.d/*',
+            check=True
+        )
+
     def _find_deboostrap_repo(self) -> tuple[Apt, AptDebRepo] | tuple[None, None]:
         """ Find apt repository for debootstrap. """
         for apt in self.config.apt_repos:
@@ -259,6 +279,7 @@ class DebootstrapRootGenerator:
 
         try:
             self._mount_special_folders()
+            self._copy_credentials()
 
             fake.run_sudo(
                 f'cp /proc/mounts {self.config.target_dir}/etc/mtab',
@@ -290,6 +311,7 @@ class DebootstrapRootGenerator:
             logging.critical('Error while generating root! %s', str(e))
             return False
         finally:
+            self._remove_credentials()
             self._unmount_special_folders()
 
         if debootstrap_hash is not None:
@@ -319,6 +341,7 @@ class DebootstrapRootGenerator:
 
         try:
             self._mount_special_folders()
+            self._copy_credentials()
 
             # Update root
             fake.run_chroot(
@@ -348,6 +371,7 @@ class DebootstrapRootGenerator:
             logging.critical('Error while generating root! %s', str(e))
             return False
         finally:
+            self._remove_credentials()
             self._unmount_special_folders()
 
         if apt_hash is not None:
@@ -392,6 +416,7 @@ class DebootstrapRootGenerator:
 
         try:
             self._mount_special_folders()
+            self._copy_credentials()
 
             # Copy resolv.conf to enable name resolution.
             fake.run_sudo(
@@ -434,9 +459,9 @@ class DebootstrapRootGenerator:
 
         except Exception as e:
             logging.critical('Error while generating root! %s', str(e))
-            self._unmount_special_folders()
             return None
         finally:
+            self._remove_credentials()
             self._unmount_special_folders()
 
             # Cleanup
