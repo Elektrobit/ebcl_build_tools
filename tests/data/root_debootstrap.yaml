@@ -1,2 +1,12 @@
 base: root.yaml
 type: debootstrap
+host_files:
+  - source: config/*
+  - source: config2/*
+    destination: etc
+  - source: config3/*
+    destination: etc/
+  - source: config4/*
+    destination: etc/apt
+  - source: config5/*
+    destination: etc/apt/
