@@ -2,13 +2,21 @@
 
 ## How to develop?
 
-Some commands are executed using sudo.
-This requires allowing sudo w/o password which is a bad idea on your dev host.
-To workaorund this, a dev container is used.
+The recommended way to develop ebcl_build_tools is using the devcontainer.
+It can used by loading the workspace into vscode and executing the command "Dev Containers: Reopen in Container".
+This will download the dev container that contains all required tools,
+install useful extensions (python, flake8, mypy, robot framework and pytest) and setup a virtual environment for development.
 
-- Open the dev container.
+### Tests
 
-If you don't use the dev container, consider to run:
+#### pytest
+The pytests are mostly unit tests but cross over into integration tests for some modules.
+Some of these tests download packages from debian repositories. They should be marked with `@pytest.mark.requires_download`.
 
-- Setup Python venv and install required tools: `setup_workspace`
-- Install extensions: `install_extensions`
+Test can be executed using ptest, either on the command line or using the testing integration.
+
+#### robot framework
+The robot framework tests are black box integration tests.
+They take a long time to execute and download files from debian repositories.
+
+To execute the tests either  the robot command line utility or the vscode integration can be used.

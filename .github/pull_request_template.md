@@ -11,7 +11,7 @@ Please use the content of this section in the PR merge comment.
 _(Provide a brief description of the changes in this pull request)_
 
 # Dependencies:
-_(Provide list of pull requests with dependecies with this pull request)_
+_(Provide list of pull requests with dependencies with this pull request)_
 
 # Tests results
 ```bash
@@ -44,6 +44,3 @@ _(Provide list of pull requests with dependecies with this pull request)_
       no contradictions, no double descriptions
 - [ ] Terminology: technical terms are clear and they are used correctly and documented in the glossary
 - [ ] Level of detail: the content matches the detail level necessary for the reviewed object
-0 commit comments
-Comments
-0
