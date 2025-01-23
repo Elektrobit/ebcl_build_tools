@@ -1,13 +1,15 @@
 """ Implementation for using debootstrap as root filesystem generator. """
+import glob
 import logging
 import os
 import hashlib
 
-from typing import Optional
+from typing import Optional, List
 
 from ebcl.common import get_cache_folder
 from ebcl.common.apt import Apt, AptDebRepo
 from ebcl.common.config import Config
+from ebcl.common.version import VersionRelation
 
 
 class DebootstrapRootGenerator:
@@ -45,10 +47,20 @@ class DebootstrapRootGenerator:
     def _get_package_hash(self, apt_hash: str) -> str:
         """ Generate hash for the selected additional packages. """
         packages = ' '.join(
-            list(map(lambda vd: vd.name, self.config.packages)))
+            list(map(lambda vd: f'{vd.name} {vd.version_relation} {vd.version} ', self.config.packages)))
         packages += f' {apt_hash}'
 
-        return hashlib.md5(packages.encode('utf-8')).digest().hex()
+        hf = hashlib.md5(packages.encode('utf-8'))
+
+        # Extend hash for apt config
+        apt_config = self._find_apt_host_files()
+        for ac in apt_config:
+            for fp in glob.glob(f'{ac}/*'):
+                if os.path.isfile(fp):
+                    with open(fp, 'rb') as f:
+                        hf.update(f.read())
+
+        return hf.hexdigest()
 
     def _generate_apt_config(self) -> None:
         """ Generate a apt sources.list. """
@@ -91,6 +103,38 @@ class DebootstrapRootGenerator:
             cwd=self.config.target_dir,
             check=True
         )
+
+        # Copy host files to allow adding additional package manager config
+        # and overwriting of generated apt config.
+        if self.config.host_files:
+            # Copy host files to target_dir folder
+            logging.info('Copy apt config to target dir...')
+            for d in self._find_apt_host_files():
+                self.config.fh.copy_files([{'source': d}], self.config.target_dir)
+
+    def _find_apt_host_files(self) -> List[str]:
+        """ Check for host files affecting the apt behavior. """
+        apt_config = []
+
+        for entry in self.config.host_files:
+            dest: str = entry.get('destination', '')
+            src: str = entry.get('source', '')
+
+            apt_path = 'etc/apt'
+            if dest == 'etc' or dest == 'etc/':
+                apt_path = 'apt'
+            elif dest == 'etc/apt' or dest == 'etc/apt/':
+                apt_path = ''
+
+            if src.endswith('*'):
+                src = src[:-1]
+
+            test_path = os.path.join(src, apt_path)
+
+            if os.path.isdir(test_path):
+                apt_config.append(test_path)
+
+        return apt_config
 
     def _mount_special_folders(self) -> None:
         """ Mount special file systems to chroot folder. """
@@ -276,20 +320,19 @@ class DebootstrapRootGenerator:
                 check=True
             )
 
-            fake.run_chroot(
-                f'bash -c "{self.apt_env} apt upgrade -y"',
-                chroot=self.config.target_dir,
-                check=True
-            )
-
             # Install additional packages
-            packages = ' '.join(
-                list(map(lambda vd: vd.name, self.config.packages)))
+            packages = ''
+            for p in self.config.packages:
+                if p.version_relation and p.version_relation == VersionRelation.EXACT:
+                    packages += f'{p.name}={p.version} '
+                else:
+                    packages += f'{p.name} '
+
             no_recommends = ""
             if not self.config.install_recommends:
                 no_recommends = "--no-install-recommends "
             fake.run_chroot(
-                f'bash -c "{self.apt_env} apt install -y {no_recommends}{packages}"',
+                f'bash -c "{self.apt_env} apt install -y {no_recommends}{packages} --allow-downgrades"',
                 chroot=self.config.target_dir,
                 check=True
             )
@@ -454,7 +497,7 @@ class DebootstrapRootGenerator:
             if not self._run_update(debootstrap_hash):
                 return None
 
-        if run_packages:
+        if run_packages and self.config.packages:
             self._extract_form_cache(apt_hash)
             if not self._run_install_packages(apt_hash):
                 return None

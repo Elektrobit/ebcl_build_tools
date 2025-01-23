@@ -6,7 +6,10 @@ import tempfile
 import pytest
 
 from ebcl.common.apt import Apt
+from ebcl.common.config import Config
+from ebcl.common.fake import Fake
 from ebcl.tools.root.root import RootGenerator
+from ebcl.tools.root.debootstrap import DebootstrapRootGenerator
 
 from ebcl.common.types.build_type import BuildType
 from ebcl.common.types.cpu_arch import CpuArch
@@ -43,6 +46,7 @@ class TestRoot:
         assert self.generator.config.image is None
         assert self.generator.config.type == BuildType.DEBOOTSTRAP
 
+    @pytest.mark.skip(reason="Kiwi doesn't work with AWS hosted linux.elektrobit.com")
     @pytest.mark.dev_container
     def test_build_kiwi_image(self):
         """ Test kiwi image build. """
@@ -55,6 +59,7 @@ class TestRoot:
         assert archive
         assert os.path.isfile(archive)
 
+    @pytest.mark.skip(reason="Kiwi doesn't work with AWS hosted linux.elektrobit.com")
     @pytest.mark.dev_container
     def test_build_kiwi_no_berry(self):
         """ Test kiwi image build without berrymill. """
@@ -69,6 +74,7 @@ class TestRoot:
         assert archive
         assert os.path.isfile(archive)
 
+    @pytest.mark.skip(reason="Kiwi doesn't work with AWS hosted linux.elektrobit.com")
     @pytest.mark.dev_container
     def test_build_kiwi_no_bootstrap(self):
         """ Test kiwi image build without bootstrap package. """
@@ -81,6 +87,7 @@ class TestRoot:
         assert archive
         assert os.path.isfile(archive)
 
+    @pytest.mark.skip(reason="Kiwi doesn't work with AWS hosted linux.elektrobit.com")
     @pytest.mark.dev_container
     def test_build_sysroot_kiwi(self):
         """ Test kiwi image build. """
@@ -108,3 +115,26 @@ class TestRoot:
         archive = generator.create_root()
         assert archive
         assert os.path.isfile(archive)
+
+        # Check that apt config was added
+        fake = Fake()
+        fake.run_cmd(f'tar -tvf {archive} | grep "preferences.d/linux.elektrobit.com"', check=True)
+        fake.run_cmd(f'tar -tvf {archive} | grep "preferences.d/aptconfig2"', check=True)
+        fake.run_cmd(f'tar -tvf {archive} | grep "preferences.d/aptconfig3"', check=True)
+        fake.run_cmd(f'tar -tvf {archive} | grep "preferences.d/aptconfig4"', check=True)
+        fake.run_cmd(f'tar -tvf {archive} | grep "preferences.d/aptconfig5"', check=True)
+
+    def test_get_package_hash(self):
+        """ Test for apt config hash algorithm. """
+        test_dir = os.path.dirname(os.path.abspath(__file__))
+        yaml = os.path.join(test_dir, 'data', 'root_debootstrap.yaml')
+
+        config = Config(yaml, self.temp_dir)
+
+        generator = DebootstrapRootGenerator(config, self.temp_dir)
+
+        apt_hash = '01ab76374f82438e4c32ec1df0e480d8'
+
+        hash = generator._get_package_hash(apt_hash)
+
+        assert hash == '54b54b43bf89e6967d4d87d0416e1574'
