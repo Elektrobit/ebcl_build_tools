@@ -143,12 +143,10 @@ class InitrdGenerator:
         if not success:
             return False
 
-        busybox_paths = [
-            os.path.join(self.target_dir, 'bin', 'busybox'),
-            os.path.join(self.target_dir, 'usr', 'bin', 'busybox')
-        ]
-
-        busybox_path = next((path for path in busybox_paths if os.path.isfile(path)), None)
+        busybox_path: Path | None = None
+        for path in [Path('bin/busybox'), Path('usr/bin/busybox')]:
+            if (self.target_dir / path).is_file():
+                busybox_path = path
 
         if not busybox_path:
             logging.critical(
@@ -157,7 +155,7 @@ class InitrdGenerator:
             return False
 
         self.config.fake.run_chroot(
-            f'{busybox_path} --install -s /bin', self.target_dir)
+            f'{"/" / busybox_path} --install -s /bin', self.target_dir)
 
         return True
 
