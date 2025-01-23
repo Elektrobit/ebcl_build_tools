@@ -2,17 +2,9 @@
 
 set -e
 
-# install embdgen dependencies
-sudo apt install libparted-dev python3-dev pkg-config udev \
-    mtools e2fsprogs cryptsetup-bin dosfstools fakeroot fdisk \
-    debootstrap
-
-
-# remove container ebcl installation
-yes | pip uninstall ebcl
-
+# Create a new .venv to work in
+python3 -m venv .venv
+. .venv/bin/activate
 # install the build tools
 pip install -e .
-
-# install robot framework
-pip install robotframework pytest pytest-cov
+pip install -r dev-requirements.txt
