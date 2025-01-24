@@ -430,6 +430,12 @@ class Apt:
             logging.info('Using default Ubuntu key %s for %s.',
                          self.key_gpg, self._repo.url)
 
+        if not key_gpg and 'local' in self._repo.dist:
+            local_gpg = '/etc/apt/trusted.gpg.d/local.gpg'
+            if os.path.exists(local_gpg):
+                self.key_gpg = local_gpg
+                logging.info('Using generated gpg: %s', local_gpg)
+
     def __eq__(self, value: object) -> bool:
         if not isinstance(value, Apt):
             return False
