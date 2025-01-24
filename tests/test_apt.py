@@ -40,6 +40,48 @@ class TestApt:
         assert p[0].name == 'busybox-static'
         assert p[0].file_url is not None
 
+    def test_trusted_repo(self):
+        """ Test that repo is trusted. """
+        apt = AptDebRepo(
+            url='http://localhost',
+            dist='local',
+            components=['main'],
+            arch=CpuArch.AMD64
+        )
+
+        deb = apt.sources_entry(trusted=True)
+        assert 'trusted=yes' in deb
+
+        apt_flat = AptFlatRepo(
+            url='http://localhost',
+            directory='',
+            arch=CpuArch.AMD64
+        )
+
+        deb = apt_flat.sources_entry(trusted=True)
+        assert 'trusted=yes' in deb
+
+    def test_repo_arch(self):
+        """ Test that repo provides arch parameter. """
+        apt = AptDebRepo(
+            url='http://localhost',
+            dist='local',
+            components=['main'],
+            arch=CpuArch.AMD64
+        )
+
+        deb = apt.sources_entry(trusted=True)
+        assert 'arch=amd64' in deb
+
+        apt_flat = AptFlatRepo(
+            url='http://localhost',
+            directory='',
+            arch=CpuArch.ARM64
+        )
+
+        deb = apt_flat.sources_entry(trusted=True)
+        assert 'arch=arm64' in deb
+
     def test_download_busybox(self):
         """ Search busybox package in default apt repository. """
         p = self.apt.find_package('busybox-static')

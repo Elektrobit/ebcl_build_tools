@@ -86,17 +86,24 @@ class DebootstrapRootGenerator:
         with open(apt_sources, mode='w', encoding='utf-8') as f:
             for apt in self.config.apt_repos:
                 logging.info('Adding apt repo %s...', str(apt))
-                f.write(f'{apt.repo.sources_entry}\n\n')
 
+                # Copy key if available
                 (key_pub_file, key_gpg_file) = apt.get_key_files()
                 if key_pub_file:
                     os.remove(key_pub_file)
 
-                fake.run_sudo(
-                    f'cp {key_gpg_file} {apt_key_dir}',
-                    cwd=self.config.target_dir,
-                    check=True
-                )
+                trusted = False
+                if key_gpg_file and os.path.isfile(key_gpg_file):
+                    fake.run_sudo(
+                        f'cp {key_gpg_file} {apt_key_dir}',
+                        cwd=self.config.target_dir,
+                        check=True
+                    )
+                else:
+                    logging.warning('No GPG key for %s, will trust the repo!', apt)
+                    trusted = True
+
+                f.write(f'{apt.repo.sources_entry(trusted=trusted)}\n\n')
 
         fake.run_sudo(
             f'cp {apt_sources} {apt_sources_target}',
