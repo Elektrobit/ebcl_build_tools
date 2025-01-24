@@ -146,9 +146,8 @@ class AptRepo(ABC):
         """Returns a string that uniquely identified this repository."""
         return f'{self._url}_{self._get_id()}'
 
-    @property
     @abstractmethod
-    def sources_entry(self) -> str:
+    def sources_entry(self, trusted: bool = False) -> str:
         """Returns a string that can be used to define the repo in an apt sources file."""
         raise NotImplementedError()
 
@@ -184,6 +183,13 @@ class AptRepo(ABC):
         release_file = cache.get(f"{self._url}/{self._meta_path}/InRelease", encoding="utf-8")
         if release_file:
             self._parse_release_file(cache, DebReleaseInfo(release_file))
+
+    def _apt_source_parameters(self, trusted: bool = False):
+        """ Returns the parameters for the apt sources.list entry. """
+        if trusted:
+            return f'[arch={self.arch} trusted=yes]'
+        else:
+            return f'[arch={self.arch}]'
 
     @abstractmethod
     def _get_id(self) -> str:
@@ -251,9 +257,9 @@ class AptFlatRepo(AptRepo):
     def _meta_path(self) -> str:
         return f'{self._directory}'
 
-    @property
-    def sources_entry(self) -> str:
-        return f"deb {self._url} {self._directory}/"
+    def sources_entry(self, trusted: bool = False) -> str:
+        params = super(AptFlatRepo, self)._apt_source_parameters(trusted)
+        return f"deb {params} {self._url} {self._directory}/"
 
     def _is_eq(self, other: Self) -> bool:
         return self._directory == other._directory
@@ -296,9 +302,9 @@ class AptDebRepo(AptRepo):
     def _meta_path(self) -> str:
         return f'dists/{self._dist}'
 
-    @property
-    def sources_entry(self) -> str:
-        return f"deb {self._url} {self._dist} {' '.join(self._components)}"
+    def sources_entry(self, trusted: bool = False) -> str:
+        params = super(AptDebRepo, self)._apt_source_parameters(trusted)
+        return f"deb {params} {self._url} {self._dist} {' '.join(self._components)}"
 
     @property
     def dist(self) -> str:
