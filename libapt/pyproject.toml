@@ -1,0 +1,88 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "src/libapt/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/libapt"]
+
+[project]
+name = "libapt"
+dynamic = ["version"]
+
+authors = [
+  { name="Elektrobit GmbH", email="info@elektrobit.com" },
+  { name="AOX Technologies GmbH", email="info@aox.de" },
+  { name="Thomas Irgang", email="thomas@irgang.eu" },
+]
+description = "Libapt provides a generic pure Python interface for Debian APT repositories.."
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: POSIX :: Linux",
+    "Topic :: Software Development :: Embedded Systems",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "requests",
+    "typing_extensions",
+    "unix_ar",
+    "zstandard"
+]
+
+[project.urls]
+Homepage = "https://github.com/Elektrobit/ebcl_build_tools"
+
+[tool.pylint.format]
+max-line-length = 120
+
+[tool.pylint.'MESSAGES CONTROL']
+disable = []
+
+[tool.pytest.ini_options]
+minversion = "6.2.5"
+addopts = "--cov --cov-context=test --cov-report html -rP"
+testpaths = [ "tests" ]
+markers = [
+    "requires_download: tests requiring downloads form public resources, which is not allowed for GH actions",
+]
+log_level = "debug"
+
+[tool.coverage.paths]
+source = [
+    "src/libapt",
+    "*/site-packages/libapt"
+]
+
+[tool.coverage.run]
+branch = true
+source = ["libapt", "src"]
+
+[tool.coverage.report]
+include_namespace_packages = true
+exclude_also = [
+    "@(abc\\.)?abstractmethod",
+    "def __repr__"
+]
+include = ["src/*"]
+
+[tool.coverage.html]
+show_contexts = true
+
+
+[tool.mypy]
+mypy_path = "$MYPY_CONFIG_FILE_DIR/src"
+explicit_package_bases = true
+disable_error_code = "type-abstract"
+
+[tool.flake8]
+ignore = []
+per-file-ignores = []
+count = true
+statistics = true
+max-line-length = 120
+exclude = '.venv'
