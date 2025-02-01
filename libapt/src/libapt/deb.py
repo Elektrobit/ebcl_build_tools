@@ -18,7 +18,7 @@ from .types.cpu_arch import CpuArch
 
 
 class InvalidFile(Exception):
-    """Invalid debian package"""
+    """Invalid Debian package"""
 
 
 class Package:
@@ -160,6 +160,7 @@ class Package:
                           self.local_file, self.name, e)
             return None
 
+        # TODO: Pure Python implementation not relying on host tools.
         # find data.tar
         data_tar = Path(deb_content_location) / 'data.tar'
         if data_tar.exists():
@@ -248,7 +249,7 @@ class DebFile:
 
     def __init__(self, fileOrPackage: Path | Package) -> None:
         """
-        Instantiate the class with either a path to a debian package
+        Instantiate the class with either a path to a Debian package
         or a Package instance with a local_file path
         """
         if isinstance(fileOrPackage, Package):
@@ -264,6 +265,7 @@ class DebFile:
         """ Get a package instance for the binary file"""
         if self._package:
             return self._package
+        # TODO: Pure Python implementation not relying on host tools.
         res = subprocess.run(
             [
                 "dpkg-deb",
@@ -278,7 +280,7 @@ class DebFile:
         )
         package = next(iter(DebPackagesInfo(res.stdout).packages), None)
         if res.returncode != 0 or not package:
-            raise InvalidFile("%s is not a valid debian file", self._file)
+            raise InvalidFile("%s is not a valid Debian file", self._file)
         package.local_file = str(self._file)
         self._package = package
         return package

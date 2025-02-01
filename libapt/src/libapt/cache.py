@@ -1,4 +1,4 @@
-"""" EBcL deb package cache. """
+"""" Deb package cache. """
 import logging
 import os
 import shutil
@@ -311,7 +311,7 @@ class CacheBackendSqlite:
 
 
 class Cache:
-    """" EBcL deb package cache. """
+    """" Deb package cache. """
     _backend: CacheBackendSqlite
     _folder: Path
 
@@ -361,6 +361,7 @@ class Cache:
 
     def add(self, package: Package, do_move: bool = False) -> str | None:
         """ Add a package to the cache. """
+        # TODO: Make use of deb hash
         logging.debug('Add package %s to cache.', package)
 
         if not package.version:

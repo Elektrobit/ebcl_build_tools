@@ -1,4 +1,5 @@
 """ Fakeroot and subprocess helper. """
+# TODO: Remove when not needed anymore
 import logging
 import os
 import subprocess

@@ -28,10 +28,12 @@ class AptCache:
     Cache for the Apt and AptRepo classes
     """
     _cache_dir: Path
+    _max_age: int
 
-    def __init__(self, cache_dir: Path) -> None:
+    def __init__(self, cache_dir: Path, max_age: int = 24 * 60 * 60) -> None:
         self._cache_dir = cache_dir
         self._cache_dir.mkdir(parents=True, exist_ok=True)
+        self._max_age = max_age
 
     def _get_cache_path(self, url: str) -> Path:
         return self._cache_dir / urlparse(url).path.replace('/', '_')
@@ -53,8 +55,8 @@ class AptCache:
             ts = float(ts_str)
             age = time.time() - ts
 
-            if age > 24 * 60 * 60:
-                # older than one day
+            if age > self._max_age:
+                # older than max age
                 logging.debug('Removing outdated cache file %s', cache_file)
                 try:
                     os.remove(cache_file)
@@ -147,8 +149,8 @@ class AptRepo(ABC):
         return f'{self._url}_{self._get_id()}'
 
     @abstractmethod
-    def sources_entry(self, trusted: bool = False) -> str:
-        """Returns a string that can be used to define the repo in an apt sources file."""
+    def sources_list_deb_entry(self, trusted: bool = False) -> str:
+        """Returns a string that can be used to define the repo in an apt sources list file."""
         raise NotImplementedError()
 
     @property
@@ -257,7 +259,7 @@ class AptFlatRepo(AptRepo):
     def _meta_path(self) -> str:
         return f'{self._directory}'
 
-    def sources_entry(self, trusted: bool = False) -> str:
+    def sources_list_deb_entry(self, trusted: bool = False) -> str:
         params = super(AptFlatRepo, self)._apt_source_parameters(trusted)
         return f"deb {params} {self._url} {self._directory}/"
 
@@ -302,7 +304,7 @@ class AptDebRepo(AptRepo):
     def _meta_path(self) -> str:
         return f'dists/{self._dist}'
 
-    def sources_entry(self, trusted: bool = False) -> str:
+    def sources_list_deb_entry(self, trusted: bool = False) -> str:
         params = super(AptDebRepo, self)._apt_source_parameters(trusted)
         return f"deb {params} {self._url} {self._dist} {' '.join(self._components)}"
 
@@ -390,34 +392,6 @@ class Apt:
             key_gpg=repo_config.get('gpg', None)
         )
 
-    @classmethod
-    def ebcl(cls, arch: CpuArch, dist: str, release: str, components: list[str]) -> Self:
-        """Get an EBcL apt repo."""
-        url = os.environ.get('EBCL_REPO_URL', 'https://linux.elektrobit.com/eb-corbos-linux')
-        release = os.environ.get('EBCL_VERSION', release)
-        key = os.environ.get('EBCL_REPO_KEY', 'file:///build/keys/elektrobit.pub')
-        gpg = os.environ.get('EBCL_REPO_GPG', '/etc/apt/trusted.gpg.d/elektrobit.gpg')
-        return cls(
-            repo=AptDebRepo(
-                url=f'{url}/{release}',
-                dist=dist,
-                components=components,
-                arch=arch
-            ),
-            key_url=key,
-            key_gpg=gpg
-        )
-
-    @classmethod
-    def ebcl_apt(cls, arch: CpuArch, release: str = '1.4') -> Self:
-        """Get the EBcL apt repo for EB components."""
-        return cls.ebcl(arch, "ebcl", release, ['prod', 'dev'])
-
-    @classmethod
-    def ebcl_primary_repo(cls, arch: CpuArch, release: str = '1.4') -> Self:
-        """Get the EBcL apt repo for upstream jammy components."""
-        return cls.ebcl(arch, "jammy", release, ['main'])
-
     def __init__(
         self,
         repo: AptRepo,
@@ -453,14 +427,14 @@ class Apt:
 
     @property
     def deb_repo(self) -> AptDebRepo | None:
-        """Return a normal debian repo or None if this is a flat repo."""
+        """Return a normal Debian repo or None if this is a flat repo."""
         return isinstance(self._repo, AptDebRepo) and self._repo or None
 
     @property
     def repo(self) -> AptRepo:
         return self._repo
 
-    def _load_packages(self) -> None:
+    def load_packages(self) -> None:
         """Download repo metadata and parse package indices."""
         if self._repo.loaded:
             return
@@ -482,7 +456,6 @@ class Apt:
 
     def get_key(self) -> str | None:
         """Get key for this repo."""
-        # TODO: test
         if not self.key_url:
             return None
 
@@ -515,7 +488,6 @@ class Apt:
 
     def get_key_files(self, output_folder: str | None = None) -> tuple[str | None, str | None]:
         """Get gpg key file for repo key."""
-        # TODO: test
         if not self.key_url:
             return (None, self.key_gpg)
 

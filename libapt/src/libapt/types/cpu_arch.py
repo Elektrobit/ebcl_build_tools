@@ -54,8 +54,8 @@ class CpuArch(Enum):
         else:
             return "UNKNOWN"
 
-    def get_kiwi_arch(self) -> str:
-        """ Get the arch string for the kiwi image description. """
+    def get_arch(self) -> str:
+        """ Get the arch string used by compilers and QEMU. """
         if self == self.AMD64:
             return "x86_64"
         elif self == self.ARM64:
@@ -64,22 +64,12 @@ class CpuArch(Enum):
         raise UnsupportedCpuArchitecture(
             f'Unsupported CPU architecture {str(self)} for kiwi-ng build!')
 
-    def get_berrymill_arch(self) -> str:
-        """ Get the arch string for the berrymill image description. """
+    def get_package_arch(self) -> str:
+        """ Get the arch string used by Debian packages. """
         if self == self.AMD64:
             return "amd64"
         elif self == self.ARM64:
             return "arm64"
-
-        raise UnsupportedCpuArchitecture(
-            f'Unsupported CPU architecture {str(self)} for berrymill build!')
-
-    def get_box_arch(self) -> str:
-        """ Get the arch string for the kiwi box build. """
-        if self == self.AMD64:
-            return "--x86_64"
-        elif self == self.ARM64:
-            return "--aarch64"
 
         raise UnsupportedCpuArchitecture(
             f'Unsupported CPU architecture {str(self)} for berrymill build!')

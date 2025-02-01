@@ -1,5 +1,5 @@
 """
-Classes for parsing debian metadata files
+Classes for parsing Debian metadata files
 """
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from .version import PackageRelation, Version, VersionDepends, parse_depends
 
 class DebMetadata:
     """
-    Parser for debian metadata files (like control, Release, Packages)
+    Parser for Debian metadata files (like control, Release, Packages)
 
     Metadata can be organized in stanzas (or paragraphs) to define multiple
     entities in a single file. This is for example used in the Packages file
@@ -67,7 +67,7 @@ class DebMetadata:
 
 
 class DebPackagesInfo:
-    """Parses a debian Packages file into a list of Packages"""
+    """Parses a Debian Packages file into a list of Packages"""
     RELATIONS = [
         ("depends", PackageRelation.DEPENDS),
         ("pre-depends", PackageRelation.PRE_DEPENS),
@@ -124,7 +124,7 @@ class DebPackagesInfo:
 
 
 class DebReleaseInfo:
-    """Parses a debian Release or InRelease file."""
+    """Parses a Debian Release or InRelease file."""
     CHECKSUM_KEYS = ["md5sum", "sha1", "sha256", "sha512"]
     _data: dict[str, str]
     _hashes: dict[str, list[tuple[str, int, str]]]
