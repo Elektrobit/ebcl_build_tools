@@ -384,11 +384,16 @@ class InitrdGenerator:
         init_script.write_text(init_script_content)
         os.chmod(init_script, 0o755)
 
+        # reproducible build
+        self.config.fake.run_sudo(
+            'find . | xargs touch -h -a -m -d $(date --utc --date=@${SOURCE_DATE_EPOCH:-$(date +%s)} +%Y-%m-%d) {}',
+            cwd=self.target_dir)
+
         # Create initrd image
         os.makedirs(os.path.dirname(image_path), exist_ok=True)
         with open(image_path, 'wb') as img:
             self.config.fake.run_sudo(
-                'find . -print0 | cpio --null -ov --format=newc', cwd=self.target_dir, stdout=img)
+                'find . -print0 | cpio --null -ov --format=newc --reproducible', cwd=self.target_dir, stdout=img)
 
         return image_path
 
