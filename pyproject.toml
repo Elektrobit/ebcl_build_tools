@@ -80,7 +80,8 @@ source = ["ebcl"]
 include_namespace_packages = true
 exclude_also = [
     "@(abc\\.)?abstractmethod",
-    "def __repr__"
+    "def __repr__",
+    "class \\w+\\(Protocol\\):"
 ]
 include = ["ebcl/*"]
 
