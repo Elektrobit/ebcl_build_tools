@@ -25,7 +25,7 @@ class BaseResolver:
             "base": [config_file]
         }
         while config["base"]:
-            base_name = config["base"].pop(0)
+            base_name = config["base"].pop()
             base_path = resolve_file(
                 file=base_name, relative_base_dir=str(conf_dir))
             old = config
