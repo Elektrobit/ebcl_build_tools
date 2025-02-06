@@ -17,7 +17,7 @@ class BaseResolver:
     Resolve bases defined in the yaml config.
     """
 
-    def load(self, config_file: str, conf_dir: str) -> dict:
+    def load(self, config_file: str, conf_dir: Path) -> dict:
         """
         Load config_file and all of its bases.
         """
@@ -27,7 +27,7 @@ class BaseResolver:
         while config["base"]:
             base_name = config["base"].pop(0)
             base_path = resolve_file(
-                file=base_name, relative_base_dir=conf_dir)
+                file=base_name, relative_base_dir=str(conf_dir))
             old = config
             config = self._load_file(base_path)
             merge_dict(config, old)
@@ -49,20 +49,20 @@ class HvFileGenerator:
     schema: Schema
     output_path: Path
 
-    def __init__(self, file: str, output_path: str, specialization: str | None = None) -> None:
-        """ Parse the yaml config file.
-        Args:
-            config_file (Path): Path to the yaml config file.
+    def __init__(self, file: Path, output_path: Path, specialization: Path | None = None) -> None:
         """
-        self.output_path = Path(output_path)
+        Parse the yaml config file.
 
-        """ Load yaml configuration. """
-        config_file = Path(file)
+        :param file: Path to the yaml config file
+        :param output_path: Path where the output file are written to
+        :param specilization: Path ot specialization directory
+        """
+        self.output_path = output_path
 
-        config = BaseResolver().load(config_file.name, str(config_file.parent))
+        config = BaseResolver().load(file.name, file.parent)
         del config["base"]
 
-        self.schema = Schema(specialization and Path(specialization) or None)
+        self.schema = Schema(specialization)
         self.config = self.schema.parse_config(config)
 
     def _render_template(self, outpath: Path, template: FileReadProtocol) -> None:
@@ -110,7 +110,9 @@ def main() -> None:
                         help='Path to the output directory')
     args = parser.parse_args()
 
-    generator = HvFileGenerator(args.config_file, args.output, args.specialization)
+    if args.specialization:
+        args.specialization = Path(args.specialization)
+    generator = HvFileGenerator(Path(args.config_file), Path(args.output), args.specialization)
     generator.create_files()
 
 
