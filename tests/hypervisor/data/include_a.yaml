@@ -1,0 +1,6 @@
+base:
+  - include_a_a.yaml
+  - include_a_b.yaml
+
+includes:
+  - include_a

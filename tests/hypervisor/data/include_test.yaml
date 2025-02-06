@@ -1,0 +1,10 @@
+base:
+  - empty.yaml
+  - include_a.yaml
+  - include_b.yaml
+
+includes:
+  - include_test
+
+foo:
+  bar: 4

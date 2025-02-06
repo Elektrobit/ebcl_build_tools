@@ -1,0 +1,8 @@
+version: 1
+
+classes:
+  UndefinedClass:
+    a_property:
+      type: integer
+
+root: UndefinedClass

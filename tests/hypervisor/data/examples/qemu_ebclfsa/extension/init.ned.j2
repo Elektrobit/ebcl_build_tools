@@ -1,0 +1,74 @@
+package.path = "rom/?.lua"
+
+local L4 = require "L4";
+local system = require "system"
+
+system.start_cons("-ka{% if config.cons.default_vm %} -c {{config.cons.default_vm}}{% endif %}")
+
+local shms = {
+{% for shm in config.shms|sort %}
+    {{shm.name}} = create_ds(
+        {{"0x%x"|format(shm.size)}},
+        nil,
+{% if shm.address %}
+        {{"0x%x"|format(shm.address)}},
+        {{"0x%x"|format(shm.address + shm.size - 1)}},
+{% else %}
+        nil,
+        nil,
+{% endif %}
+        L4.Mem_alloc_flags.Continuous | L4.Mem_alloc_flags.Pinned
+    ),
+{% endfor %}
+}
+
+local io_busses = {
+{% for vbus in config.vbus %}
+    {{vbus.name}} = 1,
+{% endfor %}
+}
+system.start_io(io_busses, "rom/io.cfg")
+
+{% if  config.vnets %}
+local vnets = {
+{% for net in config.vnets %}
+   {{ net.name }} = system.start_l4vio_net_p2p(),
+{% endfor %}
+}
+{% endif %}
+
+{% if  config.vio_block %}
+local vio_blocks = {
+{% for net in config.vio_block %}
+   {{ net.name }} = 1,
+{% endfor %}
+}
+system.start_virtio_block(vio_blocks)
+{% endif %}
+
+{% for vm in config.vms %}
+system.start_vm(
+    "{{vm.name}}",
+    {{loop.index0}},
+    "{{vm.kernel}}",
+    {{vm.ram}},
+    {% if vm.initrd %}"{{vm.initrd}}"{% else %}nil{% endif %},
+    "{{vm.dtb}}",
+    "{{vm.cmdline}}",
+    {{"0x%02x"|format(vm.cpus)}},
+    {
+{% for vnet in vm.vnets %}
+        {{vnet.name}} = vnets.{{vnet.name}}.port{{vnet.site_a and "A" or "B"}},
+{% endfor%}
+{% for vio in vm.virtio_block %}
+        {{vio.name}}_{{vio.is_server and "server" or "client"}} = vio_blocks.{{vio.name}}.{{vio.is_server and "server" or "client"}},
+{% endfor%}
+{% if vm.vbus %}
+        vbus = io_busses.{{vm.vbus.name}},
+{% endif %}
+{% for shm in vm.shms %}
+        {{shm.name}} = shms.{{shm.name}},
+{% endfor %}
+    }
+);
+{% endfor %}

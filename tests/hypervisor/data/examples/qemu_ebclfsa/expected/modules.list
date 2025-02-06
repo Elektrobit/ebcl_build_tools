@@ -1,0 +1,25 @@
+default-kernel fiasco -serial_esc
+
+entry hv-image
+roottask salt rom/init.ned
+module moe rom/init.ned
+
+module l4re
+module ned
+module cons
+module io
+module uvmm
+module virtio-block
+module l4vio_net_p2p
+module health_signal_handler
+module safeHM_lisa
+
+module init.ned
+module io.cfg
+module system.lua
+
+module Image_hi
+module Image_li
+module ramdisk_base
+module virt-hi.dtb
+module virt-li.dtb

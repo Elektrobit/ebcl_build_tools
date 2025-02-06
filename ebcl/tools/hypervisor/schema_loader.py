@@ -131,7 +131,7 @@ class Schema:
             schema = yaml.load(f, yaml.Loader)
         schema_version = schema.get("version", None)
 
-        if not schema_version or not isinstance(schema_version, int):
+        if schema_version is None or not isinstance(schema_version, int):  # pragma: no cover
             raise ConfigError("Version missing in base schema")
         self._schema_version = schema_version
         return schema
@@ -145,7 +145,7 @@ class Schema:
         with schema_file.open(encoding="utf-8") as f:
             schema = yaml.load(f, yaml.Loader)
         schema_ext_version = schema.get("version", None)
-        if not schema_ext_version or not isinstance(schema_ext_version, int):
+        if schema_ext_version is None or not isinstance(schema_ext_version, int):
             raise ConfigError("Version missing in extension schema")
         if self._schema_version != schema_ext_version:
             raise ConfigError(
@@ -161,7 +161,7 @@ class Schema:
             return None
 
         spec = importlib.util.spec_from_file_location("ext_model", ext_model_file)
-        if not spec or not spec.loader:
+        if not spec or not spec.loader:  # pragma: nocover
             raise ConfigError(f"Unable to load extension model {ext_model_file}")
         ext_model = importlib.util.module_from_spec(spec)
         with DisablePycache():  # Disable creation of __pycache__ in extension dir
