@@ -31,6 +31,7 @@ class BaseResolver:
             old = config
             config = self._load_file(base_path)
             merge_dict(config, old)
+        del config["base"]
         return config
 
     def _load_file(self, filename: str) -> dict:
@@ -60,7 +61,6 @@ class HvFileGenerator:
         self.output_path = output_path
 
         config = BaseResolver().load(file.name, file.parent)
-        del config["base"]
 
         self.schema = Schema(specialization)
         self.config = self.schema.parse_config(config)
