@@ -132,3 +132,4 @@ root: HVConfig
 templates:
   - io.cfg.j2
   - system.lua
+  - modules.list.j2
