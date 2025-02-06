@@ -489,10 +489,12 @@ class DebootstrapRootGenerator:
         apt_hash = self._get_apt_hash(debootstrap_hash)
         package_hash = self._get_package_hash(apt_hash)
 
-        run_debootstrap = not (self._has_cache_archive(debootstrap_hash) or self._has_cache_archive(
-            apt_hash) or self._has_cache_archive(package_hash))
-        run_update = not (self._has_cache_archive(apt_hash)
-                          or self._has_cache_archive(package_hash))
+        run_debootstrap = not (
+            self._has_cache_archive(debootstrap_hash)
+            or self._has_cache_archive(apt_hash)
+            or self._has_cache_archive(package_hash)
+        )
+        run_update = not (self._has_cache_archive(apt_hash) or self._has_cache_archive(package_hash))
         run_packages = not self._has_cache_archive(package_hash)
 
         if run_debootstrap:
@@ -504,10 +506,11 @@ class DebootstrapRootGenerator:
             if not self._run_update(debootstrap_hash):
                 return None
 
-        if run_packages and self.config.packages:
+        if run_packages:
             self._extract_form_cache(apt_hash)
-            if not self._run_install_packages(apt_hash):
-                return None
+            if self.config.packages:
+                if not self._run_install_packages(apt_hash):
+                    return None
         else:
             self._extract_form_cache(package_hash)
 
