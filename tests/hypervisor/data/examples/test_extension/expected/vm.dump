@@ -1,0 +1,10 @@
+name: a
+cpus: 1
+hi: True
+kernel: kernel
+
+name: b
+cpus: 1
+hi: False
+kernel: kernel
+

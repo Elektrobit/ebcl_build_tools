@@ -1,0 +1,36 @@
+vbus:
+  - name: bus1
+    devices:
+      - name: a_device
+        compatible: device
+        mmios:
+          - address: 0xe6150000
+            size:  0x4000
+          - address: 0xdf980000
+            size:  0x10000
+      - name: b_device
+        compatible: bdevice
+        irqs:
+          - irq: 12
+            trigger: level_high
+  - name: bus2
+    devices:
+      - name: c_device
+        compatible: another_device
+        mmios:
+          - address: 0x123
+            size: 1
+
+vms:
+  - name: a
+    hi: True
+    cpus: 1
+    dtb: a.dtb
+    kernel: kernel
+    ram: 123
+
+  - name: b
+    dtb: a.dtb
+    kernel: kernel
+    cpus: 1
+    ram: 456

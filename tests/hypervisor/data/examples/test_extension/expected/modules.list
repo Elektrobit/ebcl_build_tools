@@ -1,0 +1,18 @@
+default-kernel fiasco -serial_esc
+
+entry hv-image
+roottask moe rom/init.ned
+
+module l4re
+module ned
+module cons
+module io
+module uvmm
+
+module init.ned
+module io.cfg
+module system.lua
+
+module a.dtb
+module custom_model_was_used
+module kernel

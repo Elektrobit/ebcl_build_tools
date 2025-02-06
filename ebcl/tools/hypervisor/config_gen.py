@@ -116,5 +116,5 @@ def main() -> None:
     generator.create_files()
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: nocover
     main()

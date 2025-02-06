@@ -1,0 +1,10 @@
+version: 1
+
+classes:
+  VM:
+    hi:
+      type: boolean
+      default: false
+
+templates:
+  - vm.dump.j2
