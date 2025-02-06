@@ -11,7 +11,7 @@ test_data = Path(__file__).parent / "data"
 
 
 def test_empty(tmp_path: Path) -> None:
-    gen = HvFileGenerator(str(test_data / "empty.yaml"), str(tmp_path))
+    gen = HvFileGenerator(test_data / "empty.yaml", tmp_path)
     assert gen.config
     assert isinstance(gen.config, HVConfig)
     assert gen.config.vbus == []
@@ -19,7 +19,7 @@ def test_empty(tmp_path: Path) -> None:
 
 
 def test_device(tmp_path: Path) -> None:
-    gen = HvFileGenerator(str(test_data / "test_devices.yaml"), str(tmp_path))
+    gen = HvFileGenerator(test_data / "test_devices.yaml", tmp_path)
     assert isinstance(gen.config, HVConfig)
     assert len(gen.config.vbus) == 2
 
@@ -61,7 +61,7 @@ def test_device(tmp_path: Path) -> None:
 
 
 def test_shm(tmp_path: Path) -> None:
-    gen = HvFileGenerator(str(test_data / "test_shms.yaml"), str(tmp_path))
+    gen = HvFileGenerator(test_data / "test_shms.yaml", tmp_path)
     assert isinstance(gen.config, HVConfig)
     assert len(gen.config.shms) == 4
 
@@ -88,7 +88,7 @@ def test_shm(tmp_path: Path) -> None:
 
 
 def test_vms(tmp_path: Path) -> None:
-    gen = HvFileGenerator(str(test_data / "test_vms.yaml"), str(tmp_path))
+    gen = HvFileGenerator(test_data / "test_vms.yaml", tmp_path)
 
     assert isinstance(gen.config, HVConfig)
     assert len(gen.config.vms) == 2
@@ -130,7 +130,7 @@ def test_vnets(tmp_path: Path) -> None:
     def is_vnet_list(val: list[Any]) -> TypeGuard[list[VNetRef]]:
         return len(val) == 0 or all(isinstance(x, VNetRef) for x in val)
 
-    gen = HvFileGenerator(str(test_data / "test_vnets.yaml"), str(tmp_path))
+    gen = HvFileGenerator(test_data / "test_vnets.yaml", tmp_path)
 
     assert isinstance(gen.config, HVConfig)
 
@@ -171,7 +171,7 @@ def test_vnets(tmp_path: Path) -> None:
 def test_virtio_blocks(tmp_path: Path) -> None:
     def is_vioref_list(val: list[Any]) -> TypeGuard[list[VirtioBlockRef]]:
         return len(val) == 0 or all(isinstance(x, VirtioBlockRef) for x in val)
-    gen = HvFileGenerator(str(test_data / "test_virtio_blocks.yaml"), str(tmp_path))
+    gen = HvFileGenerator(test_data / "test_virtio_blocks.yaml", tmp_path)
 
     assert isinstance(gen.config, HVConfig)
 
@@ -219,7 +219,7 @@ def test_vnet_too_many_users(tmp_path: Path) -> None:
         ConfigError,
         match="^" + re.escape("VM vm_3: VNet vnet_1 is already used by two vms (vm_1 and vm_2)") + "$"
     ):
-        HvFileGenerator(str(test_data / "test_vnet_too_many_users.yaml"), str(tmp_path))
+        HvFileGenerator(test_data / "test_vnet_too_many_users.yaml", tmp_path)
 
 
 def test_virtio_block_multiple_servers(tmp_path: Path) -> None:
@@ -227,7 +227,7 @@ def test_virtio_block_multiple_servers(tmp_path: Path) -> None:
         ConfigError,
         match="^" + re.escape("VM vm_2: Server for Virtio Block blk_1 already set to vm_1") + "$"
     ):
-        HvFileGenerator(str(test_data / "test_virtio_block_multiple_servers.yaml"), str(tmp_path))
+        HvFileGenerator(test_data / "test_virtio_block_multiple_servers.yaml", tmp_path)
 
 
 def test_virtio_block_multiple_clients(tmp_path: Path) -> None:
@@ -235,7 +235,7 @@ def test_virtio_block_multiple_clients(tmp_path: Path) -> None:
         ConfigError,
         match="^" + re.escape("VM vm_2: Client for Virtio Block blk_1 already set to vm_1") + "$"
     ):
-        HvFileGenerator(str(test_data / "test_virtio_block_multiple_clients.yaml"), str(tmp_path))
+        HvFileGenerator(test_data / "test_virtio_block_multiple_clients.yaml", tmp_path)
 
 
 def test_undefined_vbus(tmp_path: Path) -> None:
@@ -243,7 +243,7 @@ def test_undefined_vbus(tmp_path: Path) -> None:
         ConfigError,
         match="^" + re.escape("VM vm_1: VBus non_existing is not defined") + "$"
     ):
-        HvFileGenerator(str(test_data / "test_undefined_vbus.yaml"), str(tmp_path))
+        HvFileGenerator(test_data / "test_undefined_vbus.yaml", tmp_path)
 
 
 def test_missing_shms(tmp_path: Path) -> None:
@@ -251,4 +251,4 @@ def test_missing_shms(tmp_path: Path) -> None:
         ConfigError,
         match="^" + re.escape("VM vm_1: The following shared memory segments are not defined: shm_3, shm_4") + "$"
     ):
-        HvFileGenerator(str(test_data / "test_missing_shms.yaml"), str(tmp_path))
+        HvFileGenerator(test_data / "test_missing_shms.yaml", tmp_path)
