@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import builtins
 import logging
-from typing import Any, Type
+from typing import Any, ClassVar, Type
 
 
 class ConfigError(Exception):
@@ -53,8 +53,8 @@ class BaseModel:
     """
     Base class for all model classes
     """
-    class_registry: dict[str, type[BaseModel]] = {}
-    PROPERTIES: list[PropertyInfo]
+    class_registry: ClassVar[dict[str, type[BaseModel]]] = {}
+    PROPERTIES: ClassVar[list[PropertyInfo]] = []
 
     def __init__(self, config: dict) -> None:
         self.__load(config)
@@ -64,18 +64,18 @@ class BaseModel:
         expected = info.get_type(self.class_registry)
 
         if not expected:
-            raise ConfigError(f"Unexpected type for {type(self).__name__}.{info.name}: {info.type}")
+            raise ConfigError(f"Invalid type for {type(self).__name__}.{info.name}: {info.type}")
 
         if not info.validate_enum(value):
             raise ConfigError(
                 f"Invalid value for enum type {type(self).__name__}.{info.name}, "
-                f"expected one of {', '.join(info.enum_values or [])} but is '{value}"
+                f"expected one of {', '.join(info.enum_values or [])} but is {value}"
             )
 
         if issubclass(expected, BaseModel):
             value = expected(value)
 
-        if not isinstance(value, expected):
+        if expected is not type(value):
             raise ConfigError(
                 f"Wrong type for {type(self).__name__}.{info.name}, expected {info.type} but is {type(value)}"
             )
@@ -95,11 +95,22 @@ class BaseModel:
     def __load(self, config: dict) -> None:
         """Load this instance from the config"""
         used_keys = []
+
+        missing_keys = []
         for info in self.PROPERTIES:
             value = config.get(info.name, info.default)
             if value is None:
                 if not info.optional:
-                    raise ConfigError(f"Property {info.name} for {type(self).__name__} is not optional")
+                    missing_keys.append(info.name)
+
+        if missing_keys:
+            raise ConfigError(
+                f"Properties are missing for {type(self).__name__}: {', '.join(sorted(missing_keys))}"
+            )
+
+        for info in self.PROPERTIES:
+            value = config.get(info.name, info.default)
+            if value is None:
                 setattr(self, info.name, None)
                 continue
             used_keys.append(info.name)
@@ -111,4 +122,6 @@ class BaseModel:
 
         unused_keys = set(config.keys()) - set(used_keys)
         if unused_keys:
-            logging.warning("Some properties for %s are unused: %s", type(self).__name__, ", ".join(unused_keys))
+            logging.warning(
+                "Some properties for %s are unused: %s", type(self).__name__, ", ".join(sorted(unused_keys))
+            )
