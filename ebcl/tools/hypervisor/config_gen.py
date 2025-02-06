@@ -67,7 +67,7 @@ class HvFileGenerator:
 
     def _render_template(self, outpath: Path, template: FileReadProtocol) -> None:
         """Render a template to target"""
-        template_obj = jinja2.Template(template.read_text("utf-8"), trim_blocks=True)
+        template_obj = jinja2.Template(template.read_text("utf-8"), trim_blocks=True, keep_trailing_newline=True)
 
         with outpath.open("w", encoding="utf-8") as f:
             f.write(template_obj.render(config=self.config))
