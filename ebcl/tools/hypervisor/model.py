@@ -288,8 +288,13 @@ class HVConfig(BaseModel):
     """List of registered virtual busses"""
     shms: list[SHM]
     """List of registered shared memory regions"""
-    modules: set[str]
+    __modules: set[str]
     """List of required hypervisor modules"""
+
+    @property
+    def modules(self) -> list[str]:
+        """Return a sorted list of required hypervisor modules"""
+        return sorted(self.__modules)
 
     def register_vnet(self, name: str, user: VM) -> VNetRef:
         """
@@ -348,12 +353,12 @@ class HVConfig(BaseModel):
         """
         Add a module to the list of required hypervisor modules.
         """
-        self.modules.add(name)
+        self.__modules.add(name)
 
     def __init__(self, config: dict) -> None:
         self.vnets = []
         self.vio_block = []
-        self.modules = set()
+        self.__modules = set()
 
         super().__init__(config)
 
