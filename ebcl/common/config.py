@@ -3,6 +3,8 @@ import glob
 import logging
 import os
 import tempfile
+import shutil
+from pathlib import Path
 
 from typing import Any, Optional
 
@@ -141,12 +143,19 @@ class Config:
         self.sysroot_defaults: bool = True
         # Install recommends (defaults to true, to keep behavior)
         self.install_recommends: bool = True
+        # where credentials are kept
+        self.cred_dir = '/workspace/tools/user_config/auth.d/'
 
         self.parse()
+
+        """ adding credentials """
+        self._create_netrc_file()
 
     @log_exception()
     def __del__(self) -> None:
         """ Cleanup. """
+        (Path.home() / ".netrc").unlink(missing_ok=True)
+
         if self.use_fakeroot:
             self.fake.run_cmd(f'rm -rf {self.target_dir}')
         else:
@@ -155,6 +164,20 @@ class Config:
     def _load_yaml(self, file: str) -> dict[str, Any]:
         with open(file, 'r', encoding='utf-8') as f:
             return yaml.safe_load(f)
+
+    def _create_netrc_file(self) -> None:
+        """ combine credential files and create .netrc """
+        if not os.path.isdir(self.cred_dir):
+            return
+
+        with os.fdopen(os.open((Path.home() / ".netrc"), os.O_WRONLY | os.O_CREAT, 0o600), 'w') as outfile:
+            # Ensure .netrc file is empty when starting
+            outfile.write('')
+            for f in os.listdir(self.cred_dir):
+                if f.endswith('.conf'):
+                    with open(os.path.join(self.cred_dir, f), 'r') as infile:
+                        shutil.copyfileobj(infile, outfile)
+                        outfile.write('\n')
 
     def parse(self) -> None:
         """ Load yaml configuration. """
