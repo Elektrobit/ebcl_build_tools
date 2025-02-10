@@ -1,15 +1,16 @@
 """ Implementation for using debootstrap as root filesystem generator. """
 import glob
+import hashlib
 import logging
 import os
-import hashlib
 
+from pathlib import Path
 from typing import Optional, List
 
 from ebcl.common import get_cache_folder
 from ebcl.common.apt import Apt, AptDebRepo
 from ebcl.common.config import Config
-from ebcl.common.version import VersionRelation
+from ebcl.common.version import VersionDepends, VersionRelation
 
 
 class DebootstrapRootGenerator:
@@ -224,6 +225,34 @@ class DebootstrapRootGenerator:
                     return (apt, repo)
         return (None, None)
 
+    def _update_ca_certificates(self) -> None:
+        """
+        Update ca-certificates
+        There is a chance that this cannot be done using apt update && apt upgrade,
+        because the sources may list a repository, that uses a root certificate for signing
+        that is not yet installed on the target system (because the ca-certificates package in debootrap is too old).
+        """
+
+        logging.info("Trying to update ca-certificates")
+        ca_pkg = self.config.proxy.find_package(VersionDepends("ca-certificates", None, None, None, self.config.arch))
+        if not ca_pkg:
+            logging.warning("No ca-certificates package in sources found, skipping update.")
+            return
+
+        ca_pkg = self.config.proxy.download_package(self.config.arch, ca_pkg, location=self.config.target_dir)
+        local_file_str = ca_pkg and ca_pkg.local_file or None
+        if not local_file_str:
+            logging.error("Unable to download ca-certificates package")
+            return
+        local_file = Path(local_file_str)
+        local_name = local_file.name
+
+        self.config.fake.run_chroot(
+            f'bash -c "{self.apt_env} dpkg --install --skip-same-version /{local_name}"',
+            self.config.target_dir
+        )
+        local_file.unlink()
+
     def _run_debootstrap(self) -> bool:
         """ Run debootstrap and store result in cache. """
         fake = self.config.fake
@@ -293,6 +322,8 @@ class DebootstrapRootGenerator:
                 cwd=self.config.target_dir,
                 check=True
             )
+
+            self._update_ca_certificates()
 
             # Update root
             fake.run_chroot(
