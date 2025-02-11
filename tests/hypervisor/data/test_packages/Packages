@@ -1,0 +1,48 @@
+Package: test-ebclfsa
+Version: 1.0
+Architecture: arm64
+Maintainer: nobody
+Filename: test-ebclfsa.deb
+Size: 3404
+MD5sum: f3d0fe80d4f93893cacb89b9ff7f4127
+SHA1: d455184b02b14bcd7d6674cc2b3d00a82c1cc759
+SHA256: 2848affa33fe5a1b56fb59b24da5e1172be10d577b06ff02521e5fa7d97f7685
+Description:
+ Example package
+
+Package: test-empty
+Version: 1.0
+Architecture: arm64
+Maintainer: nobody
+Filename: test-empty.deb
+Size: 488
+MD5sum: 2bee39e8c94278abbfafd5fe0a7d1653
+SHA1: 6b029df5dea0bbe02dbe5c7aa27155dc9fb66113
+SHA256: f3902ffe162954ab3ae3483efda97fadd6b9f48c9e67b2b77e208008c1eefbaf
+Description:
+ Example package
+
+Package: test-multiple
+Version: 1.0
+Architecture: arm64
+Maintainer: nobody
+Filename: test-multiple.deb
+Size: 546
+MD5sum: a2a503e734bb180d8e2fe0b7d6a5109a
+SHA1: 65b01ecd9ded1525ac0b0ce9b101f709a8591a2e
+SHA256: 1d6b9a3a0c6f2f6db5b44c7bc7033621a59d70270765e5386cb0a553733b0688
+Description:
+ Example package
+
+Package: test-simple
+Version: 1.0
+Architecture: arm64
+Maintainer: nobody
+Filename: test-simple.deb
+Size: 518
+MD5sum: 061515d128a6513c2302cd34dfa440a3
+SHA1: a9f1b0360f61994698c04e660fbe150df3c906d6
+SHA256: 3595fc09a69b84d8c4a7dcee5a0a3476bc7aab66178c64e2c3089f2b66ca9fca
+Description:
+ Example package
+
