@@ -31,8 +31,9 @@ Rootfs should be set up
     Directory Should Exist  /run
     Directory Should Exist  /root
     Directory Should Exist  /usr
-    Directory Should Exist  /sbin
-    Directory Should Exist  /lib
+    Directory Should Exist  /usr/sbin
+    Directory Should Exist  /usr/lib
+    Directory Should Exist  /usr/bin
     Directory Should Exist  /etc
 
 File dummy.txt should be OK

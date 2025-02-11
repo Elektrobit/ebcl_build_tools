@@ -1,0 +1,11 @@
+apt_repos:
+  - apt_repo: http://ports.ubuntu.com/ubuntu-ports
+    distro: noble
+    components:
+      - main
+      - universe
+modules:
+  - veth
+kernel: linux-image-6.8.0-31-generic
+arch: 'arm64'
+root_device: /dev/mmcblk0p2

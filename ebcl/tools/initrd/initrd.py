@@ -79,12 +79,19 @@ class Modules:
                 mod_name
             )
             name = mod_name
-        return self._modules.get(name, None)
+        module = self._modules.get(name, None)
+
+        if module is None:
+            mod_names = list(self._modules.keys())
+            mod_names.sort()
+            logging.debug('Available modules: %s', mod_names)
+            logging.debug('Missing module: %s', name)
+
+        return module
 
     def __get_or_create(self, mod: str,) -> Module:
         modpath = Path(mod)
         mod_name = Module.get_module_name(modpath)
-        logging.debug('Adding module %s (%s)', mod_name, mod)
         module = self._modules.get(mod_name, None)
         if not module:
             module = Module(modpath)
@@ -166,13 +173,6 @@ class InitrdGenerator:
                 'Busybox binary is missing! target: %s package: %s',
                 self.target_dir, package)
             return False
-
-        # Linker is expected as /lib/ld-... but installed as /usr/lib/...
-        self.config.fake.run_sudo(f'mkdir -p {self.target_dir}/lib')
-        self.config.fake.run_sudo(f'ln -sf /usr/lib/ld-linux-aarch64.so.1 {self.target_dir}/lib/ld-linux-aarch64.so.1')
-
-        # Installation of dynamically linked busybox fails if folder doesn't exist.
-        self.config.fake.run_sudo(f'mkdir -p {self.target_dir}/bin')
 
         self.config.fake.run_chroot(
             f'{"/" / busybox_path} --install -s /bin', self.target_dir)
@@ -315,6 +315,17 @@ class InitrdGenerator:
         """ Create the initrd image.  """
         image_path = os.path.join(self.config.output_path, self.name)
 
+        # Create necessary directories
+        for dir_name in ['proc', 'sys', 'dev', 'sysroot', 'var', 'usr/bin',
+                         'tmp', 'run', 'root', 'usr', 'usr/sbin', 'usr/lib', 'etc']:
+            self.config.fake.run_sudo(
+                f'mkdir -p {os.path.join(self.target_dir, dir_name)}')
+
+        # Create lib and bin folder symlinks
+        self.config.fake.run_sudo(f'ln -sf usr/lib {self.target_dir}/lib')
+        self.config.fake.run_sudo(f'ln -sf usr/bin {self.target_dir}/bin')
+        self.config.fake.run_sudo(f'ln -sf usr/sbin {self.target_dir}/sbin')
+
         logging.info('Installing busybox...')
 
         success = self.install_busybox()
@@ -322,14 +333,6 @@ class InitrdGenerator:
             return None
 
         self.download_deb_packages()
-
-        # Create necessary directories
-        for dir_name in ['proc', 'sys', 'dev', 'sysroot', 'var', 'bin',
-                         'tmp', 'run', 'root', 'usr', 'sbin', 'lib', 'etc']:
-            self.config.fake.run_sudo(
-                f'mkdir -p {os.path.join(self.target_dir, dir_name)}')
-            self.config.fake.run_sudo(
-                f'chown 0:0 {os.path.join(self.target_dir, dir_name)}')
 
         if self.config.base_tarball:
             base_tarball = self.config.base_tarball
