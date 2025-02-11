@@ -23,17 +23,6 @@ $$(deb).deb: DEB=$(NAME)_$(subst :,+,$(1))_$(2)
 endef
 
 $(foreach arch,$(archs),$(foreach version,$(versions),$(eval $(call gen_targets,$(version),$(arch)))))
-$(info $(debs))
-
-package: DEBIAN/changelog DEBIAN/control
-	dpkg-deb -b . $(NAME)_$(VERSION).deb
-
-DEBIAN:
-	mkdir -p $@
-
-DEBIAN/%: %.in | DEBIAN
-	sed 's/@@NAME@@/$(NAME)/; s/@@VERSION@@/$(VERSION)/; s/@@ARCH@@/$(ARCH)/;' $< > $@
-
 
 clean:
 	rm -rf tmp
