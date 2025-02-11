@@ -20,8 +20,6 @@ from ebcl.common.templates import render_template
 from ebcl.common.version import parse_package
 
 
-
-
 class Module:
     path: Path
     """Relative path of the module"""
@@ -35,7 +33,6 @@ class Module:
         """ Get the module name form the path. """
         mod_name = modpath.stem.split('.')[0]
         return mod_name
-
 
     def __init__(self, path: Path) -> None:
         self.path = path
@@ -150,8 +147,13 @@ class InitrdGenerator:
             logging.critical('No busybox!')
             return False
 
-        success = self.config.extract_package(self.config.busybox)
-        if not success:
+        (debs, _contents, missing) = self.proxy.download_deb_packages(
+            packages=[self.config.busybox],
+            contents=self.target_dir,
+            download_depends=True
+        )
+
+        if missing:
             return False
 
         busybox_path: Path | None = None
@@ -164,6 +166,13 @@ class InitrdGenerator:
                 'Busybox binary is missing! target: %s package: %s',
                 self.target_dir, package)
             return False
+
+        # Linker is expected as /lib/ld-... but installed as /usr/lib/...
+        self.config.fake.run_sudo(f'mkdir -p {self.target_dir}/lib')
+        self.config.fake.run_sudo(f'ln -sf /usr/lib/ld-linux-aarch64.so.1 {self.target_dir}/lib/ld-linux-aarch64.so.1')
+
+        # Installation of dynamically linked busybox fails if folder doesn't exist.
+        self.config.fake.run_sudo(f'mkdir -p {self.target_dir}/bin')
 
         self.config.fake.run_chroot(
             f'{"/" / busybox_path} --install -s /bin', self.target_dir)
