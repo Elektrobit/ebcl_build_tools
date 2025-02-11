@@ -26,8 +26,7 @@ class BaseResolver:
         }
         while config["base"]:
             base_name = config["base"].pop()
-            base_path = resolve_file(
-                file=base_name, relative_base_dir=str(conf_dir))
+            base_path = resolve_file(file=base_name, relative_base_dir=str(conf_dir))
             old = config
             config = self._load_file(base_path)
             merge_dict(config, old)
@@ -102,17 +101,15 @@ def main() -> None:
 
     parser = argparse.ArgumentParser(
         description='Create the config files for the hypervisor')
-    parser.add_argument('-s', '--specialization', type=str,
+    parser.add_argument('-s', '--specialization', type=Path,
                         help='Path to hypervisor specialization directory')
-    parser.add_argument('config_file', type=str,
+    parser.add_argument('config_file', type=Path,
                         help='Path to the YAML configuration file')
-    parser.add_argument('output', type=str,
+    parser.add_argument('output', type=Path,
                         help='Path to the output directory')
     args = parser.parse_args()
 
-    if args.specialization:
-        args.specialization = Path(args.specialization)
-    generator = HvFileGenerator(Path(args.config_file), Path(args.output), args.specialization)
+    generator = HvFileGenerator(args.config_file, args.output, args.specialization)
     generator.create_files()
 
 
