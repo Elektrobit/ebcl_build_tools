@@ -20,6 +20,8 @@ from ebcl.common.templates import render_template
 from ebcl.common.version import parse_package
 
 
+
+
 class Module:
     path: Path
     """Relative path of the module"""
@@ -27,6 +29,13 @@ class Module:
     """List of all recursive dependencies of the module"""
     is_builtin: bool
     """Module is built into the kernel"""
+
+    @staticmethod
+    def get_module_name(modpath: Path) -> str:
+        """ Get the module name form the path. """
+        mod_name = modpath.stem.split('.')[0]
+        return mod_name
+
 
     def __init__(self, path: Path) -> None:
         self.path = path
@@ -36,7 +45,7 @@ class Module:
     @property
     def name(self) -> str:
         """The name of the module (e.g. 'foo' for 'foo.ko')"""
-        return self.path.stem
+        return Module.get_module_name(self.path)
 
     @property
     def dependency_string(self) -> str:
@@ -65,8 +74,8 @@ class Modules:
 
     def find(self, name: str) -> Module | None:
         """Find a module from a filename or module name"""
-        if name.endswith(".ko"):
-            mod_name = Path(name).stem
+        if '.ko' in name:
+            mod_name = Module.get_module_name(Path(name))
             logging.warning(
                 "Using deprecated filename format for modules (%s). Please use only the module name: %s",
                 name,
@@ -77,7 +86,9 @@ class Modules:
 
     def __get_or_create(self, mod: str,) -> Module:
         modpath = Path(mod)
-        module = self._modules.get(modpath.stem, None)
+        mod_name = Module.get_module_name(modpath)
+        logging.debug('Adding module %s (%s)', mod_name, mod)
+        module = self._modules.get(mod_name, None)
         if not module:
             module = Module(modpath)
             self._modules[module.name] = module
