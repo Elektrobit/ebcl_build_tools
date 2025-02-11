@@ -1,0 +1,8 @@
+Origin: Test Repo
+Label: TestRepo
+Architectures: amd64 arm64
+Description: Test repo
+Date: Wed Dec 11 12:00:00 2024
+SHA256:
+ 3f77a280600be6e2cfb825741278847cc440f156c9012525a3006028b33f4f93 1209 Packages
+ 1b34a7b9d81aa35bb27f6898530988e563c0b064b97b35f069d84742819f8e33 628 Packages.xz
