@@ -125,6 +125,47 @@ class TestInitrd:
             self.generator.config.target_dir, 'lib', 'modules', kversion, module))
 
     @pytest.mark.requires_download
+    def test_extract_compressed_modules_from_deb(self, tmp_path: Path):
+        """ Test compressed modules. """
+        test_dir = os.path.dirname(os.path.abspath(__file__))
+        yaml = os.path.join(test_dir, 'data', 'initrd_noble.yaml')
+        # Prepare generator
+        generator = InitrdGenerator(yaml, str(tmp_path))
+
+        vd = VersionDepends(
+            name='linux-modules-6.8.0-31-generic',
+            package_relation=None,
+            version_relation=None,
+            version=None,
+            arch=generator.config.arch
+        )
+        package = generator.config.proxy.find_package(vd)
+        assert package
+
+        pkg = generator.config.proxy.download_package(
+            generator.config.arch, package)
+        assert pkg
+        assert pkg.local_file
+        assert os.path.isfile(pkg.local_file)
+
+        mods_temp = tempfile.mkdtemp()
+
+        pkg.extract(mods_temp)
+
+        module = 'veth'
+        generator.config.modules = [module]
+
+        kversion = generator.find_kernel_version(mods_temp)
+        assert kversion
+
+        generator.copy_modules(mods_temp)
+
+        self.fake.run_sudo(f'rm -rf {mods_temp}', check=False)
+
+        assert os.path.isfile(os.path.join(
+            generator.config.target_dir, 'lib', 'modules', kversion, 'kernel/drivers/net/veth.ko.zst'))
+
+    @pytest.mark.requires_download
     def test_add_devices(self):
         """ Test device node creation. """
         self.generator.config.devices = [{
