@@ -17,9 +17,9 @@ additional-css = ["docs/custom.css"]
 curly-quotes = true
 mathjax-support = false
 copy-fonts = true
-git-repository-url = "https://github.com/Elektrobit/ebcl_dev_container/"
+git-repository-url = "https://github.com/Elektrobit/ebcl_build_tools/"
 git-repository-icon = "fa-github"
-edit-url-template = "https://github.com/Elektrobit/ebcl_dev_container/edit/main/{path}"
+edit-url-template = "https://github.com/Elektrobit/ebcl_build_tools/edit/main/{path}"
 input-404 = "not-found.md"
 
 [output.html.print]
