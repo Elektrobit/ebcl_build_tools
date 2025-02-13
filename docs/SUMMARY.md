@@ -7,5 +7,6 @@
 - [Initrd Generator](initrd_generator.md)
 - [Boot Generator](boot_generator.md)
 - [Downloader](downloader.md)
+- [Hypervisor Config Generator](hypervisor_config.md)
 - [Proxy](proxy.md)
 - [Common](common.md)
