@@ -116,7 +116,7 @@ class TestProxy:
 
     def test_find_bootstrap_package(self) -> None:
         """ Test that bootstrap-root-ubuntu-jammy package is found. """
-        proxy = Proxy([Apt.ebcl_apt(CpuArch.AMD64, '1.4')])
+        proxy = Proxy([Apt.ebcl_apt(CpuArch.AMD64, '1.5')])
 
         vds = parse_depends('bootstrap-root-ubuntu-jammy', CpuArch.AMD64)
         assert vds
@@ -125,7 +125,7 @@ class TestProxy:
         assert p.name == 'bootstrap-root-ubuntu-jammy'
         assert p.arch == CpuArch.AMD64
 
-        proxy = Proxy([Apt.ebcl_apt(CpuArch.ARM64, '1.4')])
+        proxy = Proxy([Apt.ebcl_apt(CpuArch.ARM64, '1.5')])
 
         vds = parse_depends('bootstrap-root-ubuntu-jammy', CpuArch.ARM64)
         assert vds
