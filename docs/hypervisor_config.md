@@ -19,7 +19,8 @@ The configuration using lua is very flexible, but being a full-fledged imperativ
 For that reason this tool was created that can turn a declarative definition of the system configuration into the required lua code.
 
 
-Note: In the future the safety relevant applications of the hypervisor will require configuration in a format different from lua (e.g. compiled binary or binary configuration files). These files have to be created/generated as well which will likely be a part of this tool in the future.
+Note: In the future the safety relevant applications of the hypervisor will require configuration in a format different from lua (e.g. compiled binary or binary configuration files).
+These files have to be created/generated as well which will likely be a part of this tool in the future.
 
 ## Overview
 ![Elektrobit](assets/hv_overview.png)
