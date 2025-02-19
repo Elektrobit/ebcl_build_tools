@@ -36,9 +36,14 @@ As described in the overview chapter the tool comes with a model and schema defi
 The main reason for that mechanism is that the hypervisor can provide different features depending on the build (i.e. a hypervisor with and without safety extensions).
 These features must be configurable and at the time of writing this tool and documentation it does not seem to be viable to integrate all possible features into the tool itself, so it is "outsourced" to a package created together with the hypervisor binaries.
 
-In this context the *schema* is a yaml file that describes all possible properties in the configuration file with their datatypes. It can be compared to [JSON Schema](https://json-schema.org/) but is very specific to the hypervisor and limited to 
-required features. Everything in the configuration file is either a simple datatype (like string, integer or boolean) an object of a specific type (i.e. a named collection of specified properties) or a list of these.
-This schema is then used to parse the configuration file into a python object *model*. The model can also be extended/overwritten by the hypervisor specialization. For every named object type defined in the schema a python class exists or is dynamically created. This allows to add some functionality to transform the configuration or derive information using python code.
+In this context the *schema* is a yaml file that describes all possible properties in the configuration file with their datatypes.
+It can be compared to [JSON Schema](https://json-schema.org/).
+Nevertheless, it is very specific to the hypervisor and limited to required features only.
+Everything in the configuration file is either a simple datatype (like string, integer or boolean) an object of a specific type (i.e. a named collection of specified properties) or a list of these.
+This schema is then used to parse the configuration file into a python object *model*.
+The model can also be extended/overwritten by the hypervisor specialization.
+For every named object type defined in the schema a python class exists or is dynamically created.
+This allows to add functionality to transform the configuration or derive information using python code.
 
 The schema also defines the templates that are rendered into the final lua configuration using the python model in the last step of the tool. The templates can either be jinja2 templates (ending in .j2) then they are processed or they are just copied (e.g. for lua library code).
 
