@@ -46,6 +46,8 @@ class Initrd:
         cmd = f'bash -c "source /build/venv; {generator} {config} {self.target}"'
         self.fake.run_no_fake(cmd)
 
+        return self.target
+
     def _unpack(self, arch):
         """ Unpack the initrd image. """
         os.makedirs(self.target, exist_ok=True)
@@ -125,7 +127,7 @@ class Initrd:
             uid=int(uid),
             gid=int(gid))
 
-    def get_file(self, path: str) -> str:
+    def get_file_initrd(self, path: str) -> str:
         assert self.target is not None
         if path.startswith('/'):
             path = path[1:]

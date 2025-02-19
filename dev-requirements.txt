@@ -6,4 +6,4 @@ pytest==8.3.3
 robotframework==7.2
 types-PyYAML
 types-requests
-
+diffoscope
