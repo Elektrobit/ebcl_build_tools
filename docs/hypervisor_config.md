@@ -2,7 +2,7 @@
 The hypervisor config generator can create configuration files for the Elektrobit Hypervisor from a declarative configuration in yaml configuration files.
 
 ## Background
-Thy Elektrobit hypervisor traditionally is configured using the lua interface.
+The Elektrobit hypervisor traditionally is configured using a lua interface.
 Configuration of the hypervisor usually consists of:
 
  * Virtual Machines (e.g. linux) to be started with assigned resources like
