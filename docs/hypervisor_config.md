@@ -216,7 +216,7 @@ virtio_block@1000 {
 };
 ```
 This will create two `/dev/vdY`devices with `Y` being a letter starting at 'a'.
-If these are the only two `virtio,mmio` devices in the device tree that are backed by a block device, the names will be `vda` for `root` and `vdb` for `data`.
+If these are the only two `virtio,mmio` devices in the device tree backed by a block device, the names will be `vda` for `root` and `vdb` for `data`.
 
 
 #### *vbus* - List of virtual busses
