@@ -129,7 +129,7 @@ The *shms* property defines a list of shared memory segments with the following 
 
  * *name*: The name of the segment used to reference it in a virtual machine configuration and its device tree.
  * *size*: The size of the segment in bytes.
- * *address*: The optional physical address of the shared memory. If this is not set a valid address is automatically determined. If set it will trigger an error if the address is already used or outside of the RAM. Use with caution!
+ * *address*: The optional physical address of the shared memory. If this is not set, a valid address is determined automatically. If the set address is already in use or outside of the RAM, it will trigger an error. Use with caution!
 
 A device tree entry for a shared memory segment `my_shm` looks like this:
 ```c
