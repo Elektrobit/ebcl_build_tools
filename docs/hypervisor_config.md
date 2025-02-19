@@ -391,7 +391,8 @@ list_of_objects:
   - name: object 2
 ```
 
-Parsing this will return an instance of a `Root`-object with the five properties set and the `list_of_objects` property will contain a list of two `AnotherObject` instances.
+Parsing this will return an instance of a `Root`-object with the five properties set.
+The `list_of_objects` property will contain a list of two `AnotherObject` instances.
 This root object is passed to the jinja templates using the variable name `config` and can then be used to render the templates.
 
 Two templates are rendered in this example: *jinja_template.cfg.j2* is rendered using jinja2 and will be stored in the output folder as *jinja_template.cfg*. While *copy_me.lua* is just copied to the output folder.
