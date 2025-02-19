@@ -45,7 +45,8 @@ The model can also be extended/overwritten by the hypervisor specialization.
 For every named object type defined in the schema a python class exists or is dynamically created.
 This allows to add functionality to transform the configuration or derive information using python code.
 
-The schema also defines the templates that are rendered into the final lua configuration using the python model in the last step of the tool. The templates can either be jinja2 templates (ending in .j2) then they are processed or they are just copied (e.g. for lua library code).
+The schema also defines templates that are rendered into the final lua configuration using the python model in the last step of the tool.
+The templates can either be jinja2 templates (ending in .j2), being processed by the tool, or lua code that can be copied directly.
 
 
 ## Usage
