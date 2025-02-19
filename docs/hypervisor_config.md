@@ -16,7 +16,8 @@ Configuration of the hypervisor usually consists of:
 
 The configuration using lua is very flexible, but being a full-fledged imperative programming language it is not as straight forward as it could be.
 
-For that reason this tool was created that can turn a declarative definition of the system configuration into the required lua code.
+For that reason, the *hypervisor config tool* was created.
+It allows generation of the required lua code from a declarative system definition.
 
 
 Note: In the future the safety relevant applications of the hypervisor will require configuration in a format different from lua (e.g. compiled binary or binary configuration files).
