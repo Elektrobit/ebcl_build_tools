@@ -55,7 +55,7 @@ The tool always requires the configuration yaml file and the output directory:
 hypervisor_config config.yaml output_dir
 ```
 
-When a hypervisor specialization is to be used there are two variants:
+There are two variants available to hand over a hypervisor specialization:
 
 1. Pass a directory containing the specialization (schema.yaml and/or model.py and templates)
    `hypervisor_config --specialization specialization_dir config.yaml output_dir`
