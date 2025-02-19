@@ -32,7 +32,8 @@ The last part shown here is the optional *hypervisor specialization*.
 It can be used to extend or change the model used for the configuration and also replace or extend the configuration files generated.
 
 ### Model and Schema
-As described in the overview chapter the tool comes with a model and schema definition, that can be extended using a hypervisor specialization. The main reason for that mechanism is that the hypervisor can provide different features depending on the build (i.e. a hypervisor with and without safety extensions).
+As described in the overview chapter the tool comes with a model and schema definition, that can be extended using a hypervisor specialization.
+The main reason for that mechanism is that the hypervisor can provide different features depending on the build (i.e. a hypervisor with and without safety extensions).
 These features must be configurable and at the time of writing this tool and documentation it does not seem to be viable to integrate all possible features into the tool itself, so it is "outsourced" to a package created together with the hypervisor binaries.
 
 In this context the *schema* is a yaml file that describes all possible properties in the configuration file with their datatypes. It can be compared to [JSON Schema](https://json-schema.org/) but is very specific to the hypervisor and limited to 
