@@ -411,7 +411,7 @@ Two templates are rendered in this example:
 
 
 ### Model
-In this context model means the python object model representing the configuration.
+In this context, model means the python object model representing the configuration.
 It is used to further process and validate the configuration to simplify the process of writing configuration templates in jinja.
 One example for processing done in the model is collecting all kernel and device trees into a single list for inclusion into the modules.list that is then used to created the hypervisor binary.
 
