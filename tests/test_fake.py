@@ -50,8 +50,8 @@ class TestFake:
         assert stderr is not None
         assert not stderr.strip()
 
-    def test_run_chroot(self):
-        """ Run a command using fakechroot. """
+    def test_chroot_special_folders(self):
+        """ Check that the special filesystems are available in the chroot env. """
         # Prepare fakeroot
         # Get busybox
         ps = self.apt.find_package('busybox-static')
@@ -73,31 +73,71 @@ class TestFake:
         assert stderr is not None
         assert not stderr.strip()
 
-        # Prepare dev folder
-        (_stdout, stderr, _returncode) = self.fake.run_chroot(
-            'mkdir -p dev', chroot, capture_output=True)
-        assert stderr is not None
-        assert not stderr.strip()
-
-        # Check folder
+        # Check proc is mounted
         (stdout, stderr, _returncode) = self.fake.run_chroot(
-            'stat -c \'%u %g\' /dev', chroot, capture_output=True)
+            'stat -c \'%u %g\' /proc/cmdline', chroot, capture_output=True)
         assert stdout
         assert stdout.strip() == '0 0'
         assert stderr is not None
         assert not stderr.strip()
 
-        # Create device node
-        (_stdout, stderr, _returncode) = self.fake.run_chroot(
-            'mknod -m 777 /dev/console c 1234 1234', chroot, capture_output=True)
+        # Check sysfs is mounted
+        (stdout, stderr, _returncode) = self.fake.run_chroot(
+            'stat -c \'%u %g\' /sys/dev', chroot, capture_output=True)
+        assert stdout
+        assert stdout.strip() == '0 0'
         assert stderr is not None
         assert not stderr.strip()
 
-        # Check device node
+        # Check dev/pts is mounted
         (stdout, stderr, _returncode) = self.fake.run_chroot(
-            'stat -c \'%A %u %g\' /dev/console', chroot, capture_output=True)
+            'stat -c \'%u %g\' /dev/pts', chroot, capture_output=True)
         assert stdout
-        assert stdout.strip() == 'crwxrwxrwx 0 0'
+        assert stdout.strip() == '0 0'
+        assert stderr is not None
+        assert not stderr.strip()
+
+        # Check DNS config
+        (stdout, stderr, _returncode) = self.fake.run_chroot(
+            'stat -c \'%u %g\' /etc/resolv.conf', chroot, capture_output=True)
+        assert stdout
+        assert stdout.strip() == '0 0'
+        assert stderr is not None
+        assert not stderr.strip()
+
+        (stdout, stderr, _returncode) = self.fake.run_chroot(
+            'stat -c \'%u %g\' /etc/gai.conf', chroot, capture_output=True)
+        assert stdout
+        assert stdout.strip() == '0 0'
+        assert stderr is not None
+        assert not stderr.strip()
+
+        (stdout, stderr, returncode) = self.fake.run_chroot(
+            'ping -c 1 linux.elektrobit.com', chroot, capture_output=True)
+        assert returncode == 0
+        assert stderr is not None
+        assert not stderr.strip()
+
+    def test_run_chroot(self):
+        """ Run a command using fakechroot. """
+        # Prepare fakeroot
+        # Get busybox
+        ps = self.apt.find_package('busybox-static')
+        assert ps
+        p = ps[0]
+
+        chroot = tempfile.mkdtemp()
+
+        pkg = self.proxy.download_package(self.apt.arch, p)
+        assert pkg
+        assert pkg.local_file
+        assert os.path.isfile(pkg.local_file)
+
+        pkg.extract(chroot)
+
+        # Install busybox
+        (_stdout, stderr, _returncode) = self.fake.run_chroot(
+            '/bin/busybox --install -s /bin', chroot, capture_output=True)
         assert stderr is not None
         assert not stderr.strip()
 
