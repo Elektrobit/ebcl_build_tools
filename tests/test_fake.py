@@ -2,6 +2,8 @@
 import os
 import tempfile
 
+import pytest
+
 from ebcl.common.apt import Apt, AptDebRepo
 from ebcl.common.fake import Fake
 from ebcl.common.proxy import Proxy
@@ -109,6 +111,30 @@ class TestFake:
             'stat -c \'%u %g\' /etc/gai.conf', chroot, capture_output=True)
         assert stdout
         assert stdout.strip() == '0 0'
+        assert stderr is not None
+        assert not stderr.strip()
+
+    @pytest.mark.requires_download
+    def test_ping_eb_apt(self):
+        """ Check that the ping to eb apt works form chroot. """
+        # Prepare fakeroot
+        # Get busybox
+        ps = self.apt.find_package('busybox-static')
+        assert ps
+        p = ps[0]
+
+        chroot = tempfile.mkdtemp()
+
+        pkg = self.proxy.download_package(self.apt.arch, p)
+        assert pkg
+        assert pkg.local_file
+        assert os.path.isfile(pkg.local_file)
+
+        pkg.extract(chroot)
+
+        # Install busybox
+        (_stdout, stderr, _returncode) = self.fake.run_chroot(
+            '/bin/busybox --install -s /bin', chroot, capture_output=True)
         assert stderr is not None
         assert not stderr.strip()
 
