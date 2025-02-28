@@ -134,7 +134,7 @@ class Fake:
             mounts.reverse()
 
         for (folder, type) in mounts:
-            target = os.path.join(chroot, folder)
+            target = Path(os.path.join(chroot, folder))
 
             if mount:
                 self.run_sudo(f'mkdir -p {target}', check=False)
@@ -145,22 +145,39 @@ class Fake:
             self.run_sudo(cmd, cwd=chroot, check=False)
 
         files = [
-            ('etc/resolv.conf', 'etc/resolv.conf'),
-            ('etc/gai.conf', 'etc/gai.conf'),
-            ('proc/mounts', 'etc/mtab'),
+            ('/etc/resolv.conf', 'etc/resolv.conf'),
+            ('/etc/gai.conf', 'etc/gai.conf'),
+            ('/proc/mounts', 'etc/mtab'),
         ]
 
-        for (src, tgt) in files:
-            target = os.path.join(chroot, tgt)
+        backup_folder = Path(os.path.join(chroot, 'build_tools_backup'))
+        self.run_sudo(f'mkdir -p {backup_folder}', check=False)
+        for (source, tgt) in files:
+            target = Path(os.path.join(chroot, tgt))
+            target_folder = Path(target).parent
+            backup = backup_folder / target.name
 
             if mount:
-                path = str(Path(target).parent)
-                self.run_sudo(f'mkdir -p {path}', check=False)
-                cmd = f'cp /{src} {target}'
-            else:
-                cmd = f'rm -f {target}'
+                self.run_sudo(f'mkdir -p {target_folder}', check=False)
 
-            self.run_sudo(cmd, cwd=chroot, check=False)
+                if os.path.isfile(target):
+                    # Target file exists, backup target file
+                    # mv keeps symlinks
+                    backup = backup_folder / target.name
+                    self.run_sudo(f'mv {target} {backup}', check=False)
+                    self.run_sudo(f'rm -f {target}', check=False)
+
+                self.run_sudo(f'cp {source} {target}', check=False)
+            else:
+                (_out, _err, rc) = self.run_sudo(f'diff {source} {target}', check=False)
+                if rc == 0:
+                    self.run_sudo(f'rm -f {target}', check=False)
+
+                    if os.path.isfile(backup):
+                        # Restore original file
+                        self.run_sudo(f'mv {backup} {target}', check=False)
+                else:
+                    logging.warning('The file %s was modified. Old state is not restored!', target)
 
     def run_chroot(
         self,

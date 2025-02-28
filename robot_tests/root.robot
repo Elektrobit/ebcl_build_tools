@@ -17,6 +17,9 @@ Fakechroot config was executed
 Chroot config was executed
     File Should Exist    /chroot
 
+Resolv.conf symlink should exist
+    File Should Exist    /usr/bin/systemd    symbolic link
+
 *** Keywords ***
 Setup
     Build Root

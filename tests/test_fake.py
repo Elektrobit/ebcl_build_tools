@@ -75,6 +75,12 @@ class TestFake:
         assert stderr is not None
         assert not stderr.strip()
 
+        # Create resolv.conf symlink
+        (_stdout, stderr, _returncode) = self.fake.run_chroot(
+            'ln -sf etc etc/resolv.conf', chroot, capture_output=True)
+        assert stderr is not None
+        assert not stderr.strip()
+
         # Check proc is mounted
         (stdout, stderr, _returncode) = self.fake.run_chroot(
             'stat -c \'%u %g\' /proc/cmdline', chroot, capture_output=True)
@@ -109,6 +115,14 @@ class TestFake:
 
         (stdout, stderr, _returncode) = self.fake.run_chroot(
             'stat -c \'%u %g\' /etc/gai.conf', chroot, capture_output=True)
+        assert stdout
+        assert stdout.strip() == '0 0'
+        assert stderr is not None
+        assert not stderr.strip()
+
+        # Check reslov.conf symlink still exists
+        (stdout, stderr, _returncode) = self.fake.run_sudo(
+            'stat -c \'%u %g\' /etc/resolv.conf', chroot, capture_output=True)
         assert stdout
         assert stdout.strip() == '0 0'
         assert stderr is not None
