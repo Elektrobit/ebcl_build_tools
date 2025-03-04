@@ -144,58 +144,6 @@ class DebootstrapRootGenerator:
 
         return apt_config
 
-    def _mount_special_folders(self) -> None:
-        """ Mount special file systems to chroot folder. """
-        fake = self.config.fake
-
-        # Prepare for chroot.
-        fake.run_sudo(
-            f'mount -o bind /dev {self.config.target_dir}/dev',
-            cwd=self.config.target_dir,
-            check=True
-        )
-        fake.run_sudo(
-            f'mount -o bind /dev/pts {self.config.target_dir}/dev/pts',
-            cwd=self.config.target_dir,
-            check=True
-        )
-        fake.run_sudo(
-            f'mount -t sysfs /sys {self.config.target_dir}/sys',
-            cwd=self.config.target_dir,
-            check=True
-        )
-        fake.run_sudo(
-            f'mount -t proc /proc {self.config.target_dir}/proc',
-            cwd=self.config.target_dir,
-            check=True
-        )
-
-    def _unmount_special_folders(self) -> None:
-        """ Unmount special file systems from chroot folder. """
-        fake = self.config.fake
-
-        # Unmount special folders.
-        fake.run_sudo(
-            f'umount {self.config.target_dir}/dev/pts',
-            cwd=self.config.target_dir,
-            check=False
-        )
-        fake.run_sudo(
-            f'umount {self.config.target_dir}/dev',
-            cwd=self.config.target_dir,
-            check=False
-        )
-        fake.run_sudo(
-            f'umount {self.config.target_dir}/sys',
-            cwd=self.config.target_dir,
-            check=False
-        )
-        fake.run_sudo(
-            f'umount {self.config.target_dir}/proc',
-            cwd=self.config.target_dir,
-            check=False
-        )
-
     def _copy_credentials(self):
         """ copy the user credential for apt repo """
         if not next(self.config.cred_dir.glob("*.conf"), None):
@@ -307,22 +255,7 @@ class DebootstrapRootGenerator:
         self._generate_apt_config()
 
         try:
-            self._mount_special_folders()
             self._copy_credentials()
-
-            fake.run_sudo(
-                f'cp /proc/mounts {self.config.target_dir}/etc/mtab',
-                cwd=self.config.target_dir,
-                check=True
-            )
-
-            # Copy resolv.conf to enable name resolution.
-            fake.run_sudo(
-                f'cp /etc/resolv.conf {self.config.target_dir}/etc/resolv.conf',
-                cwd=self.config.target_dir,
-                check=True
-            )
-
             self._update_ca_certificates()
 
             # Update root
@@ -343,7 +276,6 @@ class DebootstrapRootGenerator:
             return False
         finally:
             self._remove_credentials()
-            self._unmount_special_folders()
 
         if debootstrap_hash is not None:
             cache_archive = f'{self._get_apt_hash(debootstrap_hash)}.tar'
@@ -371,7 +303,6 @@ class DebootstrapRootGenerator:
         fake = self.config.fake
 
         try:
-            self._mount_special_folders()
             self._copy_credentials()
 
             # Update root
@@ -403,7 +334,6 @@ class DebootstrapRootGenerator:
             return False
         finally:
             self._remove_credentials()
-            self._unmount_special_folders()
 
         if apt_hash is not None:
             cache_archive = f'{self._get_package_hash(apt_hash)}.tar'
@@ -437,7 +367,9 @@ class DebootstrapRootGenerator:
         """ Check if cache archive exists. """
         archive = os.path.join(self.cache_folder, f'{archive_hash}.tar')
         if os.path.exists(archive):
+            logging.debug('Cache hit for %s: %s', archive_hash, archive)
             return True
+        logging.debug('Cache miss for %s.', archive_hash)
         return False
 
     def _run_base_config_and_tar(self, name: str) -> Optional[str]:
@@ -446,15 +378,7 @@ class DebootstrapRootGenerator:
         config = self.config
 
         try:
-            self._mount_special_folders()
             self._copy_credentials()
-
-            # Copy resolv.conf to enable name resolution.
-            fake.run_sudo(
-                f'cp /etc/resolv.conf {config.target_dir}/etc/resolv.conf',
-                cwd=config.target_dir,
-                check=True
-            )
 
             # Set root password
             if config.root_password:
@@ -493,21 +417,8 @@ class DebootstrapRootGenerator:
             return None
         finally:
             self._remove_credentials()
-            self._unmount_special_folders()
 
             # Cleanup
-            fake.run_sudo(
-                f'rm {config.target_dir}/etc/resolv.conf',
-                cwd=config.target_dir,
-                check=False
-            )
-
-            fake.run_sudo(
-                f'rm {config.target_dir}/etc/mtab',
-                cwd=config.target_dir,
-                check=False
-            )
-
             fake.run_sudo(
                 f'rm -rf {config.target_dir}/var/lib/apt/lists/*',
                 cwd=config.target_dir,
@@ -544,6 +455,10 @@ class DebootstrapRootGenerator:
         debootstrap_hash = self._get_debootstrap_hash()
         apt_hash = self._get_apt_hash(debootstrap_hash)
         package_hash = self._get_package_hash(apt_hash)
+
+        logging.debug('debootstrap hash: %s', debootstrap_hash)
+        logging.debug('apt hash: %s', apt_hash)
+        logging.debug('package hash: %s', package_hash)
 
         run_debootstrap = not (
             self._has_cache_archive(debootstrap_hash)

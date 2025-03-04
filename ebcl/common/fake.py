@@ -38,6 +38,7 @@ class Fake:
         stdout: Optional[BufferedWriter] = None,
         check=True,
         capture_output=False,
+        mount_special_folder=False,
     ) -> Tuple[Optional[str], Optional[str], int]:
         """ Run a command. """
         logging.info('Running command: %s', cmd)
@@ -56,6 +57,10 @@ class Fake:
         if stdout is not None:
             out = stdout
 
+        if mount_special_folder:
+            assert cwd
+            self._special_folders(cwd, True)
+
         p = subprocess.run(
             cmd,
             check=False,
@@ -64,6 +69,10 @@ class Fake:
             stderr=err,
             cwd=cwd
         )
+
+        if mount_special_folder:
+            assert cwd
+            self._special_folders(cwd, False)
 
         pout: Optional[str]
         perr: Optional[str]
@@ -110,6 +119,66 @@ class Fake:
             capture_output=capture_output
         )
 
+    def _special_folders(self, chroot: str, mount: bool) -> None:
+        """ Mount special file systems to chroot folder. """
+        logging.info('Handle special folders for chroot (chroot: %s, mount: %s)...', chroot, mount)
+
+        mounts = [
+            ('dev', '-o bind'),
+            ('dev/pts', '-o bind'),
+            ('sys', '-t sysfs'),
+            ('proc', '-t proc'),
+        ]
+
+        if not mount:
+            mounts.reverse()
+
+        for (folder, type) in mounts:
+            target = Path(os.path.join(chroot, folder))
+
+            if mount:
+                self.run_sudo(f'mkdir -p {target}', check=False)
+                cmd = f'mount {type} /{folder} {target}'
+            else:
+                cmd = f'umount {target}'
+
+            self.run_sudo(cmd, cwd=chroot, check=False)
+
+        files = [
+            ('/etc/resolv.conf', 'etc/resolv.conf'),
+            ('/etc/gai.conf', 'etc/gai.conf'),
+            ('/proc/mounts', 'etc/mtab'),
+        ]
+
+        backup_folder = Path(os.path.join(chroot, 'build_tools_backup'))
+        self.run_sudo(f'mkdir -p {backup_folder}', check=False)
+        for (source, tgt) in files:
+            target = Path(os.path.join(chroot, tgt))
+            target_folder = Path(target).parent
+            backup = backup_folder / target.name
+
+            if mount:
+                self.run_sudo(f'mkdir -p {target_folder}', check=False)
+
+                if os.path.isfile(target):
+                    # Target file exists, backup target file
+                    # mv keeps symlinks
+                    backup = backup_folder / target.name
+                    self.run_sudo(f'mv {target} {backup}', check=False)
+                    self.run_sudo(f'rm -f {target}', check=False)
+
+                self.run_sudo(f'cp {source} {target}', check=False)
+            else:
+                (_out, _err, rc) = self.run_sudo(f'diff {source} {target}', check=False)
+                if rc == 0:
+                    self.run_sudo(f'rm -f {target}', check=False)
+
+                    if os.path.isfile(backup):
+                        # Restore original file
+                        self.run_sudo(f'mv {backup} {target}', check=False)
+                else:
+                    logging.warning('The file %s was modified. Old state is not restored!', target)
+
     def run_chroot(
         self,
         cmd: str,
@@ -120,8 +189,10 @@ class Fake:
         """ Run a command using sudo and chroot. """
         (out, err, returncode) = self.run_cmd(
             cmd=f'sudo chroot {chroot} {cmd}',
+            cwd=chroot,
             check=check,
-            capture_output=capture_output
+            capture_output=capture_output,
+            mount_special_folder=True
         )
 
         if out is None:
