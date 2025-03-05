@@ -319,7 +319,7 @@ class InitrdGenerator:
         for dir_name in ['proc', 'sys', 'dev', 'sysroot', 'var', 'usr/bin',
                          'tmp', 'run', 'root', 'usr', 'usr/sbin', 'usr/lib', 'etc']:
             self.config.fake.run_sudo(
-                f'mkdir -p {os.path.join(self.target_dir, dir_name)}')
+                f'mkdir -p --mode=0755 {os.path.join(self.target_dir, dir_name)}')
 
         # Create lib and bin folder symlinks
         self.config.fake.run_sudo(f'ln -sf usr/lib {self.target_dir}/lib')
