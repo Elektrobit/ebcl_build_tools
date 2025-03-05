@@ -409,12 +409,12 @@ class Apt:
         )
 
     @classmethod
-    def ebcl_apt(cls, arch: CpuArch, release: str = '1.4') -> Self:
+    def ebcl_apt(cls, arch: CpuArch, release: str = '1.5') -> Self:
         """Get the EBcL apt repo for EB components."""
         return cls.ebcl(arch, "ebcl", release, ['prod', 'dev'])
 
     @classmethod
-    def ebcl_primary_repo(cls, arch: CpuArch, release: str = '1.4') -> Self:
+    def ebcl_primary_repo(cls, arch: CpuArch, release: str = '1.5') -> Self:
         """Get the EBcL apt repo for upstream jammy components."""
         return cls.ebcl(arch, "jammy", release, ['main'])
 
