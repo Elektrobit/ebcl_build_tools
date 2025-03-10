@@ -6,7 +6,7 @@ import os
 
 from typing import Optional
 
-from ebcl.common import init_logging, promo, log_exception
+from ebcl.common import add_loging_arguments, init_logging, promo, log_exception
 from ebcl.common.config import Config
 
 from . import config_root
@@ -33,20 +33,21 @@ class RootConfig:
 @log_exception(call_exit=True)
 def main() -> None:
     """ Main entrypoint of EBcL root filesystem config helper. """
-    init_logging()
-
-    logging.info('\n=====================\n'
-                 'EBcL Root Configurator\n'
-                 '======================\n')
-
     parser = argparse.ArgumentParser(
         description='Configure the given root tarball.')
+    add_loging_arguments(parser)
     parser.add_argument('config_file', type=str,
                         help='Path to the YAML configuration file')
     parser.add_argument('archive_in', type=str, help='Root tarball.')
     parser.add_argument('archive_out', type=str, help='New tarball.')
 
     args = parser.parse_args()
+
+    init_logging(args)
+
+    logging.info('\n=====================\n'
+                 'EBcL Root Configurator\n'
+                 '======================\n')
 
     logging.debug('Running root_configurator with args %s', args)
 
@@ -56,7 +57,7 @@ def main() -> None:
     archive = generator.config_root(args.archive_in, args.archive_out)
 
     if archive:
-        print(f'Archive was written to {archive}.')
+        logging.info('Archive was written to %s.', archive)
         promo()
     else:
         exit(1)
