@@ -350,7 +350,6 @@ class Cache:
                 file_path = Path(root) / file
                 try:
                     package = DebFile(file_path).to_package()
-                    print(package)
                 except InvalidFile:
                     logging.info("File %s is invalid and will be deleted", str(file_path))
                     file_path.unlink()
