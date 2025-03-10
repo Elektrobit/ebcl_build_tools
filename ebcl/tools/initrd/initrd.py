@@ -13,7 +13,7 @@ import tempfile
 from pathlib import Path
 from typing import Any, Callable, Optional
 
-from ebcl.common import init_logging, promo, log_exception
+from ebcl.common import add_loging_arguments, init_logging, promo, log_exception
 from ebcl.common.config import Config, InvalidConfiguration
 from ebcl.common.files import EnvironmentType
 from ebcl.common.templates import render_template
@@ -426,20 +426,21 @@ class InitrdGenerator:
 @log_exception(call_exit=True)
 def main() -> None:
     """ Main entrypoint of EBcL initrd generator. """
-    init_logging()
-
-    logging.info('\n====================\n'
-                 'EBcL Initrd Generator\n'
-                 '=====================\n')
-
     parser = argparse.ArgumentParser(
         description='Create an initrd image for Linux.')
+    add_loging_arguments(parser)
     parser.add_argument('config_file', type=str,
                         help='Path to the YAML configuration file')
     parser.add_argument('output', type=str,
                         help='Path to the output directory')
 
     args = parser.parse_args()
+
+    init_logging(args)
+
+    logging.info('\n====================\n'
+                 'EBcL Initrd Generator\n'
+                 '=====================\n')
 
     logging.debug('Running initrd_generator with args %s', args)
 
@@ -453,10 +454,10 @@ def main() -> None:
     generator.finalize()
 
     if image:
-        print(f'Image was written to {image}.')
+        logging.info('Image was written to %s.', image)
         promo()
     else:
-        print('Image build failed!')
+        logging.error('Image build failed!')
         exit(1)
 
 

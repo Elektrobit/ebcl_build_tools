@@ -7,7 +7,7 @@ import tempfile
 
 from typing import Optional
 
-from ebcl.common import init_logging, promo, log_exception
+from ebcl.common import add_loging_arguments, init_logging, promo, log_exception
 from ebcl.common.config import Config
 from ebcl.common.version import VersionDepends
 
@@ -74,23 +74,18 @@ class PackageDownloader:
         if missing:
             logging.error('Not found packages: %s', missing)
 
-        print(f'The packages were downloaded to:\n{output_path}')
-        print(f'The packages were extracted to:\n{content_path}')
+        logging.info('The packages were downloaded to:\n%s', output_path)
+        logging.info('The packages were extracted to:\n%s', content_path)
 
 
 @log_exception(call_exit=True)
 def main() -> None:
     """ Main entrypoint of EBcL boot generator. """
-    init_logging()
-
-    logging.info('\n======================\n'
-                 'EBcL Package downloader\n'
-                 '=======================\n')
-
     parser = argparse.ArgumentParser(
         description='Download and extract the given packages.')
+    add_loging_arguments(parser)
     parser.add_argument('config', type=str,
-                        help='Path to the YAML configuration file containing the apt repostory config.')
+                        help='Path to the YAML configuration file containing the apt repository config.')
     parser.add_argument('packages', type=str,
                         help='List of packages separated by space.')
     parser.add_argument('-o', '--output', type=str,
@@ -101,6 +96,12 @@ def main() -> None:
                         help='Download all package dependencies recursive.')
 
     args = parser.parse_args()
+
+    init_logging(args)
+
+    logging.info('\n======================\n'
+                 'EBcL Package downloader\n'
+                 '=======================\n')
 
     downloader = PackageDownloader(args.config, args.output)
 

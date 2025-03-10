@@ -1,4 +1,5 @@
 """ Common functions of the EBcL build helpers """
+from argparse import ArgumentParser
 import logging
 import os
 
@@ -12,7 +13,17 @@ class ImplementationError(Exception):
     """ Raised if a assumption is not met. """
 
 
-def init_logging(level: str = 'INFO') -> None:
+def add_loging_arguments(parser: ArgumentParser) -> None:
+    """ Add default logging parameters to an argparser """
+    parser.add_argument(
+        '--logfile',
+        metavar="FILENAME",
+        default=None,
+        help="Log into file instead of stdout"
+    )
+
+
+def init_logging(args, level: str = 'INFO') -> None:
     """ Initialize the logging for the EBcL build tools. """
     log_format = '[{asctime}] {levelname:<6s} {filename:s}:{lineno:d} - {message:s}'
     log_date_format = '%m/%d/%Y %I:%M:%S %p'
@@ -26,7 +37,8 @@ def init_logging(level: str = 'INFO') -> None:
         level=used_level,
         format=log_format,
         style='{',
-        datefmt=log_date_format
+        datefmt=log_date_format,
+        filename=args.logfile
     )
 
     logging.info('Setting log level to %s. (default: %s, env: %s)',
@@ -40,7 +52,7 @@ def bug(bug_url: str = 'https://github.com/Elektrobit/ebcl_build_tools/issues') 
     text += f"You are using EBcl build tooling version {ebcl.__version__},"
     text += f"and EB corbos Linux workspace version {os.getenv('RELEASE_VERSION', None)}"
 
-    print(text)
+    logging.error(text)
 
 
 def promo() -> None:
@@ -48,7 +60,7 @@ def promo() -> None:
     release_version = os.getenv('RELEASE_VERSION', None)
 
     if release_version:
-        print(f'Thanks for using EB corbos Linux workspace {release_version}!')
+        logging.info('Thanks for using EB corbos Linux workspace %s!', release_version)
     else:
         text = '\n'
         text += "=========================================================================\n"
@@ -58,7 +70,7 @@ def promo() -> None:
         text += "=========================================================================\n"
         text += '\n'
 
-        print(text)
+        logging.info(text)
 
 
 RT = TypeVar('RT')
