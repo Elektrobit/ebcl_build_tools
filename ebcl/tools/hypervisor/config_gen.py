@@ -13,6 +13,7 @@ from ebcl.common.config import Config
 from ebcl.common.files import resolve_file
 from ebcl.common.version import VersionDepends
 from ebcl.tools.hypervisor.model_gen import ConfigError
+from ebcl.tools.hypervisor.vbus_gen import DTSConverter
 
 from .schema_loader import BaseModel, FileReadProtocol, Schema, merge_dict
 
@@ -164,6 +165,8 @@ def main() -> None:
 
     parser = argparse.ArgumentParser(
         description='Create the config files for the hypervisor')
+    parser.add_argument('--dts', type=Path,
+                        help='Path to SoC Device tree, which is to be converted to yaml style')
     parser.add_argument('-s', '--specialization', type=Path,
                         help='Path to hypervisor specialization directory')
     parser.add_argument('-p', '--specialization-package', type=str,
@@ -172,19 +175,25 @@ def main() -> None:
                         help='Path to specialization in package')
     parser.add_argument('-r', '--repo-config', type=Path,
                         help='Path to a config file with a repository containing the hypervisor specialization')
-    parser.add_argument('config_file', type=Path,
+    parser.add_argument('--config_file', type=Path, required=False,
                         help='Path to the YAML configuration file')
-    parser.add_argument('output', type=Path,
+    parser.add_argument('--output', type=Path, required=False,
                         help='Path to the output directory')
     args = parser.parse_args()
 
+    if args.dts:
+        dtsconverter = DTSConverter(args.dts)
+        dtsconverter.dump()
+    
     if args.specialization_package:
         if not args.repo_config or not args.repo_config.exists():
             parser.error("If a SPECIALIZATION_PACKAGE is specified a REPO_CONFIG must be specified as well")
         unpacker = SpecializationUnpacker(args.specialization_package, args.repo_config, args.specialization_path)
         args.specialization = unpacker.directory
-    generator = HvFileGenerator(args.config_file, args.output, args.specialization)
-    generator.create_files()
+    
+    if not args.dts:
+        generator = HvFileGenerator(args.config_file, args.output, args.specialization)
+        generator.create_files()
 
 
 if __name__ == "__main__":  # pragma: nocover
