@@ -123,11 +123,7 @@ class SpecializationUnpacker:
         if not package:  # pragma: no cover (should never happen)
             raise ConfigError(f"Cannot download package {package_name}")
 
-        print(package.local_file)
-        print(package.extract(self._tmp_dir.name, None, use_sudo=False))
-
-        os.system(f"find {self._tmp_dir.name}")
-
+        package.extract(self._tmp_dir.name, None, use_sudo=False)
         if path:
             self._config_dir = self._config_dir / path
         else:
