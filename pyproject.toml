@@ -12,9 +12,7 @@ packages = ["ebcl"]
 name = "ebcl"
 dynamic = ["version"]
 
-authors = [
-  { name="Elektrobit GmbH", email="info@elektrobit.com" },
-]
+authors = [{ name = "Elektrobit GmbH", email = "info@elektrobit.com" }]
 description = "EBcL build helpers."
 readme = "README.md"
 classifiers = [
@@ -31,7 +29,7 @@ dependencies = [
     "requests",
     "typing_extensions",
     "unix_ar",
-    "zstandard"
+    "zstandard",
 ]
 
 [project.urls]
@@ -50,27 +48,20 @@ hypervisor_config = "ebcl.tools.hypervisor.config_gen:main"
 max-line-length = 120
 
 [tool.pylint.'MESSAGES CONTROL']
-disable = [
-    "E0402",
-    "W0212",
-    "W0718"
-]
+disable = ["E0402", "W0212", "W0718"]
 
 [tool.pytest.ini_options]
 minversion = "6.2.5"
 addopts = ""
-testpaths = [ "tests" ]
+testpaths = ["tests"]
 markers = [
     "dev_container: tests requiring tools only available in the dev container, e.g. kiwi-ng.",
     "requires_download: tests requiring downloads form public resources, which is not allowed for GH actions",
 ]
-log_level = "debug"
+log_level = "DEBUG"
 
 [tool.coverage.paths]
-source = [
-    "ebcl",
-    "*/site-packages/ebcl"
-]
+source = ["ebcl", "*/site-packages/ebcl"]
 
 [tool.coverage.run]
 branch = true
@@ -81,7 +72,7 @@ include_namespace_packages = true
 exclude_also = [
     "@(abc\\.)?abstractmethod",
     "def __repr__",
-    "class \\w+\\(Protocol\\):"
+    "class \\w+\\(Protocol\\):",
 ]
 include = ["ebcl/*"]
 
@@ -99,8 +90,15 @@ per-file-ignores = [
     'ebcl/common/dependency.py:F841',
     'ebcl/tools/proxy/proxy.py:F841',
     'ebcl/tools/root/debootstrap.py:W503',
+    'ebcl/common/__init__.py:E704',
 ]
 count = true
 statistics = true
 max-line-length = 120
 exclude = '.venv'
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"

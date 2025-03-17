@@ -1,4 +1,7 @@
-""" APT helper functions """
+"""
+Support for interfacing with Debian APT repositories.
+"""
+
 import glob
 import gzip
 import logging
@@ -6,6 +9,7 @@ import lzma
 import os
 import tempfile
 import time
+
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from pathlib import Path
@@ -27,6 +31,7 @@ class AptCache:
     """
     Cache for the Apt and AptRepo classes
     """
+
     _cache_dir: Path
 
     def __init__(self, cache_dir: Path) -> None:
@@ -34,7 +39,7 @@ class AptCache:
         self._cache_dir.mkdir(parents=True, exist_ok=True)
 
     def _get_cache_path(self, url: str) -> Path:
-        return self._cache_dir / urlparse(url).path.replace('/', '_')
+        return self._cache_dir / urlparse(url).path.replace("/", "_")
 
     def _get_local(self, path: Path) -> bytes:
         with path.open("rb") as f:
@@ -42,63 +47,59 @@ class AptCache:
 
     def _get_from_cache(self, url: str) -> bytes | None:
         cache_file_path = self._get_cache_path(url)
-        cache_files = glob.glob(f'{cache_file_path}_*')
+        cache_files = glob.glob(f"{cache_file_path}_*")
         if cache_files:
             cache_files.sort()
             cache_file = cache_files[-1]
 
-            logging.debug('Cache file found for %s: %s', url, cache_file)
+            logging.debug("Cache file found for %s: %s", url, cache_file)
 
-            ts_str = cache_file.split('_')[-1]
+            ts_str = cache_file.split("_")[-1]
             ts = float(ts_str)
             age = time.time() - ts
 
             if age > 24 * 60 * 60:
                 # older than one day
-                logging.debug('Removing outdated cache file %s', cache_file)
+                logging.debug("Removing outdated cache file %s", cache_file)
                 try:
                     os.remove(cache_file)
                 except Exception as e:
-                    logging.error(
-                        'Removing old cache file %s failed! %s', cache_file, e)
+                    logging.error("Removing old cache file %s failed! %s", cache_file, e)
             else:
                 # Read cached data
-                logging.debug('Reading cached data from %s...', cache_file)
+                logging.debug("Reading cached data from %s...", cache_file)
                 try:
                     return self._get_local(Path(cache_file))
                 except Exception as e:
-                    logging.error(
-                        'Reading cached data from %s failed! %s', cache_file, e)
+                    logging.error("Reading cached data from %s failed! %s", cache_file, e)
         else:
-            logging.info('No cache file found for %s', url)
+            logging.info("No cache file found for %s", url)
         return None
 
     def _download(self, url: str) -> bytes | None:
         try:
             result = requests.get(url, allow_redirects=True, timeout=10, stream=True)
         except Exception as e:
-            logging.error('Downloading %s failed! %s', url, e)
+            logging.error("Downloading %s failed! %s", url, e)
             return None
 
         if result.status_code != requests.codes.ok:
             return None
 
-        cache_file = f'{self._get_cache_path(url)}_{time.time()}'
+        cache_file = f"{self._get_cache_path(url)}_{time.time()}"
 
         file_bytes: list[bytes] = []
-        with open(cache_file, 'wb') as f:
+        with open(cache_file, "wb") as f:
             for chunk in result.iter_content(chunk_size=512 * 1024):
                 file_bytes.append(chunk)
                 f.write(chunk)
-        return b''.join(file_bytes)
+        return b"".join(file_bytes)
 
     @overload
-    def get(self, url: str, encoding: None = None) -> bytes | None:
-        ...
+    def get(self, url: str, encoding: None = None) -> bytes | None: ...
 
     @overload
-    def get(self, url: str, encoding: str) -> str | None:
-        ...
+    def get(self, url: str, encoding: str) -> str | None: ...
 
     def get(self, url: str, encoding: str | None = None) -> str | bytes | None:
         """
@@ -124,7 +125,7 @@ class AptCache:
 class AptRepo(ABC):
     """Base class for repository description."""
 
-    PACKAGES_FILES = ['Packages.xz', 'Packages.gz']
+    PACKAGES_FILES = ["Packages.xz", "Packages.gz"]
 
     _url: str
     _arch: CpuArch
@@ -144,7 +145,7 @@ class AptRepo(ABC):
     @property
     def id(self) -> str:
         """Returns a string that uniquely identified this repository."""
-        return f'{self._url}_{self._get_id()}'
+        return f"{self._url}_{self._get_id()}"
 
     @abstractmethod
     def sources_entry(self, trusted: bool = False) -> str:
@@ -185,11 +186,11 @@ class AptRepo(ABC):
             self._parse_release_file(cache, DebReleaseInfo(release_file))
 
     def _apt_source_parameters(self, trusted: bool = False):
-        """ Returns the parameters for the apt sources.list entry. """
+        """Returns the parameters for the apt sources.list entry."""
         if trusted:
-            return f'[arch={self.arch} trusted=yes]'
+            return f"[arch={self.arch} trusted=yes]"
         else:
-            return f'[arch={self.arch}]'
+            return f"[arch={self.arch}]"
 
     @abstractmethod
     def _get_id(self) -> str:
@@ -220,12 +221,12 @@ class AptRepo(ABC):
             logging.error("Unable to fetch %s (%s)", path, self)
             return
 
-        if path.endswith('.xz'):
+        if path.endswith(".xz"):
             data = lzma.decompress(data)
-        elif path.endswith('.gz'):
+        elif path.endswith(".gz"):
             data = gzip.decompress(data)
         else:
-            logging.error('Unknown compression of index %s (%s)! Cannot parse index.', path, self)
+            logging.error("Unknown compression of index %s (%s)! Cannot parse index.", path, self)
             return
         content = data.decode(encoding="utf-8", errors="ignore")
         packages_info = DebPackagesInfo(content)
@@ -242,20 +243,16 @@ class AptFlatRepo(AptRepo):
     A flat repo has no disttribution folder.
     Se: https://wiki.debian.org/DebianRepository/Format#Flat_Repository_Format
     """
+
     _directory: str
 
-    def __init__(
-        self,
-        url: str,
-        directory: str,
-        arch: CpuArch
-    ) -> None:
+    def __init__(self, url: str, directory: str, arch: CpuArch) -> None:
         super().__init__(url, arch)
         self._directory = directory
 
     @property
     def _meta_path(self) -> str:
-        return f'{self._directory}'
+        return f"{self._directory}"
 
     def sources_entry(self, trusted: bool = False) -> str:
         params = super(AptFlatRepo, self)._apt_source_parameters(trusted)
@@ -265,7 +262,7 @@ class AptFlatRepo(AptRepo):
         return self._directory == other._directory
 
     def _get_id(self) -> str:
-        return f'{self._directory}'
+        return f"{self._directory}"
 
     def _get_repr(self) -> str:
         return f"directory: {self._directory}"
@@ -287,20 +284,14 @@ class AptDebRepo(AptRepo):
     _dist: str
     _components: set[str]
 
-    def __init__(
-        self,
-        url: str,
-        dist: str,
-        components: list[str],
-        arch: CpuArch
-    ) -> None:
+    def __init__(self, url: str, dist: str, components: list[str], arch: CpuArch) -> None:
         super().__init__(url, arch)
         self._dist = dist
         self._components = set(components)
 
     @property
     def _meta_path(self) -> str:
-        return f'dists/{self._dist}'
+        return f"dists/{self._dist}"
 
     def sources_entry(self, trusted: bool = False) -> str:
         params = super(AptDebRepo, self)._apt_source_parameters(trusted)
@@ -315,20 +306,16 @@ class AptDebRepo(AptRepo):
         return self._components
 
     def _get_id(self) -> str:
-        return f'{self._dist}_{"_".join(self._components)}'
+        return f"{self._dist}_{'_'.join(self._components)}"
 
     def _get_repr(self) -> str:
         return f"dist: {self._dist}, components: {' '.join(self._components)}"
 
     def _is_eq(self, other: Self) -> bool:
-        return self._dist == other._dist \
-            and self._components == other._components
+        return self._dist == other._dist and self._components == other._components
 
     def _find_package_file(self, releaseInfo: DebReleaseInfo, component: str) -> str | None:
-        name = [
-            f'{component}/binary-{self._arch}/{p}'
-            for p in self.PACKAGES_FILES
-        ]
+        name = [f"{component}/binary-{self._arch}/{p}" for p in self.PACKAGES_FILES]
         for hash in releaseInfo.hashes.values():
             for file in hash:
                 if file[2] in name:
@@ -338,11 +325,11 @@ class AptDebRepo(AptRepo):
     def _parse_release_file(self, cache: AptCache, releaseInfo: DebReleaseInfo) -> None:
         for component in self._components:
             if component not in releaseInfo.components:
-                logging.warning('No package index for component %s found!', component)
+                logging.warning("No package index for component %s found!", component)
                 continue
             package_file = self._find_package_file(releaseInfo, component)
             if not package_file:
-                logging.warning('No package index for component %s found!', component)
+                logging.warning("No package index for component %s found!", component)
             else:
                 self._parse_packages(cache, package_file)
 
@@ -364,66 +351,49 @@ class Apt:
          2. flat apt repo:
             This must contain a directory key
         """
-        if 'apt_repo' not in repo_config:
+        if "apt_repo" not in repo_config:
             return None
 
         repo: AptRepo
-        if 'distro' in repo_config:
+        if "distro" in repo_config:
             repo = AptDebRepo(
-                url=repo_config['apt_repo'],
-                dist=repo_config['distro'],
-                components=repo_config.get('components', 'main'),
-                arch=arch
+                url=repo_config["apt_repo"],
+                dist=repo_config["distro"],
+                components=repo_config.get("components", "main"),
+                arch=arch,
             )
-        elif 'directory' in repo_config:
-            repo = AptFlatRepo(
-                url=repo_config['apt_repo'],
-                directory=repo_config['directory'],
-                arch=arch
-            )
+        elif "directory" in repo_config:
+            repo = AptFlatRepo(url=repo_config["apt_repo"], directory=repo_config["directory"], arch=arch)
         else:
             return None
 
-        return cls(
-            repo=repo,
-            key_url=repo_config.get('key', None),
-            key_gpg=repo_config.get('gpg', None)
-        )
+        return cls(repo=repo, key_url=repo_config.get("key", None), key_gpg=repo_config.get("gpg", None))
 
     @classmethod
     def ebcl(cls, arch: CpuArch, dist: str, release: str, components: list[str]) -> Self:
         """Get an EBcL apt repo."""
-        url = os.environ.get('EBCL_REPO_URL', 'https://linux.elektrobit.com/eb-corbos-linux')
-        release = os.environ.get('EBCL_VERSION', release)
-        key = os.environ.get('EBCL_REPO_KEY', 'file:///build/keys/elektrobit.pub')
-        gpg = os.environ.get('EBCL_REPO_GPG', '/etc/apt/trusted.gpg.d/elektrobit.gpg')
+        url = os.environ.get("EBCL_REPO_URL", "https://linux.elektrobit.com/eb-corbos-linux")
+        release = os.environ.get("EBCL_VERSION", release)
+        key = os.environ.get("EBCL_REPO_KEY", "file:///build/keys/elektrobit.pub")
+        gpg = os.environ.get("EBCL_REPO_GPG", "/etc/apt/trusted.gpg.d/elektrobit.gpg")
         return cls(
-            repo=AptDebRepo(
-                url=f'{url}/{release}',
-                dist=dist,
-                components=components,
-                arch=arch
-            ),
+            repo=AptDebRepo(url=f"{url}/{release}", dist=dist, components=components, arch=arch),
             key_url=key,
-            key_gpg=gpg
+            key_gpg=gpg,
         )
 
     @classmethod
-    def ebcl_apt(cls, arch: CpuArch, release: str = '1.5') -> Self:
+    def ebcl_apt(cls, arch: CpuArch, release: str = "1.5") -> Self:
         """Get the EBcL apt repo for EB components."""
-        return cls.ebcl(arch, "ebcl", release, ['prod', 'dev'])
+        return cls.ebcl(arch, "ebcl", release, ["prod", "dev"])
 
     @classmethod
-    def ebcl_primary_repo(cls, arch: CpuArch, release: str = '1.5') -> Self:
+    def ebcl_primary_repo(cls, arch: CpuArch, release: str = "1.5") -> Self:
         """Get the EBcL apt repo for upstream jammy components."""
-        return cls.ebcl(arch, "jammy", release, ['main'])
+        return cls.ebcl(arch, "jammy", release, ["main"])
 
     def __init__(
-        self,
-        repo: AptRepo,
-        key_url: str | None = None,
-        key_gpg: str | None = None,
-        state_folder: str | None = None
+        self, repo: AptRepo, key_url: str | None = None, key_gpg: str | None = None, state_folder: str | None = None
     ) -> None:
         self._repo = repo
         self._cache = AptCache(Path(state_folder and state_folder or get_cache_folder("apt")))
@@ -431,10 +401,9 @@ class Apt:
         self.key_url: str | None = key_url
         self.key_gpg: str | None = key_gpg
 
-        if not key_gpg and 'ubuntu.com/ubuntu' in self._repo.url:
-            self.key_gpg = '/etc/apt/trusted.gpg.d/ubuntu-keyring-2018-archive.gpg'
-            logging.info('Using default Ubuntu key %s for %s.',
-                         self.key_gpg, self._repo.url)
+        if not key_gpg and "ubuntu.com/ubuntu" in self._repo.url:
+            self.key_gpg = "/etc/apt/trusted.gpg.d/ubuntu-keyring-2018-archive.gpg"
+            logging.info("Using default Ubuntu key %s for %s.", self.key_gpg, self._repo.url)
 
     def __eq__(self, value: object) -> bool:
         if not isinstance(value, Apt):
@@ -466,7 +435,7 @@ class Apt:
             return
         self._repo.load_index(self._cache)
 
-        logging.info('Repo %s provides %s packages.', self._repo, len(self._repo.packages))
+        logging.info("Repo %s provides %s packages.", self._repo, len(self._repo.packages))
 
     def find_package(self, package_name: str) -> list[Package] | None:
         """Find a binary deb package."""
@@ -475,7 +444,7 @@ class Apt:
         return self._repo.packages.get(package_name, None)
 
     def __str__(self) -> str:
-        return f'Apt<{self._repo}, key: {self.key_url}, gpg: {self.key_gpg}>'
+        return f"Apt<{self._repo}, key: {self.key_url}, gpg: {self.key_gpg}>"
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -487,28 +456,26 @@ class Apt:
             return None
 
         key_url = self.key_url
-        if key_url.startswith('file://'):
+        if key_url.startswith("file://"):
             key_url = key_url[7:]
 
         contents = None
 
         if os.path.isfile(key_url):
             # handle local file
-            logging.info('Reading key for %s from %s', self, key_url)
-            with open(key_url, encoding='utf8') as f:
+            logging.info("Reading key for %s from %s", self, key_url)
+            with open(key_url, encoding="utf8") as f:
                 contents = f.read()
-        elif key_url.startswith('http://') or key_url.startswith('https://'):
+        elif key_url.startswith("http://") or key_url.startswith("https://"):
             # download key
-            logging.info('Downloading key for %s from %s', self, key_url)
+            logging.info("Downloading key for %s from %s", self, key_url)
             data = self._cache.get(key_url)
             if data:
-                contents = data.decode(encoding='utf8', errors='ignore')
+                contents = data.decode(encoding="utf8", errors="ignore")
             else:
-                logging.error(
-                    'Download of key %s for %s failed!', key_url, self)
+                logging.error("Download of key %s for %s failed!", key_url, self)
         else:
-            logging.error(
-                'Unknown key url %s, cannot download key!', self.key_url)
+            logging.error("Unknown key url %s, cannot download key!", self.key_url)
             return None
 
         return contents
@@ -527,19 +494,18 @@ class Apt:
         key_gpg_file = tempfile.mktemp(suffix=".gpg", dir=output_folder)
 
         try:
-            with open(key_pub_file, 'w', encoding='utf8') as f:
+            with open(key_pub_file, "w", encoding="utf8") as f:
                 f.write(contents)
         except Exception as e:
-            logging.error('Writing pub key of %s to %s failed! %s', self, key_pub_file, e)
+            logging.error("Writing pub key of %s to %s failed! %s", self, key_pub_file, e)
             return (None, self.key_gpg)
 
         if not self.key_gpg:
             fake = Fake()
             try:
-                fake.run_cmd(f'cat {key_pub_file} | gpg --dearmor > {key_gpg_file}')
+                fake.run_cmd(f"cat {key_pub_file} | gpg --dearmor > {key_gpg_file}")
             except Exception as e:
-                logging.error('Dearmoring key %s of %s as %s failed! %s',
-                              key_pub_file, self, key_gpg_file, e)
+                logging.error("Dearmoring key %s of %s as %s failed! %s", key_pub_file, self, key_gpg_file, e)
                 return (key_pub_file, None)
         else:
             key_gpg_file = self.key_gpg

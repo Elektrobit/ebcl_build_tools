@@ -1,14 +1,8 @@
 {
     "[python]": {
-        "editor.defaultFormatter": "ms-python.autopep8",
+        "editor.defaultFormatter": "charliermarsh.ruff",
         "editor.formatOnSave": true
     },
-    "pylint.args": [
-        "--disable=E0015",
-        "--disable=E0402",
-        "--disable=W0212",
-        "--disable=W0718"
-    ],
     "python.testing.pytestArgs": [
         "tests"
     ],
@@ -18,7 +12,6 @@
         "--disable-error-code=import-untyped",
         "--check-untyped-defs"
     ],
-    "editor.formatOnSave": true,
     "files.insertFinalNewline": true,
     "[makefile]": {
         "editor.insertSpaces": false,
@@ -33,6 +26,13 @@
         "mtab",
         "noninteractive",
         "resolv",
-        "sysfs"
+        "sysfs",
+        "caplog",
+        "pyproject",
+        "pytest",
+        "robotframework",
+        "mypy",
+        "capsys",
+        "sysout"
     ]
 }

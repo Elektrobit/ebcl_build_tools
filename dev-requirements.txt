@@ -6,4 +6,5 @@ pytest==8.3.3
 robotframework==7.2
 types-PyYAML
 types-requests
-
+pytest-mock==3.14.0
+ruff
