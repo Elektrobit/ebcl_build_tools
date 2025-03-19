@@ -34,8 +34,7 @@ class TestFake:
 
     def test_run_cmd(self):
         """ Run a command using a default shell. """
-        (stdout, stderr, _returncode) = self.fake.run_cmd(
-            'id', capture_output=True)
+        (stdout, stderr, _returncode) = self.fake.run_cmd('id')
         assert stdout is not None
         assert f'uid={os.getuid()}' in stdout
         assert f'gid={os.getgid()}' in stdout
@@ -44,8 +43,7 @@ class TestFake:
 
     def test_run_fake(self):
         """ Run a command using fakeroot. """
-        (stdout, stderr, _returncode) = self.fake.run_fake(
-            'id', capture_output=True)
+        (stdout, stderr, _returncode) = self.fake.run_fake('id')
         assert stdout is not None
         assert 'uid=0(root)' in stdout
         assert 'gid=0(root)' in stdout
@@ -71,19 +69,19 @@ class TestFake:
 
         # Install busybox
         (_stdout, stderr, _returncode) = self.fake.run_chroot(
-            '/bin/busybox --install -s /bin', chroot, capture_output=True)
+            '/bin/busybox --install -s /bin', chroot)
         assert stderr is not None
         assert not stderr.strip()
 
         # Create resolv.conf symlink
         (_stdout, stderr, _returncode) = self.fake.run_chroot(
-            'ln -sf etc etc/resolv.conf', chroot, capture_output=True)
+            'ln -sf etc etc/resolv.conf', chroot)
         assert stderr is not None
         assert not stderr.strip()
 
         # Check proc is mounted
         (stdout, stderr, _returncode) = self.fake.run_chroot(
-            'stat -c \'%u %g\' /proc/cmdline', chroot, capture_output=True)
+            'stat -c \'%u %g\' /proc/cmdline', chroot)
         assert stdout
         assert stdout.strip() == '0 0'
         assert stderr is not None
@@ -91,7 +89,7 @@ class TestFake:
 
         # Check sysfs is mounted
         (stdout, stderr, _returncode) = self.fake.run_chroot(
-            'stat -c \'%u %g\' /sys/dev', chroot, capture_output=True)
+            'stat -c \'%u %g\' /sys/dev', chroot)
         assert stdout
         assert stdout.strip() == '0 0'
         assert stderr is not None
@@ -99,7 +97,7 @@ class TestFake:
 
         # Check dev/pts is mounted
         (stdout, stderr, _returncode) = self.fake.run_chroot(
-            'stat -c \'%u %g\' /dev/pts', chroot, capture_output=True)
+            'stat -c \'%u %g\' /dev/pts', chroot)
         assert stdout
         assert stdout.strip() == '0 0'
         assert stderr is not None
@@ -107,14 +105,14 @@ class TestFake:
 
         # Check DNS config
         (stdout, stderr, _returncode) = self.fake.run_chroot(
-            'stat -c \'%u %g\' /etc/resolv.conf', chroot, capture_output=True)
+            'stat -c \'%u %g\' /etc/resolv.conf', chroot)
         assert stdout
         assert stdout.strip() == '0 0'
         assert stderr is not None
         assert not stderr.strip()
 
         (stdout, stderr, _returncode) = self.fake.run_chroot(
-            'stat -c \'%u %g\' /etc/gai.conf', chroot, capture_output=True)
+            'stat -c \'%u %g\' /etc/gai.conf', chroot)
         assert stdout
         assert stdout.strip() == '0 0'
         assert stderr is not None
@@ -122,7 +120,7 @@ class TestFake:
 
         # Check reslov.conf symlink still exists
         (stdout, stderr, _returncode) = self.fake.run_sudo(
-            'stat -c \'%u %g\' /etc/resolv.conf', chroot, capture_output=True)
+            'stat -c \'%u %g\' /etc/resolv.conf', chroot)
         assert stdout
         assert stdout.strip() == '0 0'
         assert stderr is not None
@@ -148,12 +146,12 @@ class TestFake:
 
         # Install busybox
         (_stdout, stderr, _returncode) = self.fake.run_chroot(
-            '/bin/busybox --install -s /bin', chroot, capture_output=True)
+            '/bin/busybox --install -s /bin', chroot)
         assert stderr is not None
         assert not stderr.strip()
 
         (stdout, stderr, returncode) = self.fake.run_chroot(
-            'ping -c 1 linux.elektrobit.com', chroot, capture_output=True)
+            'ping -c 1 linux.elektrobit.com', chroot)
         assert returncode == 0
         assert stderr is not None
         assert not stderr.strip()
@@ -177,7 +175,7 @@ class TestFake:
 
         # Install busybox
         (_stdout, stderr, _returncode) = self.fake.run_chroot(
-            '/bin/busybox --install -s /bin', chroot, capture_output=True)
+            '/bin/busybox --install -s /bin', chroot)
         assert stderr is not None
         assert not stderr.strip()
 
@@ -186,7 +184,7 @@ class TestFake:
     def test_run_sudo(self):
         """ Run a command using sudo. """
         (stdout, stderr, _returncode) = self.fake.run_sudo(
-            'id', capture_output=True)
+            'id')
         assert stdout is not None
         assert 'uid=0(root)' in stdout
         assert 'gid=0(root)' in stdout
