@@ -1,0 +1,13 @@
+kernel: null
+arch: amd64
+# Name of the archive.
+name: ebcl_dummy
+apt_repos:
+  # Get SELinux packages
+  - apt_repo: http://127.0.0.1:8088
+    distro: jammy
+    gpg: /etc/apt/trusted.gpg.d/local.gpg
+    components:
+      - main
+packages:
+  - ebcl-doc
