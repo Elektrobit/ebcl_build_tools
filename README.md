@@ -19,4 +19,4 @@ Test can be executed using ptest, either on the command line or using the testin
 The robot framework tests are black box integration tests.
 They take a long time to execute and download files from debian repositories.
 
-To execute the tests either  the robot command line utility or the vscode integration can be used.
+To execute the tests either the robot command line utility (via `robot_tests$ robot *.robot`) or the vscode integration can be used.
