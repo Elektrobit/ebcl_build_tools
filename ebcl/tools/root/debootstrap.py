@@ -5,7 +5,7 @@ import logging
 import os
 
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Any
 
 from ebcl.common import get_cache_folder
 from ebcl.common.apt import Apt, AptDebRepo
@@ -34,6 +34,9 @@ class DebootstrapRootGenerator:
         apt_config = f'{debootstrap_hash} '
         for apt in self.config.apt_repos:
             apt_config += f'{apt.id} '
+
+        for entry in self._find_apt_host_files():
+            apt_config += f'{str(entry)}'
 
         return hashlib.md5(apt_config.encode('utf-8')).digest().hex()
 
@@ -117,10 +120,10 @@ class DebootstrapRootGenerator:
         if self.config.host_files:
             # Copy host files to target_dir folder
             logging.info('Copy apt config to target dir...')
-            for d in self._find_apt_host_files():
-                self.config.fh.copy_files([{'source': d}], self.config.target_dir)
+            for entry in self._find_apt_host_files():
+                self.config.fh.copy_files([entry], self.config.target_dir)
 
-    def _find_apt_host_files(self) -> List[str]:
+    def _find_apt_host_files(self) -> List[Any]:
         """ Check for host files affecting the apt behavior. """
         apt_config = []
 
@@ -140,7 +143,8 @@ class DebootstrapRootGenerator:
             test_path = os.path.join(src, apt_path)
 
             if os.path.isdir(test_path):
-                apt_config.append(test_path)
+                logging.debug("Found apt config %s.", entry)
+                apt_config.append(entry)
 
         return apt_config
 
