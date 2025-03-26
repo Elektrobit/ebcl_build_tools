@@ -8,9 +8,6 @@ from typing import Any, Optional, Tuple
 from jinja2 import Template
 
 
-# TODO: test
-
-
 def render_template(
         template_file: str,
         params: dict[str, Any],
