@@ -273,6 +273,7 @@ class DebFile:
             ],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            stdin=subprocess.DEVNULL,
             check=False,
             encoding="utf-8"
         )

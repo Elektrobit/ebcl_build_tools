@@ -3,23 +3,24 @@
 import argparse
 import logging
 
-from ebcl.common import init_logging
+from ebcl.common import add_loging_arguments, init_logging
 
 # TODO: implmement
 
 
 def main() -> None:
     """ Main entrypoint of EBcL apt proxy. """
-    init_logging()
+    parser = argparse.ArgumentParser(
+        description='EBcL apt proxy.')
+    add_loging_arguments(parser)
+
+    args = parser.parse_args()
+
+    init_logging(args)
 
     logging.info('\n=========\n'
                  'EBcL Proxy\n'
                  '==========\n')
-
-    parser = argparse.ArgumentParser(
-        description='EBcL apt proxy.')
-
-    _args = parser.parse_args()
 
     logging.critical('Not implemented!')
 
