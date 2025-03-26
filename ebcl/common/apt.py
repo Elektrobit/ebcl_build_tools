@@ -482,7 +482,6 @@ class Apt:
 
     def get_key(self) -> str | None:
         """Get key for this repo."""
-        # TODO: test
         if not self.key_url:
             return None
 

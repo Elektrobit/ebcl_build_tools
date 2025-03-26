@@ -26,8 +26,9 @@ class TestApt:
                 url='http://archive.ubuntu.com/ubuntu',
                 dist='jammy',
                 components=['main'],
-                arch=CpuArch.AMD64
-            )
+                arch=CpuArch.AMD64,
+            ),
+            key_url='file://' + (test_data / "test.key").as_posix(),
         )
         cls.proxy = Proxy()
         cls.proxy.add_apt(cls.apt)
@@ -292,3 +293,23 @@ class TestApt:
         assert vds[1].name == 'libpcre2-8-0'
         assert vds[1].version == Version('10.22')
         assert vds[1].version_relation == VersionRelation.EXACT
+
+    def test_apt_get_key_file(self):
+        """Test get_key with key file"""
+        key = self.apt.get_key()
+        assert key is not None
+
+    def test_apt_get_key_https(self):
+        """Test get_key with key from https"""
+        apt = Apt(
+            AptDebRepo(
+            url='http://archive.ubuntu.com/ubuntu',
+            dist='jammy',
+            components=['main'],
+            arch=CpuArch.AMD64,
+            ),
+            key_url='https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xf6ecb3762474eda9d21b7022871920d1991bc93c',
+        )
+        key = apt.get_key()
+        assert key is not None
+        assert key.startswith('-----BEGIN PGP PUBLIC KEY BLOCK-----')
