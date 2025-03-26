@@ -142,7 +142,6 @@ class TestRoot:
         fake = Fake()
         fake.run_cmd(f'tar -tvf {archive} | grep "/bin/ip"', check=True)
 
-
     def test_get_package_hash(self):
         """ Test for apt config hash algorithm. """
         test_dir = os.path.dirname(os.path.abspath(__file__))
