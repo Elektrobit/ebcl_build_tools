@@ -40,7 +40,6 @@ class TestRoot:
         """ Remove temp_dir. """
         shutil.rmtree(cls.temp_dir)
         shutil.rmtree(cls.result_dir)
-        shutil.rmtree(cls.output_path)
 
     def test_read_config(self):
         """ Test yaml config loading. """
