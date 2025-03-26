@@ -112,17 +112,17 @@ class TestRoot:
 
         generator.apt_repos = [Apt.ebcl_apt(CpuArch.AMD64)]
 
-        archive = generator.create_root()
+        archive = generator.create_root(run_scripts=False)
         assert archive
         assert os.path.isfile(archive)
 
         # Check that apt config was added
         fake = Fake()
-        fake.run_cmd(f'tar -tvf {archive} | grep "preferences.d/linux.elektrobit.com"', check=True)
-        fake.run_cmd(f'tar -tvf {archive} | grep "preferences.d/aptconfig2"', check=True)
-        fake.run_cmd(f'tar -tvf {archive} | grep "preferences.d/aptconfig3"', check=True)
-        fake.run_cmd(f'tar -tvf {archive} | grep "preferences.d/aptconfig4"', check=True)
-        fake.run_cmd(f'tar -tvf {archive} | grep "preferences.d/aptconfig5"', check=True)
+        fake.run_cmd(f'tar -tvf {archive} | grep "etc/apt/preferences.d/linux.elektrobit.com"', check=True)
+        fake.run_cmd(f'tar -tvf {archive} | grep "etc/apt/preferences.d/aptconfig2"', check=True)
+        fake.run_cmd(f'tar -tvf {archive} | grep "etc/apt/preferences.d/aptconfig3"', check=True)
+        fake.run_cmd(f'tar -tvf {archive} | grep "etc/apt/preferences.d/aptconfig4"', check=True)
+        fake.run_cmd(f'tar -tvf {archive} | grep "etc/apt/preferences.d/aptconfig5"', check=True)
 
     def test_get_package_hash(self):
         """ Test for apt config hash algorithm. """
