@@ -303,10 +303,10 @@ class TestApt:
         """Test get_key with key from https"""
         apt = Apt(
             AptDebRepo(
-            url='http://archive.ubuntu.com/ubuntu',
-            dist='jammy',
-            components=['main'],
-            arch=CpuArch.AMD64,
+                url='http://archive.ubuntu.com/ubuntu',
+                dist='jammy',
+                components=['main'],
+                arch=CpuArch.AMD64,
             ),
             key_url='https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xf6ecb3762474eda9d21b7022871920d1991bc93c',
         )
