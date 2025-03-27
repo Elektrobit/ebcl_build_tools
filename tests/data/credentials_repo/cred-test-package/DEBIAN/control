@@ -1,0 +1,7 @@
+Package:    cred-test-package
+Version:    1.0
+Section:    base
+Priority:   optional
+Architecture:   all
+Maintainer: EBcL
+Description: A simple EBcL credential test file
