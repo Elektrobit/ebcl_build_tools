@@ -323,6 +323,9 @@ class InitrdGenerator:
 
         # Create lib and bin folder symlinks
         self.config.fake.run_sudo(f'ln -sf usr/lib {self.target_dir}/lib')
+        self.config.fake.run_sudo(f'ln -sf usr/lib32 {self.target_dir}/lib32')
+        self.config.fake.run_sudo(f'ln -sf usr/lib64 {self.target_dir}/lib64')
+        self.config.fake.run_sudo(f'ln -sf usr/libx32 {self.target_dir}/libx32')
         self.config.fake.run_sudo(f'ln -sf usr/bin {self.target_dir}/bin')
         self.config.fake.run_sudo(f'ln -sf usr/sbin {self.target_dir}/sbin')
 
