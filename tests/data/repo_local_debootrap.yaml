@@ -1,13 +1,11 @@
-kernel: null
 arch: amd64
-# Name of the archive.
-name: ebcl_dummy
+use_ebcl_apt: false
+primary_distro: jammy
 apt_repos:
-  # Get SELinux packages
   - apt_repo: http://127.0.0.1:8088
     distro: jammy
-    gpg: /etc/apt/trusted.gpg.d/local.gpg
+    key: http://127.0.0.1:8088/Release.key
     components:
       - main
 packages:
-  - ebcl-doc
+  - cred-test-package
