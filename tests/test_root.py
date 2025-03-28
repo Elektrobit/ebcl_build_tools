@@ -1,4 +1,4 @@
-""" Unit tests for the EBcL boot generator. """
+""" Unit tests for the EBcL root generator. """
 import os
 import shutil
 import tempfile
@@ -16,7 +16,7 @@ from ebcl.common.types.cpu_arch import CpuArch
 
 
 class TestRoot:
-    """ Unit tests for the EBcL boot generator. """
+    """ Unit tests for the EBcL root generator. """
 
     yaml: str
     temp_dir: str
@@ -25,7 +25,7 @@ class TestRoot:
 
     @classmethod
     def setup_class(cls):
-        """ Prepare initrd generator. """
+        """ Prepare root generator. """
         test_dir = os.path.dirname(os.path.abspath(__file__))
         cls.yaml = os.path.join(test_dir, 'data', 'root.yaml')
         # Prepare generator
@@ -123,6 +123,23 @@ class TestRoot:
         fake.run_cmd(f'tar -tvf {archive} | grep "etc/apt/preferences.d/aptconfig3"', check=True)
         fake.run_cmd(f'tar -tvf {archive} | grep "etc/apt/preferences.d/aptconfig4"', check=True)
         fake.run_cmd(f'tar -tvf {archive} | grep "etc/apt/preferences.d/aptconfig5"', check=True)
+
+    @pytest.mark.requires_download
+    def test_build_sysroot(self):
+        """ Test build sysroot root.tar. """
+        test_dir = os.path.dirname(os.path.abspath(__file__))
+        yaml = os.path.join(test_dir, 'data', 'root_sysroot.yaml')
+        generator = RootGenerator(yaml, self.temp_dir, True)
+
+        generator.apt_repos = [Apt.ebcl_apt(CpuArch.AMD64)]
+
+        archive = generator.create_root()
+        assert archive
+        assert os.path.isfile(archive)
+
+        # Check that iproute was added
+        fake = Fake()
+        fake.run_cmd(f'tar -tvf {archive} | grep "/bin/ip"', check=True)
 
     def test_get_package_hash(self):
         """ Test for apt config hash algorithm. """

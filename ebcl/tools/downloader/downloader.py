@@ -16,7 +16,6 @@ from ebcl.common.types.cpu_arch import CpuArch
 
 class PackageDownloader:
     """ Download and extract deb packages. """
-    # TODO: test
 
     @log_exception(call_exit=True)
     def __init__(self, config_file: str, output_path: str) -> None:
