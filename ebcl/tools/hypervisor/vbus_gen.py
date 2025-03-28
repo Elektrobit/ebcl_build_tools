@@ -4,13 +4,18 @@ import yaml
 import logging
 import os
 
+
 class DTSConverter:
+    """
+    Will Take a flattened Device Tree and try to convert most of it
+    To the expected Yaml Configuration
+    """
     def __init__(self, dts: Path):
-        self.dts_file_path = dts
-        self.current_node : dict | None = None
-        self.nodes : list = []
-        
-        self.node_hierarchy : list = []  # Stack to track parent nodes
+        self.dts_file_path: Path = dts
+        self.current_node: dict | None = None
+        self.nodes: list = []
+
+        self.node_hierarchy: list = []  # Stack to track parent nodes
         self.yaml_output = self.process_dts_file(self.dts_file_path)
 
     def parse_compatible_property(self, compatible_property) -> str:
@@ -56,7 +61,7 @@ class DTSConverter:
         """Parse the interrupts property and return a list of dictionaries with IRQ numbers."""
         interrupts_cleaned = interrupts_property.replace('<', '').replace('>', '').replace(';', '').split()
         irqs: list = []
-        
+
         if len(interrupts_cleaned) == 1:
             logging.warning(f'TODO: Only one interrupt entry: {interrupts_cleaned[0]}')
             return irqs
@@ -67,24 +72,25 @@ class DTSConverter:
             irqs.append({"irq": irq_number, "trigger": "level_high"})
 
         return irqs
-    
+
     def parse_cells_info(self, cell_property) -> int:
-        cell_cleaned = cell_property.replace('<', '').replace('>','').replace(';','')
+        """Parse the info inside a <something>; cell"""
+        cell_cleaned = cell_property.replace('<', '').replace('>', '').replace(';', '')
         cell = int(cell_cleaned, 16)
         return cell
-    
+
     def parse_node_full_name(self, node_match: re.Match[str]) -> str:
+        """Parse the full node name"""
         node_name, unit_address = node_match.groups()
         full_name = node_name if not unit_address else f"{node_name}@{unit_address}"
         return full_name
-    
 
     def process_dts_file(self, dts_file_path):
         """Parse a DTS file and convert it into the YAML structure."""
         try:
             with open(dts_file_path, 'r') as dts_file:
                 dts_lines = dts_file.readlines()
-            
+
             # Regex patterns to extract nodes and properties
             node_pattern = re.compile(r'([a-zA-Z0-9\-_]+)\s*@?([\da-fA-Fx]*)\s*{')
             compatible_pattern = re.compile(r'compatible\s*=\s*(\"[^\"]+\")\s*;')
@@ -99,7 +105,7 @@ class DTSConverter:
             size_cells: dict = {}
             address_cells: dict = {}
             current_node: dict = {}
-            
+
             for line in dts_lines:
                 line = line.strip()
                 # Detect new node
@@ -125,7 +131,7 @@ class DTSConverter:
                     if self.node_hierarchy:
                         self.node_hierarchy.pop()  # Pop from stack when node closes
                     continue
-                
+
                 size_match = size_cell_pattern.match(line)
                 if size_match:
                     size_cells[len(self.node_hierarchy)] = self.parse_cells_info(size_match.group(1))
@@ -137,34 +143,35 @@ class DTSConverter:
                     address_cells[len(self.node_hierarchy)] = self.parse_cells_info(address_match.group(1))
                     logging.debug(f"Set address-cells[{len(self.node_hierarchy)}] = {address_cells[len(self.node_hierarchy)]}")
                     continue
-                
+
                 reg_match = reg_pattern.match(line)
                 if reg_match:
                     if 'reg' not in current_node:
                         current_node['reg'] = []  # Ensure 'reg' exists
-                    current_node['reg'].extend(self.parse_reg_property(reg_match.group(1), 
-                                                                    current_node['size-cells'], 
-                                                                    current_node['address-cells']))
+                    current_node['reg'].extend(
+                        self.parse_reg_property(reg_match.group(1),
+                                                current_node['size-cells'],
+                                                current_node['address-cells']))
                     continue
-                
+
                 compatible_match = compatible_pattern.match(line)
                 if compatible_match and current_node:
                     current_node['compatible'] = self.parse_compatible_property(compatible_match.group(1))
                     continue
-                
+
                 interrupts_match = interrupts_pattern.match(line)
                 if interrupts_match:
                     current_node['irq'] = self.parse_interrupts_property(interrupts_match.group(1))
                     continue
-                
+
                 status_match = status_pattern.match(line)
                 if status_match:
                     current_node['status'] = "disabled" if "disabled" in status_match.group(1) else "okay"
-            
+
             for mynode in self.nodes:
                 if not all(key in mynode for key in ["compatible", "reg"]):
                     continue
-                
+
                 if "status" in mynode and mynode["status"] == "disabled":
                     continue
 
@@ -190,7 +197,7 @@ class DTSConverter:
 
         except FileNotFoundError:
             logging.error(f"Error: The file {dts_file_path} was not found.")
-    
+
     def dump(self):
         path = os.path.join(os.path.dirname(self.dts_file_path), "test.yaml")
         mode: str = 'x'

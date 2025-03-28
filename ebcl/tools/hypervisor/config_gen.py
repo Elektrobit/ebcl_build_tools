@@ -187,13 +187,13 @@ def main() -> None:
     if args.dts:
         dtsconverter = DTSConverter(args.dts)
         dtsconverter.dump()
-    
+
     if args.specialization_package and not args.dts:
         if not args.repo_config or not args.repo_config.exists():
             parser.error("If a SPECIALIZATION_PACKAGE is specified a REPO_CONFIG must be specified as well")
         unpacker = SpecializationUnpacker(args.specialization_package, args.repo_config, args.specialization_path)
         args.specialization = unpacker.directory
-    
+
     if not args.dts:
         generator = HvFileGenerator(args.config_file, args.output, args.specialization)
         generator.create_files()
