@@ -162,7 +162,7 @@ class DTSConverter:
                     current_node['status'] = "disabled" if "disabled" in status_match.group(1) else "okay"
             
             for mynode in self.nodes:
-                if not all(key in mynode for key in ["compatible", "reg", "irq"]):
+                if not all(key in mynode for key in ["compatible", "reg"]):
                     continue
                 
                 if "status" in mynode and mynode["status"] == "disabled":
@@ -172,7 +172,7 @@ class DTSConverter:
                     "name": mynode["name"],
                     "compatible": mynode["compatible"],
                     "mmios": mynode["reg"],
-                    "irqs": mynode["irq"]
+                    "irqs": mynode["irq"] if "irq" in mynode else None
                 }
                 devices.append(device_entry)
 

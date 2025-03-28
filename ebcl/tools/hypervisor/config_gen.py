@@ -166,7 +166,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description='Create the config files for the hypervisor')
     parser.add_argument('--dts', type=Path,
-                        help='Path to SoC Device tree, which is to be converted to yaml style')
+                        help=(
+                            "Path to the SoC Device Tree to be converted to YAML format. "
+                            "If provided, all other parameters will be ignored.")
+                        )
     parser.add_argument('-s', '--specialization', type=Path,
                         help='Path to hypervisor specialization directory')
     parser.add_argument('-p', '--specialization-package', type=str,
@@ -175,9 +178,9 @@ def main() -> None:
                         help='Path to specialization in package')
     parser.add_argument('-r', '--repo-config', type=Path,
                         help='Path to a config file with a repository containing the hypervisor specialization')
-    parser.add_argument('--config_file', type=Path, required=False,
+    parser.add_argument('--config_file', type=Path,
                         help='Path to the YAML configuration file')
-    parser.add_argument('--output', type=Path, required=False,
+    parser.add_argument('--output', type=Path,
                         help='Path to the output directory')
     args = parser.parse_args()
 
@@ -185,7 +188,7 @@ def main() -> None:
         dtsconverter = DTSConverter(args.dts)
         dtsconverter.dump()
     
-    if args.specialization_package:
+    if args.specialization_package and not args.dts:
         if not args.repo_config or not args.repo_config.exists():
             parser.error("If a SPECIALIZATION_PACKAGE is specified a REPO_CONFIG must be specified as well")
         unpacker = SpecializationUnpacker(args.specialization_package, args.repo_config, args.specialization_path)
