@@ -35,7 +35,7 @@ jobs:
         flake8
     - name: Check typing with mypy
       run: |
-        mypy ebcl
+        mypy ebcl tests
     - name: Test with pytest
       run: |
         pytest -m "not dev_container and not requires_download"
