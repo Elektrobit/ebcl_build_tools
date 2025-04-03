@@ -414,9 +414,9 @@ class Apt:
         return cls.ebcl(arch, "ebcl", release, ['prod', 'dev'])
 
     @classmethod
-    def ebcl_primary_repo(cls, arch: CpuArch, release: str = '1.5') -> Self:
+    def ebcl_primary_repo(cls, arch: CpuArch, primary_distro, release: str = '1.5') -> Self:
         """Get the EBcL apt repo for upstream jammy components."""
-        return cls.ebcl(arch, "jammy", release, ['main'])
+        return cls.ebcl(arch, primary_distro if primary_distro else "jammy", release, ['main'])
 
     def __init__(
         self,
