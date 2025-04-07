@@ -181,6 +181,13 @@ class Config:
     def parse(self) -> None:
         """ Load yaml configuration. """
         self._parse_yaml(self.config_file)
+        if self.use_ebcl_apt:
+            ebcl_apt = Apt.ebcl_apt(self.arch)
+            self.proxy.add_apt(ebcl_apt)
+            self.apt_repos.append(ebcl_apt)
+            ebcl_main = Apt.ebcl_primary_repo(self.arch, self.primary_distro)
+            self.proxy.add_apt(ebcl_main)
+            self.apt_repos.append(ebcl_main)
 
     def _parse_yaml(self, file: str) -> None:
         """ Load yaml configuration. """
@@ -191,7 +198,7 @@ class Config:
 
         base = config.get('base', None)
         if base:
-            # Hanlde parent config files
+            # Handle parent config files
             if isinstance(base, str):
                 bases = [base]
             else:
@@ -231,15 +238,11 @@ class Config:
 
             self.apt_repos += apt_repos
 
+        if 'primary_distro' in config:
+            self.primary_distro = config.get('primary_distro', None)
+
         if 'use_ebcl_apt' in config:
             self.use_ebcl_apt = config.get('use_ebcl_apt', False)
-            if self.use_ebcl_apt:
-                ebcl_apt = Apt.ebcl_apt(self.arch)
-                self.proxy.add_apt(ebcl_apt)
-                self.apt_repos.append(ebcl_apt)
-                ebcl_main = Apt.ebcl_primary_repo(self.arch)
-                self.proxy.add_apt(ebcl_main)
-                self.apt_repos.append(ebcl_main)
 
         host_files = parse_files(
             config.get('host_files', None),
@@ -424,9 +427,6 @@ class Config:
 
         if 'type' in config:
             self.type = BuildType.from_str(config.get('type', None))
-
-        if 'primary_distro' in config:
-            self.primary_distro = config.get('primary_distro', None)
 
         if 'debootstrap_flags' in config:
             self.debootstrap_flags = config.get('debootstrap_flags', None)
