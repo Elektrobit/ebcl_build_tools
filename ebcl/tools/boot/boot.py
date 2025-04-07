@@ -8,7 +8,7 @@ import tempfile
 
 from typing import Optional
 
-from ebcl.common import init_logging, promo, log_exception
+from ebcl.common import add_loging_arguments, init_logging, promo, log_exception
 from ebcl.common.config import Config
 from ebcl.common.files import resolve_file
 
@@ -148,20 +148,21 @@ class BootGenerator:
 @log_exception(call_exit=True)
 def main() -> None:
     """ Main entrypoint of EBcL boot generator. """
-    init_logging()
-
-    logging.info('\n===================\n'
-                 'EBcL Boot Generator\n'
-                 '===================\n')
-
     parser = argparse.ArgumentParser(
-        description='Create the content of the boot partiton.')
+        description='Create the content of the boot partition.')
+    add_loging_arguments(parser)
     parser.add_argument('config_file', type=str,
                         help='Path to the YAML configuration file')
     parser.add_argument('output', type=str,
                         help='Path to the output directory')
 
     args = parser.parse_args()
+
+    init_logging(args)
+
+    logging.info('\n===================\n'
+                 'EBcL Boot Generator\n'
+                 '===================\n')
 
     logging.debug('Running boot_generator with args %s', args)
 
@@ -175,10 +176,10 @@ def main() -> None:
     generator.finalize()
 
     if image:
-        print(f'Results were written to {image}.')
+        logging.info('Results were written to %s.', image)
         promo()
     else:
-        print('Build failed!')
+        logging.error('Build failed!')
         exit(1)
 
 

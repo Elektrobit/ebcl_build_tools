@@ -206,7 +206,7 @@ class TestInitrd:
             self.generator.target_dir)
 
         (out, err, _returncode) = self.fake.run_sudo(
-            f'stat -c \'%a\' {self.generator.target_dir}/root/dummy.txt', capture_output=True)
+            f'stat -c \'%a\' {self.generator.target_dir}/root/dummy.txt')
         assert out is not None
         out = out.split('\n')[-2]
         mode = oct(
@@ -216,7 +216,7 @@ class TestInitrd:
         assert not err.strip()
 
         (out, err, _returncode) = self.fake.run_sudo(
-            f'stat -c \'%u %g\' {self.generator.target_dir}/root/dummy.txt', capture_output=True)
+            f'stat -c \'%u %g\' {self.generator.target_dir}/root/dummy.txt')
         assert out is not None
         out = out.split('\n')[-2]
         assert out.strip() == '0 0'
@@ -224,13 +224,13 @@ class TestInitrd:
         assert not err.strip()
 
         (out, err, _returncode) = self.fake.run_sudo(
-            f'stat -c \'%a\' {self.generator.target_dir}/root/other.txt', capture_output=True)
+            f'stat -c \'%a\' {self.generator.target_dir}/root/other.txt')
         assert out is not None
         out = out.split('\n')[-2]
         assert out.strip() == '700'
 
         (out, err, _returncode) = self.fake.run_sudo(
-            f'stat -c \'%u %g\' {self.generator.target_dir}/root/other.txt', capture_output=True)
+            f'stat -c \'%u %g\' {self.generator.target_dir}/root/other.txt')
         assert out is not None
         out = out.split('\n')[-2]
         assert out.strip() == '123 456'
