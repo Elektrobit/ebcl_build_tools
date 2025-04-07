@@ -36,7 +36,7 @@ class TestConfig:
 
         config = Config(yaml_file, self.temp_dir)
 
-        assert len(config.apt_repos) == 2
+        assert len(config.apt_repos) == 4
         assert isinstance(config.apt_repos[0].repo, AptDebRepo)
         assert config.apt_repos[0].repo.dist == 'jammy'
         assert isinstance(config.apt_repos[1].repo, AptDebRepo)
@@ -64,7 +64,7 @@ class TestConfig:
 
         config = Config(yaml_file, self.temp_dir)
 
-        assert len(config.apt_repos) == 2
+        assert len(config.apt_repos) == 4
         assert isinstance(config.apt_repos[0].repo, AptDebRepo)
         assert config.apt_repos[0].repo.dist == 'jammy'
         assert isinstance(config.apt_repos[1].repo, AptDebRepo)
@@ -102,7 +102,7 @@ class TestConfig:
 
         config = Config(yaml_file, self.temp_dir)
 
-        assert len(config.apt_repos) == 2
+        assert len(config.apt_repos) == 4
         assert isinstance(config.apt_repos[0].repo, AptDebRepo)
         assert config.apt_repos[0].repo.dist == 'jammy'
         assert isinstance(config.apt_repos[1].repo, AptFlatRepo)
@@ -190,3 +190,14 @@ class TestConfig:
 
         del config
         assert not netrc_path.exists()
+
+    def test_distro_ebcl_apt_yaml(self):
+        """ Try to parse boot.yaml. """
+        yaml_file = os.path.join(
+            os.path.dirname(__file__), 'data', 'root_distro.yaml')
+
+        config = Config(yaml_file, self.temp_dir)
+
+        print(config.apt_repos)
+        print(config.primary_distro)
+
