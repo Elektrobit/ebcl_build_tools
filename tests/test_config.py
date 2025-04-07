@@ -200,4 +200,3 @@ class TestConfig:
 
         print(config.apt_repos)
         print(config.primary_distro)
-

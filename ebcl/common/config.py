@@ -182,7 +182,6 @@ class Config:
         """ Load yaml configuration. """
         self._parse_yaml(self.config_file)
         if self.use_ebcl_apt:
-            print('Adding EBcL apt repo')
             ebcl_apt = Apt.ebcl_apt(self.arch)
             self.proxy.add_apt(ebcl_apt)
             self.apt_repos.append(ebcl_apt)
