@@ -28,6 +28,7 @@ class DebootstrapRootGenerator:
         self.cache_folder = get_cache_folder('debootstrap')
         self.debootstrap_variant = debootstrap_variant
         self.apt_env = 'DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC'
+        self.apt_options = ' -o DPkg::Options::=--force-confold --allow-downgrades '
 
     def _get_apt_hash(self, debootstrap_hash: str) -> str:
         """ Generate a hash for the apt configuration """
@@ -328,7 +329,7 @@ class DebootstrapRootGenerator:
             if not self.config.install_recommends:
                 no_recommends = "--no-install-recommends "
             fake.run_chroot(
-                f'bash -c "{self.apt_env} apt install -y {no_recommends}{packages} --allow-downgrades"',
+                f'bash -c "{self.apt_env} apt install -y {self.apt_options}  {no_recommends}{packages}"',
                 chroot=self.config.target_dir,
                 check=True
             )
