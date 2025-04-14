@@ -41,7 +41,8 @@ class Fakeroot:
             check=True,
             shell=True,
             stdout=PIPE,
-            stderr=PIPE)
+            stderr=PIPE
+        )
 
         pout = ''
         perr = ''
