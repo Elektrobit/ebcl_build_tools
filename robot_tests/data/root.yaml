@@ -5,6 +5,9 @@ packages:
   - systemd
   - udev        # udev will create the device node for ttyS0
   - util-linux
+  - elos
+host_files:
+  - source: config/*
 scripts:
   - name: root_config_sudo.sh
     env: sudo
