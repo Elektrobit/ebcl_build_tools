@@ -1,0 +1,9 @@
+#!/usr/bin/make -f
+
+export PYBUILD_NAME=ebcl-build-tools
+
+%:
+	dh $@ --with python3 --buildsystem=pybuild
+
+# Disable tests as they require sudo to run
+override_dh_auto_test:

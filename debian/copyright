@@ -1,0 +1,11 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: ebcl-build-tools
+Source: https://github.com/Elektrobit/ebcl_build_tools/tree/main
+
+Files: *
+Copyright: 2025, Elektrobit Automotive GmbH
+License: TBD
+
+License: TBD
+ TODO Figure out correct license here.
+

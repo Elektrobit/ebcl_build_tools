@@ -1,0 +1,39 @@
+Source: ebcl-build-tools
+Maintainer: Elektrobit GmbH <info@elektrobit.com>
+Section: utils
+Priority: optional
+Standards-Version: 4.6.2
+Build-Depends:
+ debhelper-compat (= 13),
+ dh-python,
+ pybuild-plugin-pyproject,
+ python3-hatchling,
+ python3-jinja2,
+ python3-poetry-core,
+ python3-pytest,
+ python3-requests,
+ python3-setuptools,
+ python3-typing-extensions,
+ python3-yaml,
+ python3-zstandard,
+ python3-unix-ar,
+ python3,
+Rules-Requires-Root: no
+Homepage: https://github.com/Elektrobit/ebcl_build_tools/
+Vcs-Browser: https://github.com/Elektrobit/ebcl_build_tools/
+Vcs-Git: https://github.com/Elektrobit/ebcl_build_tools.git
+
+Package: ebcl-build-tools
+Architecture: all
+Depends:
+ ${misc:Depends},
+ ${python3:Depends},
+Multi-Arch: foreign
+Description: EBcL build helpers
+ A collection of helper utilities for EBcL. Includes the following tools:
+  - boot_generator
+  - hypervisor_config
+  - initrd_generator
+  - package_downloader
+  - root_configurator
+  - root_generator
