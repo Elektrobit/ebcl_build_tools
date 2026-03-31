@@ -52,14 +52,13 @@ class Files:
         self, cmd: str,
         env: Optional[EnvironmentType],
         cwd: Optional[str] = None,
-        check: bool = True,
-        capture_output=True
+        check: bool = True
     ) -> Optional[Tuple[Optional[str], Optional[str], int]]:
         """ Run the cmd using fake. """
         if env == EnvironmentType.FAKEROOT:
-            return self.fake.run_fake(cmd, cwd=cwd, check=check, capture_output=capture_output)
+            return self.fake.run_fake(cmd, cwd=cwd, check=check)
         elif env == EnvironmentType.SUDO:
-            return self.fake.run_sudo(cmd, cwd=cwd, check=check, capture_output=capture_output)
+            return self.fake.run_sudo(cmd, cwd=cwd, check=check)
         elif env == EnvironmentType.CHROOT:
             chroot_dir: Optional[str] = None
             if cwd:
@@ -73,9 +72,9 @@ class Files:
 
             cmd = cmd.replace(chroot_dir, '')
 
-            return self.fake.run_chroot(cmd, chroot=chroot_dir, check=check, capture_output=capture_output)
+            return self.fake.run_chroot(cmd, chroot=chroot_dir, check=check)
         elif env == EnvironmentType.SHELL or env is None:
-            return self.fake.run_cmd(cmd, cwd=cwd, check=check, capture_output=capture_output)
+            return self.fake.run_cmd(cmd, cwd=cwd, check=check)
 
     def copy_files(
         self,
@@ -262,8 +261,7 @@ class Files:
         params: Optional[str] = None,
         environment: Optional[EnvironmentType] = None,
         cwd: Optional[str] = None,
-        check: bool = True,
-        capture_output: bool = True
+        check: bool = True
     ) -> Optional[Tuple[Optional[str], Optional[str], int]]:
         """ Run scripts. """
         if not params:
@@ -307,8 +305,7 @@ class Files:
                 cmd=f'{script_file} {params}',
                 env=environment,
                 cwd=target_dir,
-                check=check,
-                capture_output=capture_output
+                check=check
             )
 
             if os.path.abspath(script_file) != os.path.abspath(file):

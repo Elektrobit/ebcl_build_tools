@@ -8,7 +8,7 @@ from tempfile import TemporaryDirectory
 import jinja2
 import yaml
 
-from ebcl.common import init_logging, log_exception
+from ebcl.common import add_loging_arguments, init_logging, log_exception
 from ebcl.common.config import Config
 from ebcl.common.files import resolve_file
 from ebcl.common.version import VersionDepends
@@ -152,14 +152,9 @@ class SpecializationUnpacker:
 @log_exception(call_exit=True)
 def main() -> None:
     """ Main entrypoint of EBcL hypervisor generator. """
-    init_logging()
-
-    logging.info('\n===================\n'
-                 'EBcL Hypervisor Config File Generator\n'
-                 '===================\n')
-
     parser = argparse.ArgumentParser(
         description='Create the config files for the hypervisor')
+    add_loging_arguments(parser)
     parser.add_argument('-s', '--specialization', type=Path,
                         help='Path to hypervisor specialization directory')
     parser.add_argument('-p', '--specialization-package', type=str,
@@ -173,6 +168,12 @@ def main() -> None:
     parser.add_argument('output', type=Path,
                         help='Path to the output directory')
     args = parser.parse_args()
+
+    init_logging(args)
+
+    logging.info('\n===================\n'
+                 'EBcL Hypervisor Config File Generator\n'
+                 '===================\n')
 
     if args.specialization_package:
         if not args.repo_config or not args.repo_config.exists():

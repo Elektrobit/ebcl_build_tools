@@ -7,7 +7,7 @@ import tempfile
 from io import BufferedWriter
 from pathlib import Path
 from subprocess import PIPE
-from typing import Tuple, Optional, Any
+from typing import Tuple, Optional
 
 
 class CommandFailed(Exception):
@@ -37,22 +37,12 @@ class Fake:
         cwd: Optional[str] = None,
         stdout: Optional[BufferedWriter] = None,
         check=True,
-        capture_output=False,
         mount_special_folder=False,
     ) -> Tuple[Optional[str], Optional[str], int]:
         """ Run a command. """
         logging.info('Running command: %s', cmd)
 
-        out: Any
-        if capture_output:
-            err = PIPE
-            if stdout is None:
-                out = PIPE
-            else:
-                out = stdout
-        else:
-            err = None
-            out = None
+        out: int | BufferedWriter = PIPE
 
         if stdout is not None:
             out = stdout
@@ -66,7 +56,8 @@ class Fake:
             check=False,
             shell=True,
             stdout=out,
-            stderr=err,
+            stderr=PIPE,
+            stdin=subprocess.DEVNULL,
             cwd=cwd
         )
 
@@ -74,20 +65,16 @@ class Fake:
             assert cwd
             self._special_folders(cwd, False)
 
-        pout: Optional[str]
-        perr: Optional[str]
-        if capture_output:
-            if stdout is None:
-                pout = p.stdout.decode('utf8')
-                if pout.strip():
-                    logging.info('STDOUT: %s', pout)
+        pout: Optional[str] = None
+        perr: Optional[str] = None
+        if stdout is None:
+            pout = p.stdout.decode('utf8')
+            if pout.strip():
+                logging.info('STDOUT: %s', pout)
 
-            perr = p.stderr.decode('utf8')
-            if perr.strip():
-                logging.error('%s has stderr output.\nSTDERR: %s', cmd, perr)
-        else:
-            pout = None
-            perr = None
+        perr = p.stderr.decode('utf8')
+        if perr.strip():
+            logging.error('%s has stderr output.\nSTDERR: %s', cmd, perr)
 
         if p.returncode != 0:
             logging.info('Returncode: %s', p.returncode)
@@ -108,15 +95,13 @@ class Fake:
         cwd: Optional[str] = None,
         stdout: Optional[BufferedWriter] = None,
         check=True,
-        capture_output=False,
     ) -> Tuple[Optional[str], Optional[str], int]:
         """ Run a command using fakeroot. """
         return self.run_cmd(
             cmd=f'fakeroot -i {self.state} -s {self.state} -- {cmd}',
             cwd=cwd,
             stdout=stdout,
-            check=check,
-            capture_output=capture_output
+            check=check
         )
 
     def _special_folders(self, chroot: str, mount: bool) -> None:
@@ -183,15 +168,13 @@ class Fake:
         self,
         cmd: str,
         chroot: str,
-        check=True,
-        capture_output=False
+        check=True
     ) -> Tuple[Optional[str], Optional[str], int]:
         """ Run a command using sudo and chroot. """
         (out, err, returncode) = self.run_cmd(
             cmd=f'sudo chroot {chroot} {cmd}',
             cwd=chroot,
             check=check,
-            capture_output=capture_output,
             mount_special_folder=True
         )
 
@@ -205,7 +188,6 @@ class Fake:
             cwd: Optional[str] = None,
             stdout: Optional[BufferedWriter] = None,
             check=True,
-            capture_output=False,
     ) -> Tuple[Optional[str], Optional[str], int]:
         """ Run a command using sudo. """
         cmd = cmd.replace('"', r'\"')
@@ -213,6 +195,5 @@ class Fake:
             cmd=f'sudo bash -c \"{cmd}\"',
             cwd=cwd,
             stdout=stdout,
-            check=check,
-            capture_output=capture_output
+            check=check
         )
